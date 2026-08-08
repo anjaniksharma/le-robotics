@@ -169,6 +169,19 @@ class MotorBackend:
         deg = round(pos * 360.0 / RESOLUTION, 1) if pos >= 0 else None
         return {"id": mid, "pos": pos, "deg": deg}
 
+    def read_all(self, ids):
+        """Read present position of several motors; returns {id: count}."""
+        return {str(i): self.read(i)["pos"] for i in ids}
+
+    def move_batch(self, moves):
+        """Apply a list of {id,pos,speed,accel} moves (whole-arm command)."""
+        for m in moves:
+            try:
+                self.move(m["id"], m["pos"], m.get("speed"), m.get("accel"))
+            except Exception:
+                pass
+        return {"ok": True, "count": len(moves)}
+
     def status(self):
         return {
             "connected": True,
@@ -230,15 +243,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         u = urlparse(self.path)
-        if u.path in ("/", "/index.html"):
-            f = HERE / "index.html"
-            if f.exists():
-                self._send(f.read_bytes(), ctype="text/html; charset=utf-8")
-            else:
-                self._send({"error": "index.html not found"}, 404)
-            return
         if u.path == "/favicon.ico":
             self._send(b"", code=204, ctype="image/x-icon"); return
+        # serve local .html pages (index.html at "/", plus arm.html etc.)
+        if u.path in ("/", "/index.html") or u.path.endswith(".html"):
+            name = "index.html" if u.path in ("/", "/index.html") else u.path.lstrip("/")
+            f = (HERE / name).resolve()
+            if f.parent == HERE and f.exists():
+                self._send(f.read_bytes(), ctype="text/html; charset=utf-8")
+            else:
+                self._send({"error": f"{name} not found"}, 404)
+            return
         if u.path == "/api/status":
             self._send(BACKEND.status()); return
         if u.path == "/api/ports":
@@ -247,6 +262,10 @@ class Handler(BaseHTTPRequestHandler):
             q = parse_qs(u.query)
             mid = int(q.get("id", ["1"])[0])
             self._send(BACKEND.read(mid)); return
+        if u.path == "/api/read_all":
+            q = parse_qs(u.query)
+            ids = [int(x) for x in q.get("ids", ["1,2,3,4,5,6"])[0].split(",") if x.strip()]
+            self._send({"positions": BACKEND.read_all(ids)}); return
         self._send({"error": "not found"}, 404)
 
     def do_POST(self):
@@ -257,6 +276,8 @@ class Handler(BaseHTTPRequestHandler):
                 self._send(BACKEND.connect(b.get("port"), b.get("baud"))); return
             if u.path == "/api/move":
                 self._send(BACKEND.move(b["id"], b["pos"], b.get("speed"), b.get("accel"))); return
+            if u.path == "/api/move_batch":
+                self._send(BACKEND.move_batch(b.get("moves", []))); return
             if u.path == "/api/torque":
                 self._send(BACKEND.set_torque(b["id"], b.get("on", True))); return
         except Exception as e:

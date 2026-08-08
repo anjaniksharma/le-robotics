@@ -76,9 +76,34 @@ what makes a servo a "servo."
 - If the arm behaves oddly, quit the bridge (`Ctrl+C`) — the motors hold their
   last position but stop taking commands.
 
+## Two web pages, one bridge
+The same `motor_bridge.py` serves both pages — pick from the URL it prints:
+
+| URL | Page | What it does |
+| --- | --- | --- |
+| `http://localhost:8777/` | **Live Motor Control** | One dial drives **one** STS3215; live encoder readback. Great first contact. |
+| `http://localhost:8777/arm.html` | **SO-101 Digital Twin** 🦾 | A **3D replica** of the whole arm with **six joint dials**. Move a dial → the real arm copies it. Flip to **Mirror** mode, turn torque off, pose the physical arm by hand, and the on-screen twin follows. |
+
+### About the Digital Twin (`arm.html`)
+- Built with pure **CSS 3D transforms** — a real articulated kinematic chain, no
+  external libraries, fully offline. Drag to orbit, scroll to zoom.
+- Joint dials use the **real SO-ARM101 URDF ranges** (shoulder_pan ±110°,
+  shoulder_lift ±100°, elbow_flex ±97°, wrist_flex ±95°, wrist_roll −157…163°,
+  gripper 0–100%).
+- **"0°" = the pose the arm is in when you connect** (captured via `read_all`), or
+  when you press **🏠 Set current pose as 0°** — so commands are relative and safe.
+- **Drive mode** sends all six goals with one `/api/move_batch`; the twin then
+  renders from the *actual* positions polled back, so it shows the real robot.
+- **Mirror mode** reads the arm ~14×/sec and moves the dials + twin to match.
+
 ## Files
 - `motor_bridge.py` — the local server (stdlib HTTP + `feetech-servo-sdk`).
-- `index.html` — the browser control panel (self-contained).
+- `index.html` — single-motor control panel.
+- `arm.html` — the 3D SO-101 Digital Twin (six-joint control).
+
+### API (for the curious)
+`GET /api/status·/api/ports·/api/read?id=·/api/read_all?ids=1,2,3` ·
+`POST /api/connect·/api/move·/api/move_batch·/api/torque`
 
 Verified in **simulation** on macOS (Apple Silicon), Python 3.12.7,
 `feetech-servo-sdk` from `lerobot[feetech]` 0.6.2. Register map from lerobot's

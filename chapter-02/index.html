@@ -334,7 +334,12 @@ Remove the USB cable from your MotorsBus and press Enter…</div>
     </div>
   </div>
   <p style="font-size:13px;margin-top:12px">Each command needs the <b>port</b> you found (e.g. <code class="inl">--robot.port=/dev/tty.usbmodem575E0032081</code>). The full flags are in the LeRobot SO-101 guide — the point for now is the <b>shape</b> of the journey.</p>
-  <div class="callout q" style="margin-top:16px"><b>🎛️ Want to drive a motor right now?</b> Try the <a href="../live-demo/index.html" style="color:var(--cyan);font-weight:700">Live Motor Control demo</a> — sliders in your browser move a real STS3215 (or a simulated one if none is plugged in). Start it with <code class="inl">python le-robotics/live-demo/motor_bridge.py</code> and open <code class="inl">http://localhost:8777</code>.</div>
+  <div class="callout q" style="margin-top:16px"><b>🎛️ Want to drive the robot right now?</b> Start the bridge with <code class="inl">python le-robotics/live-demo/motor_bridge.py</code>, then try:
+    <ul style="margin:8px 0 0">
+      <li><a href="../live-demo/index.html" style="color:var(--cyan);font-weight:700">Live Motor Control</a> — one dial drives one real STS3215 (<code class="inl">/</code>).</li>
+      <li><a href="../live-demo/arm.html" style="color:var(--violet);font-weight:700">🦾 SO-101 Digital Twin</a> — a 3D replica with six joint dials; the connected arm copies every motion, or mirror the real arm back (<code class="inl">/arm.html</code>).</li>
+    </ul>
+    Both fall back to simulation if no motor is plugged in.</div>
 </section>
 
 <!-- 7 TROUBLESHOOT + RECAP + QUIZ -->

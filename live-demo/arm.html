@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SO-101 Digital Twin · Drive the whole arm from your browser</title>
+<style>
+  :root{
+    --bg:#0b1020;--bg2:#111834;--card:#161e40;--card2:#1d2750;--ink:#eaf0ff;--muted:#a6b3d9;--line:#2a3566;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+    --j1:#f472b6;--j2:#38bdf8;--j3:#a3e635;--j4:#fbbf24;--j5:#a78bfa;--j6:#fb7185;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.5;
+    background:radial-gradient(1100px 650px at 82% -10%,rgba(167,139,250,.16),transparent 60%),
+      radial-gradient(900px 650px at -10% 110%,rgba(56,189,248,.14),transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed;min-height:100vh}
+  .wrap{max-width:1120px;margin:0 auto;padding:22px 18px 60px}
+  .crumbs{color:#7c88b6;font-size:13px;margin-bottom:4px}.crumbs a{color:#9fb0dd;text-decoration:none}
+  h1{font-size:clamp(23px,3.4vw,36px);margin:.1em 0;letter-spacing:-.02em}
+  h1 .g{background:linear-gradient(90deg,#fff,var(--violet) 55%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:14.5px;max-width:760px}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:var(--shadow)}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  button{cursor:pointer;font-family:inherit}
+  .btn{background:var(--lime);color:#0b1020;border:none;border-radius:10px;padding:9px 15px;font-weight:800;font-size:14px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--cyan);border:1px solid var(--cyan)}
+  .btn.sm{padding:7px 11px;font-size:13px}
+  select,input[type=number]{background:#0e1533;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line)}
+  .badge .d{width:9px;height:9px;border-radius:50%;background:#66739c}
+  .badge.live{color:var(--green);border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.1)}.badge.live .d{background:var(--green);box-shadow:0 0 10px var(--green)}
+  .badge.sim{color:var(--amber);border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.1)}.badge.sim .d{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+  .badge.off{color:#8593c0}
+  .grid{display:grid;gap:16px;grid-template-columns:1.15fr .85fr}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#cfe}
+  .banner{border-left:4px solid var(--amber);background:rgba(251,191,36,.08);padding:11px 15px;border-radius:0 12px 12px 0;font-size:13.5px;margin-bottom:14px}
+  code.inl{font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#cfe;font-size:.92em}
+  /* ---- 3D scene ---- */
+  #scene{position:relative;width:100%;height:440px;border-radius:16px;overflow:hidden;cursor:grab;
+    background:radial-gradient(120% 90% at 50% 15%,#16204a 0%,#0c1230 60%,#080c1e 100%);
+    perspective:1200px;perspective-origin:50% 42%;touch-action:none}
+  #scene.grab{cursor:grabbing}
+  #world{position:absolute;left:50%;top:50%;transform-style:preserve-3d;transform:translate(-50%,-50%)}
+  .frame{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+  .box{position:absolute;left:0;top:0;width:0;height:0;transform-style:preserve-3d}
+  .face{position:absolute;left:50%;top:50%;backface-visibility:hidden;border:1px solid rgba(0,0,0,.25);
+    box-shadow:inset 0 0 18px rgba(0,0,0,.35)}
+  .disc{position:absolute;left:50%;top:50%;border-radius:50%;transform-style:preserve-3d}
+  .hud{position:absolute;left:12px;bottom:10px;font-size:11.5px;color:#8aa;font-family:ui-monospace,Menlo,monospace}
+  .hud2{position:absolute;right:12px;top:10px;font-size:11.5px;color:#8aa;font-family:ui-monospace,Menlo,monospace;text-align:right}
+  .camctl{position:absolute;right:10px;bottom:10px;display:flex;gap:6px}
+  .camctl button{width:30px;height:30px;border-radius:8px;background:rgba(20,29,68,.8);border:1px solid var(--line);color:#cbd6ff;font-weight:800}
+  /* ---- joint controls ---- */
+  .joint{margin:2px 0 12px}
+  .jhead{display:flex;justify-content:space-between;align-items:center;font-size:13.5px}
+  .jname{display:flex;align-items:center;gap:8px;font-weight:700}
+  .jdot{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#0b1020;font-weight:800;font-size:12px}
+  .jval{font-family:ui-monospace,Menlo,monospace}
+  .jrange{font-size:10.5px;color:#6b78a8;text-align:right}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:7px;border-radius:7px;background:#0e1533;outline:none;margin:7px 0 2px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:19px;height:19px;border-radius:50%;background:#fff;border:3px solid #0b1020;cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:19px;height:19px;border-radius:50%;background:#fff;border:3px solid #0b1020;cursor:pointer}
+  .switch{position:relative;width:48px;height:28px;border-radius:16px;background:#22304f;transition:.2s;flex:0 0 auto;border:1px solid var(--line)}
+  .switch.on{background:var(--green)}
+  .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+  .switch.on i{left:23px}
+  .seg{display:inline-flex;background:#0e1533;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px}
+  .seg button{background:transparent;border:none;color:var(--muted);padding:6px 12px;border-radius:7px;font-weight:700;font-size:13px}
+  .seg button.on{background:var(--violet);color:#0b1020}
+  .presets button{background:#0e1533;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:7px 11px;font-weight:700;font-size:12.5px}
+  .presets button:hover{border-color:var(--lime)}
+  .note{color:var(--muted);font-size:12.5px}
+  .foot{color:#7c88b6;font-size:12px;margin-top:22px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="crumbs"><a href="./index.html">← Single-motor demo</a> &nbsp;·&nbsp; <a href="../chapter-02/index.html">Chapter 2</a></div>
+  <h1>🦾 <span class="g">SO-101 Digital Twin</span></h1>
+  <p class="sub">A 3D replica of the SO-101 arm. Move the six joint dials and the on-screen arm bends in real time — and if a real arm is connected, <b>it copies every motion</b>. Flip to <b>Mirror</b> mode, turn torque off, pose the physical arm by hand, and watch the twin follow. Joint ranges are the real ones from the SO-ARM101 URDF.</p>
+
+  <div id="offlineBanner" class="banner" style="display:none">
+    ⚠️ Running from a file, or the bridge isn't up. Start it and open the served URL:
+    <code class="inl">python le-robotics/live-demo/motor_bridge.py</code> → <code class="inl">http://localhost:8777/arm.html</code>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="row" style="justify-content:space-between">
+      <div class="row">
+        <span id="statusBadge" class="badge off"><span class="d"></span><span id="statusText">Not connected</span></span>
+        <span id="portChip" class="chip" style="display:none"></span>
+      </div>
+      <div class="row">
+        <div class="seg" title="Direction of control">
+          <button id="modeDrive" class="on">Drive → arm</button>
+          <button id="modeMirror">Mirror ← arm</button>
+        </div>
+        <select id="portSel"><option value="">auto-detect port</option></select>
+        <button class="btn ghost sm" id="refreshBtn">⟳ Ports</button>
+        <button class="btn" id="connectBtn">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- 3D VIEW -->
+    <div class="card" style="padding:0;overflow:hidden">
+      <div id="scene">
+        <div id="world"></div>
+        <div class="hud">drag to orbit · scroll to zoom</div>
+        <div class="hud2" id="poseHud"></div>
+        <div class="camctl">
+          <button id="camReset" title="Reset view">⟲</button>
+          <button id="zoomIn">＋</button>
+          <button id="zoomOut">－</button>
+        </div>
+      </div>
+      <div class="row" style="justify-content:space-between;padding:10px 14px">
+        <div class="presets row">
+          <button data-pose="home">🏠 Home</button>
+          <button data-pose="ready">🤖 Ready</button>
+          <button data-pose="reach">🫲 Reach</button>
+          <button id="waveBtn" style="border-color:var(--pink);color:var(--pink)">👋 Wave</button>
+        </div>
+        <div class="row">
+          <span class="note">Torque</span>
+          <div class="switch on" id="torqueSw"><i></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- JOINT DIALS -->
+    <div class="card" id="jointPanel"></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <div class="row" style="justify-content:space-between">
+      <div class="row">
+        <span class="note">Motion speed</span>
+        <input id="spdSlider" type="range" min="80" max="1800" value="500" style="width:180px">
+        <span class="jval" id="spdv" style="color:var(--lime)">500</span>
+      </div>
+      <button class="btn ghost sm" id="homeBtn" title="Read the arm's current pose and treat it as 0° (safe center)">🏠 Set current pose as 0°</button>
+    </div>
+    <p class="note" style="margin:8px 0 0">On real hardware, “0°” for every joint is the pose the arm was in when you connected (or when you press <b>Set current pose as 0°</b>). Move dials <b>gently</b> the first time so you learn how each joint maps. Full URDF travel is shown under each dial.</p>
+  </div>
+
+  <p class="foot">SO-101 Digital Twin · joint ranges from <a href="https://github.com/TheRobotStudio/SO-ARM100" style="color:#9fb0dd">SO-ARM101</a> <code class="inl">so101_new_calib.urdf</code> · commands via <code class="inl">feetech-servo-sdk</code> (4096 counts/turn).</p>
+</div>
+
+<script>
+const API = location.origin.startsWith("http") ? "" : "http://localhost:8777";
+const RES = 4096, CPD = RES/360;      // counts per degree ≈ 11.378
+const $ = s => document.querySelector(s);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* Real SO-101 joint definitions (URDF-derived degree ranges) */
+const JOINTS = [
+  {id:1, key:'pan',   name:'shoulder_pan',  min:-110, max:110, val:0, color:'var(--j1)', hex:'#f472b6', axis:'Y'},
+  {id:2, key:'lift',  name:'shoulder_lift', min:-100, max:100, val:0, color:'var(--j2)', hex:'#38bdf8', axis:'X'},
+  {id:3, key:'elbow', name:'elbow_flex',    min:-97,  max:97,  val:0, color:'var(--j3)', hex:'#a3e635', axis:'X'},
+  {id:4, key:'wflex', name:'wrist_flex',    min:-95,  max:95,  val:0, color:'var(--j4)', hex:'#fbbf24', axis:'X'},
+  {id:5, key:'roll',  name:'wrist_roll',    min:-157, max:163, val:0, color:'var(--j5)', hex:'#a78bfa', axis:'Y'},
+  {id:6, key:'grip',  name:'gripper',       min:0,    max:100, val:30, color:'var(--j6)', hex:'#fb7185', axis:'G'},
+];
+const J = Object.fromEntries(JOINTS.map(j=>[j.key,j]));
+let mode='drive', connected=false, sim=true, liveIds=[];
+let home={}; JOINTS.forEach(j=>home[j.id]=RES/2);   // count that == 0° for each joint
+let actual={};                                       // present angle (deg) per joint, for the twin
+
+/* ============ Build the 3D arm (CSS 3D kinematic chain) ============ */
+// link lengths (px) base→tip
+const L = {base:26, pillar:44, upper:132, fore:116, wrist:40, grip:34, finger:44};
+const world = $('#world');
+
+function face(w,h,tf,bg,extra=''){
+  return `<div class="face" style="width:${w}px;height:${h}px;margin-left:${-w/2}px;margin-top:${-h/2}px;transform:${tf};background:${bg};${extra}"></div>`;
+}
+// a 3D box centered on its own origin, dims w(x) h(y) d(z), tinted from hex
+function box(w,h,d,hex){
+  const f=hex, top=shade(hex,1.25), side=shade(hex,.72), bot=shade(hex,.5), bk=shade(hex,.85);
+  return `<div class="box" style="transform:translateY(${-h/2}px)">`+
+    face(w,h,`translateZ(${d/2}px)`,f)+
+    face(w,h,`rotateY(180deg) translateZ(${d/2}px)`,bk)+
+    face(d,h,`rotateY(90deg) translateZ(${w/2}px)`,side)+
+    face(d,h,`rotateY(-90deg) translateZ(${w/2}px)`,side)+
+    face(w,d,`rotateX(90deg) translateZ(${h/2}px)`,top)+
+    face(w,d,`rotateX(-90deg) translateZ(${h/2}px)`,bot)+
+  `</div>`;
+}
+function shade(hex,f){
+  const n=parseInt(hex.slice(1),16);let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  r=Math.min(255,r*f)|0;g=Math.min(255,g*f)|0;b=Math.min(255,b*f)|0;
+  return `rgb(${r},${g},${b})`;
+}
+// a motor "puck" disc at a joint, oriented, colored
+function puck(r,hex,axis){
+  // draw as a short cylinder approximation: a tinted circle facing the axis
+  const rot = axis==='Y' ? 'rotateX(90deg)' : 'rotateY(90deg)';
+  return `<div class="disc" style="width:${r*2}px;height:${r*2}px;margin-left:${-r}px;margin-top:${-r}px;`+
+    `transform:${rot};background:radial-gradient(circle at 40% 35%, ${shade(hex,1.3)}, ${shade(hex,.6)});`+
+    `border:2px solid ${shade(hex,.5)};box-shadow:0 0 12px ${hex}66"></div>`;
+}
+
+function buildArm(){
+  // nested frames. Each frame is a 0-size point; children are bones + next frame.
+  // ground shadow
+  const ground = `<div class="frame" style="transform:rotateX(90deg) translateZ(2px)">
+     <div style="position:absolute;left:-90px;top:-90px;width:180px;height:180px;border-radius:50%;
+        background:radial-gradient(circle, rgba(0,0,0,.55), transparent 70%)"></div></div>`;
+  // base block
+  const base = `<div class="frame">${box(78,L.base,78,'#3a4780')}
+      <div class="frame" style="transform:translateY(${-L.base}px)">${box(58,10,58,'#26305c')}</div></div>`;
+
+  const arm =
+  `<div class="frame" id="f1">${puck(20,J.pan.hex,'Y')}${box(30,L.pillar,30,'#5b6a99')}
+    <div class="frame" id="f2" style="transform:translateY(${-L.pillar}px)">${puck(18,J.lift.hex,'X')}${box(38,L.upper,30,J.lift.hex)}
+      <div class="frame" id="f3" style="transform:translateY(${-L.upper}px)">${puck(16,J.elbow.hex,'X')}${box(32,L.fore,26,J.elbow.hex)}
+        <div class="frame" id="f4" style="transform:translateY(${-L.fore}px)">${puck(14,J.wflex.hex,'X')}${box(26,L.wrist,24,J.wflex.hex)}
+          <div class="frame" id="f5" style="transform:translateY(${-L.wrist}px)">${puck(13,J.roll.hex,'Y')}${box(22,L.grip,22,J.roll.hex)}
+            <div class="frame" id="f6" style="transform:translateY(${-L.grip}px)">
+              <div class="frame" id="fingerL">${box(7,L.finger,18,J.grip.hex)}</div>
+              <div class="frame" id="fingerR">${box(7,L.finger,18,J.grip.hex)}</div>
+              <div class="frame">${box(30,10,26,shade(J.grip.hex,.7))}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  world.innerHTML = ground + base + arm;
+}
+buildArm();
+
+/* ---- camera ---- */
+let camYaw=-32, camPitch=-14, camZoom=1;
+function applyCam(){
+  world.style.transform = `translate(-50%,-50%) translateY(60px) scale(${camZoom}) rotateX(${camPitch}deg) rotateY(${camYaw}deg)`;
+}
+applyCam();
+const scene=$('#scene');
+let drag=false,lx=0,ly=0;
+scene.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;scene.classList.add('grab');});
+window.addEventListener('mouseup',()=>{drag=false;scene.classList.remove('grab');});
+window.addEventListener('mousemove',e=>{if(!drag)return;camYaw+=(e.clientX-lx)*.4;camPitch=clamp(camPitch-(e.clientY-ly)*.4,-80,20);lx=e.clientX;ly=e.clientY;applyCam();});
+scene.addEventListener('touchstart',e=>{drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;},{passive:true});
+scene.addEventListener('touchmove',e=>{if(!drag)return;camYaw+=(e.touches[0].clientX-lx)*.4;camPitch=clamp(camPitch-(e.touches[0].clientY-ly)*.4,-80,20);lx=e.touches[0].clientX;ly=e.touches[0].clientY;applyCam();e.preventDefault();},{passive:false});
+scene.addEventListener('wheel',e=>{camZoom=clamp(camZoom*(e.deltaY>0?.92:1.08),.5,2.2);applyCam();e.preventDefault();},{passive:false});
+$('#camReset').onclick=()=>{camYaw=-32;camPitch=-14;camZoom=1;applyCam();};
+$('#zoomIn').onclick=()=>{camZoom=clamp(camZoom*1.12,.5,2.2);applyCam();};
+$('#zoomOut').onclick=()=>{camZoom=clamp(camZoom*.9,.5,2.2);applyCam();};
+
+/* ---- render arm from joint angles (degrees) ---- */
+function renderArm(a){
+  // a: {pan,lift,elbow,wflex,roll,grip}
+  $('#f1').style.transform=`rotateY(${a.pan}deg)`;
+  $('#f2').style.transform=`translateY(${-L.pillar}px) rotateX(${-a.lift}deg)`;
+  $('#f3').style.transform=`translateY(${-L.upper}px) rotateX(${-a.elbow}deg)`;
+  $('#f4').style.transform=`translateY(${-L.fore}px) rotateX(${-a.wflex}deg)`;
+  $('#f5').style.transform=`translateY(${-L.wrist}px) rotateY(${a.roll}deg)`;
+  const gap = 6 + (a.grip/100)*16;   // 0%..100% → fingers 6..22 apart
+  $('#fingerL').style.transform=`translateY(${-L.grip}px) translateX(${-gap}px)`;
+  $('#fingerR').style.transform=`translateY(${-L.grip}px) translateX(${gap}px)`;
+  $('#poseHud').innerHTML = JOINTS.map(j=>`${j.key}:${Math.round(a[j.key])}${j.key==='grip'?'%':'°'}`).join('<br>');
+}
+
+/* ---- state: target angles (from dials) & displayed angles ---- */
+const target={}; JOINTS.forEach(j=>target[j.key]=j.val);
+const disp={};   JOINTS.forEach(j=>disp[j.key]=j.val);   // smoothed display when offline
+function currentDisplay(){
+  // when connected, twin shows the REAL arm (actual); else show smoothed target
+  const src = connected ? actual : disp;
+  const a={}; JOINTS.forEach(j=>a[j.key]= (src[j.key]!==undefined?src[j.key]:target[j.key])); return a;
+}
+
+/* ---- joint → encoder count mapping ---- */
+function angToCount(j,deg){ return clamp(Math.round(home[j.id] + deg*CPD),0,RES-1); }
+function countToAng(j,cnt){ return (cnt - home[j.id])/CPD; }
+
+/* ---- build dials ---- */
+function buildDials(){
+  const p=$('#jointPanel'); p.innerHTML='';
+  JOINTS.forEach(j=>{
+    const wrap=document.createElement('div');wrap.className='joint';
+    const unit=j.key==='grip'?'%':'°';
+    wrap.innerHTML=`<div class="jhead"><div class="jname"><span class="jdot" style="background:${j.hex}">${j.id}</span>${j.name}</div>
+      <div class="jval" style="color:${j.hex}"><span id="v_${j.key}">${j.val}</span>${unit}</div></div>`;
+    const inp=document.createElement('input');inp.type='range';inp.min=j.min;inp.max=j.max;inp.value=j.val;inp.step= j.key==='grip'?1:0.5;
+    inp.style.accentColor=j.hex; inp.id='s_'+j.key;
+    inp.addEventListener('input',()=>{ setJoint(j.key,+inp.value); });
+    wrap.appendChild(inp);
+    const r=document.createElement('div');r.className='jrange';r.textContent=`range ${j.min} … ${j.max}${unit}  ·  URDF`;
+    wrap.appendChild(r);
+    p.appendChild(wrap);
+  });
+}
+buildDials();
+
+let lastSend=0, pending=false;
+function setJoint(key,deg,fromMirror){
+  const j=J[key]; deg=clamp(deg,j.min,j.max); target[key]=deg;
+  $('#v_'+key).textContent = (key==='grip'?Math.round(deg):deg);
+  if(!fromMirror) $('#s_'+key).value=deg;
+  if(!connected){ disp[key]=deg; }           // offline: move twin directly
+  if(!fromMirror && mode==='drive' && connected) scheduleSend();
+}
+function scheduleSend(){
+  const now=performance.now();
+  if(now-lastSend<50){ if(!pending){pending=true;setTimeout(()=>{pending=false;sendArm();},55);} return; }
+  sendArm();
+}
+async function sendArm(){
+  lastSend=performance.now();
+  const spd=+$('#spdSlider').value;
+  const moves=JOINTS.map(j=>({id:j.id,pos:angToCount(j,target[j.key]),speed:spd,accel:40}));
+  try{ await fetch(API+"/api/move_batch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({moves})}); }
+  catch(e){ showOffline(true); }
+}
+
+/* ---- torque, speed, presets ---- */
+$('#spdSlider').addEventListener('input',e=>$('#spdv').textContent=e.target.value);
+$('#torqueSw').addEventListener('click',async()=>{
+  const sw=$('#torqueSw');const on=!sw.classList.contains('on');sw.classList.toggle('on',on);
+  if(!connected)return;
+  for(const j of JOINTS){ try{await fetch(API+"/api/torque",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:j.id,on})});}catch(e){} }
+});
+const POSES={
+  home:{pan:0,lift:0,elbow:0,wflex:0,roll:0,grip:30},
+  ready:{pan:0,lift:-35,elbow:70,wflex:35,roll:0,grip:60},
+  reach:{pan:25,lift:-70,elbow:40,wflex:60,roll:20,grip:100},
+};
+document.querySelectorAll('.presets [data-pose]').forEach(b=>b.onclick=()=>{stopWave();applyPose(POSES[b.dataset.pose]);});
+function applyPose(p){ Object.entries(p).forEach(([k,v])=>setJoint(k,v)); if(mode==='drive'&&connected)sendArm(); }
+let waveT=null;
+function stopWave(){ if(waveT){clearInterval(waveT);waveT=null;$('#waveBtn').style.background='';$('#waveBtn').style.color='var(--pink)';} }
+$('#waveBtn').onclick=()=>{
+  if(waveT){stopWave();return;}
+  $('#waveBtn').style.background='var(--pink)';$('#waveBtn').style.color='#0b1020';
+  let t=0; applyPose({pan:0,lift:-60,elbow:30,wflex:0,roll:0,grip:40});
+  waveT=setInterval(()=>{ t+=0.25; setJoint('roll',60*Math.sin(t)); setJoint('wflex',20+15*Math.sin(t*1.3));
+    if(mode==='drive'&&connected)scheduleSend(); },90);
+};
+
+/* ---- connection & mirror ---- */
+function showOffline(v){ $('#offlineBanner').style.display=v?'block':'none'; }
+function setBadge(){
+  const bd=$('#statusBadge'),tx=$('#statusText'),pc=$('#portChip');
+  bd.className='badge '+(!connected?'off':(sim?'sim':'live'));
+  tx.textContent=!connected?'Not connected':(sim?'Simulation mode':'● Live hardware');
+  if(connected){pc.style.display='';pc.textContent=sim?'no arm — simulated':('motors '+(liveIds.join(',')||'?'));}else pc.style.display='none';
+}
+async function refreshPorts(){
+  try{const r=await fetch(API+"/api/ports");const j=await r.json();const sel=$('#portSel');const cur=sel.value;
+    sel.innerHTML='<option value="">auto-detect port</option>';
+    (j.ports||[]).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
+    sel.value=cur;showOffline(false);}catch(e){showOffline(true);}
+}
+$('#refreshBtn').onclick=refreshPorts;
+$('#connectBtn').onclick=async()=>{
+  $('#connectBtn').disabled=true;$('#connectBtn').textContent='…';
+  try{
+    const r=await fetch(API+"/api/connect",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({port:$('#portSel').value||null})});
+    const j=await r.json();connected=!!j.connected;sim=!!j.sim;liveIds=j.ids||[];
+    await captureHome();          // treat current pose as 0°
+    setBadge();showOffline(false);
+  }catch(e){showOffline(true);connected=false;setBadge();}
+  $('#connectBtn').disabled=false;$('#connectBtn').textContent='Connect';
+};
+$('#homeBtn').onclick=captureHome;
+async function captureHome(){
+  if(!connected)return;
+  try{
+    const r=await fetch(API+`/api/read_all?ids=1,2,3,4,5,6`);const j=await r.json();const pos=j.positions||{};
+    JOINTS.forEach(k=>{ const c=pos[k.id]; if(typeof c==='number'&&c>=0) home[k.id]=c; });
+  }catch(e){}
+}
+$('#modeDrive').onclick=()=>setMode('drive');
+$('#modeMirror').onclick=()=>setMode('mirror');
+function setMode(m){ mode=m; $('#modeDrive').classList.toggle('on',m==='drive'); $('#modeMirror').classList.toggle('on',m==='mirror');
+  $('#jointPanel').style.opacity = m==='mirror' ? .6 : 1;
+  document.querySelectorAll('#jointPanel input').forEach(i=>i.disabled = (m==='mirror'));
+}
+
+/* ---- poll loop: read the arm, update twin (+ dials in mirror mode) ---- */
+async function poll(){
+  if(connected){
+    try{
+      const r=await fetch(API+`/api/read_all?ids=1,2,3,4,5,6`);const j=await r.json();const pos=j.positions||{};
+      JOINTS.forEach(k=>{ const c=pos[k.id]; if(typeof c==='number'&&c>=0){
+        const ang = k.key==='grip' ? clamp(countToAng(k,c),k.min,k.max) : clamp(countToAng(k,c),k.min-5,k.max+5);
+        actual[k.key]=ang;
+        if(mode==='mirror'){ setJoint(k.key,ang,true); }
+      }});
+      showOffline(false);
+    }catch(e){showOffline(true);}
+  }
+  renderArm(currentDisplay());
+  requestAnimationFrame(()=>setTimeout(poll,70));
+}
+
+/* offline smoothing so the twin eases toward targets without hardware */
+setInterval(()=>{ if(connected)return; JOINTS.forEach(j=>{ const d=target[j.key]-disp[j.key]; disp[j.key]+=d*0.25; }); },30);
+
+/* ---- boot ---- */
+async function boot(){
+  try{const r=await fetch(API+"/api/status");const j=await r.json();connected=!!j.connected;sim=!!j.sim;liveIds=j.ids||[];
+    if(connected) await captureHome(); setBadge(); await refreshPorts();
+  }catch(e){showOffline(true);setBadge();}
+  renderArm(currentDisplay()); poll();
+}
+boot();
+</script>
+</body>
+</html>
