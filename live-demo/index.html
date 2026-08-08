@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Live Motor Control · Drive a real STS3215 from your browser</title>
+<style>
+  :root{
+    --bg:#0b1020;--bg2:#111834;--card:#161e40;--card2:#1d2750;--ink:#eaf0ff;--muted:#a6b3d9;--line:#2a3566;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.55;
+    background:radial-gradient(1100px 650px at 80% -10%,rgba(56,189,248,.16),transparent 60%),
+      radial-gradient(900px 650px at -10% 110%,rgba(163,230,53,.14),transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed;min-height:100vh}
+  .wrap{max-width:1060px;margin:0 auto;padding:26px 20px 60px}
+  header h1{font-size:clamp(24px,3.6vw,38px);margin:.1em 0;letter-spacing:-.02em}
+  header h1 .g{background:linear-gradient(90deg,#fff,var(--lime) 60%,var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--muted);font-size:15px;max-width:720px}
+  .crumbs{color:#7c88b6;font-size:13px;margin-bottom:4px}.crumbs a{color:#9fb0dd;text-decoration:none}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:18px;padding:20px 22px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:18px}.g2{grid-template-columns:1.05fr .95fr}
+  @media(max-width:840px){.g2{grid-template-columns:1fr}}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  button{cursor:pointer;font-family:inherit}
+  .btn{background:var(--lime);color:#0b1020;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--cyan);border:1px solid var(--cyan)}
+  .btn.sm{padding:7px 12px;font-size:13px}
+  select,input[type=number]{background:#0e1533;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:9px 11px;font-family:ui-monospace,Menlo,monospace;font-size:14px}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px;border:1px solid var(--line)}
+  .badge .d{width:9px;height:9px;border-radius:50%;background:#66739c}
+  .badge.live{color:var(--green);border-color:rgba(52,211,153,.5);background:rgba(52,211,153,.1)}.badge.live .d{background:var(--green);box-shadow:0 0 10px var(--green)}
+  .badge.sim{color:var(--amber);border-color:rgba(251,191,36,.5);background:rgba(251,191,36,.1)}.badge.sim .d{background:var(--amber);box-shadow:0 0 10px var(--amber)}
+  .badge.off{color:#8593c0}
+  .mbtns{display:flex;gap:8px;flex-wrap:wrap}
+  .mbtn{width:44px;height:44px;border-radius:12px;background:#0e1533;border:1px solid var(--line);color:var(--muted);font-weight:800;font-size:16px}
+  .mbtn.on{border-color:var(--lime);color:var(--lime)}
+  .mbtn.live{box-shadow:inset 0 0 0 1px rgba(52,211,153,.4)}
+  .mbtn.sel{background:var(--lime);color:#0b1020;border-color:var(--lime)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#0e1533;outline:none;margin:14px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--lime);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--lime);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--lime);border:3px solid #0b1020;cursor:pointer}
+  .lab{display:flex;justify-content:space-between;font-size:13px;color:#cbd6ff;font-weight:600}
+  .val{font-family:ui-monospace,Menlo,monospace;color:var(--lime)}
+  .stat{display:flex;flex-direction:column;gap:1px}.stat .n{font-size:22px;font-weight:800;font-family:ui-monospace,Menlo,monospace}.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .switch{position:relative;width:52px;height:30px;border-radius:16px;background:#22304f;transition:.2s;flex:0 0 auto;border:1px solid var(--line)}
+  .switch.on{background:var(--green)}
+  .switch i{position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s}
+  .switch.on i{left:25px}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#cfe}
+  .presets button{background:#0e1533;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 12px;font-weight:700;font-size:13px}
+  .presets button:hover{border-color:var(--lime)}
+  .note{color:var(--muted);font-size:13px}
+  code.inl{font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#cfe;font-size:.92em}
+  .banner{border-left:4px solid var(--amber);background:rgba(251,191,36,.08);padding:12px 16px;border-radius:0 12px 12px 0;font-size:14px;margin-bottom:16px}
+  .foot{color:#7c88b6;font-size:12.5px;margin-top:26px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="crumbs"><a href="../chapter-02/index.html">← Chapter 2: Waking Up the Robot</a></div>
+    <h1>🎛️ <span class="g">Live Motor Control</span></h1>
+    <p class="sub">Drive a <b>real STS3215</b> servo straight from this page. Your slider → the Python bridge → USB → the motor. The on-screen rotor mirrors the <b>actual encoder</b> read back from the motor, so you can watch it chase your target — that's <b>closed-loop control</b> in action. No motor plugged in? It runs in <b>simulation</b>.</p>
+  </header>
+
+  <div id="offlineBanner" class="banner" style="display:none">
+    ⚠️ Can't reach the bridge server. Start it first: &nbsp;<code class="inl">source .venv/bin/activate</code> then
+    <code class="inl">python le-robotics/live-demo/motor_bridge.py</code> &nbsp;and open <code class="inl">http://localhost:8777</code> (not the file directly).
+  </div>
+
+  <!-- Connection -->
+  <div class="card" style="margin-bottom:18px">
+    <div class="row" style="justify-content:space-between">
+      <div class="row">
+        <span id="statusBadge" class="badge off"><span class="d"></span><span id="statusText">Not connected</span></span>
+        <span id="portChip" class="chip" style="display:none"></span>
+      </div>
+      <div class="row">
+        <select id="portSel" title="Serial port"><option value="">auto-detect port</option></select>
+        <input id="baudInp" type="number" value="1000000" title="Baud rate" style="width:120px" />
+        <button class="btn ghost sm" id="refreshBtn">⟳ Ports</button>
+        <button class="btn" id="connectBtn">Connect</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid g2">
+    <!-- LEFT: dial -->
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:6px">
+        <b>Motor</b>
+        <div class="mbtns" id="motorBtns"></div>
+      </div>
+      <svg id="dial" viewBox="0 0 300 300" style="width:100%;height:auto;touch-action:none;cursor:grab"></svg>
+      <div class="row" style="justify-content:space-around;margin-top:6px">
+        <div class="stat"><span class="n cyan" id="targetDeg">180°</span><span class="l">Target angle</span></div>
+        <div class="stat"><span class="n" style="color:var(--lime)" id="actualDeg">180°</span><span class="l">Actual (from motor)</span></div>
+        <div class="stat"><span class="n" id="actualCount">2048</span><span class="l">Encoder count</span></div>
+      </div>
+      <p class="note" style="text-align:center;margin-top:6px">Drag the dial, or use the slider below. The <span style="color:var(--cyan)">blue</span> marker is your target; the <span style="color:var(--lime)">green</span> rotor is where the motor actually is.</p>
+    </div>
+
+    <!-- RIGHT: controls -->
+    <div class="card">
+      <div class="lab"><span>Target position</span><span class="val"><span id="posv">2048</span> / 4095 &nbsp;(<span id="degv">180.0</span>°)</span></div>
+      <input id="posSlider" type="range" min="0" max="4095" value="2048" />
+
+      <div class="row" style="justify-content:space-between;margin:6px 0 14px">
+        <div class="row"><b>Torque</b> <span class="note">(hold position)</span></div>
+        <div class="switch on" id="torqueSw"><i></i></div>
+      </div>
+
+      <div class="lab"><span>Speed</span><span class="val"><span id="spdv">600</span></span></div>
+      <input id="spdSlider" type="range" min="50" max="2000" value="600" />
+
+      <div class="lab" style="margin-top:6px"><span>Acceleration</span><span class="val"><span id="accv">40</span></span></div>
+      <input id="accSlider" type="range" min="0" max="150" value="40" />
+
+      <div style="margin-top:16px"><b style="font-size:14px">Presets</b>
+        <div class="presets row" style="margin-top:8px">
+          <button data-deg="0">0°</button>
+          <button data-deg="90">90°</button>
+          <button data-deg="180">180°</button>
+          <button data-deg="270">270°</button>
+          <button data-deg="360">360°</button>
+          <button id="waveBtn" style="border-color:var(--pink);color:var(--pink)">👋 Wave</button>
+          <button id="sweepBtn" style="border-color:var(--violet);color:var(--violet)">↔ Sweep</button>
+        </div>
+      </div>
+      <p class="note" style="margin-top:14px">Try turning <b>Torque off</b> and pushing the real arm by hand — the “Actual” readout still updates because the encoder is always watching. Turn it back on and it snaps to your target. 💪</p>
+    </div>
+  </div>
+
+  <p class="foot">
+    Part of the LeRobot SO-101 course · The bridge speaks the Feetech STS/SMS protocol via <code class="inl">feetech-servo-sdk</code>
+    (Goal_Position reg 42, Present_Position reg 56, 4096 counts/turn).
+  </p>
+</div>
+
+<script>
+const API = location.origin.startsWith("http") ? "" : "http://localhost:8777";
+const RES = 4096;
+let motorId = 1, connected = false, sim = true, liveIds = [];
+let target = 2048;           // target count
+let actual = 2048;           // last read count
+let sending = false, lastSent = 0;
+let animTimer = null;
+
+const $ = s => document.querySelector(s);
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const c2d = c => (c*360/RES);
+const d2c = d => Math.round(((d%360)+360)%360*RES/360)%RES;
+
+/* ---------- dial rendering ---------- */
+const dial = $('#dial');
+function buildDial(){
+  let s='';
+  const cx=150,cy=150;
+  // outer ring + ticks
+  s+=`<circle cx="${cx}" cy="${cy}" r="128" fill="#0c1330" stroke="#26305c" stroke-width="2"/>`;
+  for(let d=0; d<360; d+=30){
+    const a=(d-90)*Math.PI/180, r1=118, r2=(d%90===0)?100:110;
+    s+=`<line x1="${cx+Math.cos(a)*r1}" y1="${cy+Math.sin(a)*r1}" x2="${cx+Math.cos(a)*r2}" y2="${cy+Math.sin(a)*r2}" stroke="#3a4780" stroke-width="${d%90===0?3:1.5}"/>`;
+    if(d%90===0){const ra=(d-90)*Math.PI/180;s+=`<text x="${cx+Math.cos(ra)*84}" y="${cy+Math.sin(ra)*84+4}" fill="#7c88b6" font-size="12" text-anchor="middle" font-family="ui-monospace,Menlo">${d}°</text>`;}
+  }
+  // target arc marker (blue)
+  s+=`<g id="tgtG"><line id="tgtLine" x1="${cx}" y1="${cy}" x2="${cx}" y2="32" stroke="#38bdf8" stroke-width="3" stroke-dasharray="5 4" opacity=".9"/><circle id="tgtDot" cx="${cx}" cy="32" r="9" fill="#38bdf8"/></g>`;
+  // rotor (green) — the actual motor position
+  s+=`<g id="rotorG"><rect x="${cx-7}" y="${cy-96}" width="14" height="96" rx="7" fill="url(#rg)"/><circle cx="${cx}" cy="${cy-92}" r="10" fill="#a3e635"/></g>`;
+  s+=`<defs><linearGradient id="rg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a3e635"/><stop offset="1" stop-color="#4d7c0f"/></linearGradient></defs>`;
+  // hub
+  s+=`<circle cx="${cx}" cy="${cy}" r="30" fill="#141d44" stroke="#3a4780" stroke-width="2"/>`;
+  s+=`<circle cx="${cx}" cy="${cy}" r="12" fill="#0c1330" stroke="#a3e635" stroke-width="2"/>`;
+  s+=`<text x="${cx}" y="${cy+52}" fill="#66739c" font-size="11" text-anchor="middle">STS3215 · motor <tspan id="mLabel" fill="#a3e635" font-weight="800">1</tspan></text>`;
+  dial.innerHTML=s;
+}
+buildDial();
+
+function setRotor(count){
+  const g=$('#rotorG'); if(g) g.setAttribute('transform',`rotate(${c2d(count)} 150 150)`);
+}
+function setTargetMarker(count){
+  const g=$('#tgtG'); if(g) g.setAttribute('transform',`rotate(${c2d(count)} 150 150)`);
+}
+
+/* ---------- dial drag ---------- */
+let dragging=false;
+function pointerToCount(ev){
+  const r=dial.getBoundingClientRect();
+  const px=(ev.touches?ev.touches[0].clientX:ev.clientX)-r.left;
+  const py=(ev.touches?ev.touches[0].clientY:ev.clientY)-r.top;
+  const x=px*300/r.width-150, y=py*300/r.height-150;
+  let deg=Math.atan2(y,x)*180/Math.PI+90;      // 0 at top
+  deg=((deg%360)+360)%360;
+  return d2c(deg);
+}
+function startDrag(ev){dragging=true;dial.style.cursor='grabbing';setTarget(pointerToCount(ev));ev.preventDefault();}
+function moveDrag(ev){if(dragging){setTarget(pointerToCount(ev));ev.preventDefault();}}
+function endDrag(){dragging=false;dial.style.cursor='grab';}
+dial.addEventListener('mousedown',startDrag);dial.addEventListener('touchstart',startDrag,{passive:false});
+window.addEventListener('mousemove',moveDrag);window.addEventListener('touchmove',moveDrag,{passive:false});
+window.addEventListener('mouseup',endDrag);window.addEventListener('touchend',endDrag);
+
+/* ---------- target setting + send ---------- */
+function setTarget(count, fromSlider){
+  target=clamp(Math.round(count),0,RES-1);
+  setTargetMarker(target);
+  $('#posv').textContent=target;
+  $('#degv').textContent=c2d(target).toFixed(1);
+  $('#targetDeg').textContent=Math.round(c2d(target))+'°';
+  if(!fromSlider) $('#posSlider').value=target;
+  sendMove();
+}
+async function sendMove(){
+  const now=performance.now();
+  if(now-lastSent<40){ return; }  // throttle ~25/s
+  lastSent=now;
+  const body={id:motorId,pos:target,speed:+$('#spdSlider').value,accel:+$('#accSlider').value};
+  try{ await fetch(API+"/api/move",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); }
+  catch(e){ showOffline(true); }
+}
+
+/* ---------- controls ---------- */
+$('#posSlider').addEventListener('input',e=>setTarget(+e.target.value,true));
+$('#spdSlider').addEventListener('input',e=>$('#spdv').textContent=e.target.value);
+$('#accSlider').addEventListener('input',e=>$('#accv').textContent=e.target.value);
+$('#torqueSw').addEventListener('click',async()=>{
+  const sw=$('#torqueSw'); const on=!sw.classList.contains('on'); sw.classList.toggle('on',on);
+  try{ await fetch(API+"/api/torque",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:motorId,on})}); }catch(e){}
+});
+document.querySelectorAll('.presets [data-deg]').forEach(b=>b.onclick=()=>{stopAnims();setTarget(d2c(+b.dataset.deg));});
+
+/* wave + sweep animations (client-side target choreography) */
+function stopAnims(){ if(animTimer){clearInterval(animTimer);animTimer=null;} $('#waveBtn').classList.remove('on');$('#sweepBtn').classList.remove('on');}
+$('#waveBtn').onclick=()=>{ if(animTimer){stopAnims();return;} $('#waveBtn').classList.add('on');
+  let t=0; animTimer=setInterval(()=>{ t+=0.15; const deg=180+70*Math.sin(t); setTarget(d2c(deg)); },80); };
+$('#sweepBtn').onclick=()=>{ if(animTimer){stopAnims();return;} $('#sweepBtn').classList.add('on');
+  let deg=20,dir=1; animTimer=setInterval(()=>{ deg+=dir*6; if(deg>340||deg<20)dir*=-1; setTarget(d2c(deg)); },70); };
+
+/* ---------- motor selector ---------- */
+function buildMotorBtns(){
+  const box=$('#motorBtns'); box.innerHTML='';
+  for(let i=1;i<=6;i++){
+    const b=document.createElement('button');b.className='mbtn'+(i===motorId?' sel':'')+(liveIds.includes(i)?' live':'');
+    b.textContent=i; b.title=liveIds.includes(i)?`Motor ${i} (detected)`:`Motor ${i}`;
+    b.onclick=()=>{motorId=i;stopAnims();$('#mLabel')&&($('#mLabel').textContent=i);buildMotorBtns();};
+    box.appendChild(b);
+  }
+  const ml=$('#mLabel'); if(ml) ml.textContent=motorId;
+}
+buildMotorBtns();
+
+/* ---------- connection ---------- */
+function showOffline(v){ $('#offlineBanner').style.display=v?'block':'none'; }
+function setBadge(){
+  const bd=$('#statusBadge'),tx=$('#statusText'),pc=$('#portChip');
+  bd.className='badge '+(!connected?'off':(sim?'sim':'live'));
+  tx.textContent=!connected?'Not connected':(sim?'Simulation mode':'● Live hardware');
+  if(connected){pc.style.display='';pc.textContent=sim?'no motor — simulated':(liveIds.length?('motors '+liveIds.join(',')):'connected');}
+  else pc.style.display='none';
+}
+async function refreshPorts(){
+  try{ const r=await fetch(API+"/api/ports"); const j=await r.json();
+    const sel=$('#portSel'); const cur=sel.value; sel.innerHTML='<option value="">auto-detect port</option>';
+    (j.ports||[]).forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;sel.appendChild(o);});
+    sel.value=cur; showOffline(false);
+  }catch(e){ showOffline(true); }
+}
+$('#refreshBtn').onclick=refreshPorts;
+$('#connectBtn').onclick=async()=>{
+  $('#connectBtn').disabled=true; $('#connectBtn').textContent='Connecting…';
+  try{
+    const r=await fetch(API+"/api/connect",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({port:$('#portSel').value||null,baud:+$('#baudInp').value})});
+    const j=await r.json(); connected=!!j.connected; sim=!!j.sim; liveIds=j.ids||[];
+    if(!sim && liveIds.length){ motorId=liveIds[0]; }
+    setBadge(); buildMotorBtns(); showOffline(false);
+  }catch(e){ showOffline(true); connected=false; setBadge(); }
+  $('#connectBtn').disabled=false; $('#connectBtn').textContent='Connect';
+};
+
+/* ---------- live readback loop ---------- */
+async function poll(){
+  if(connected){
+    try{
+      const r=await fetch(API+`/api/read?id=${motorId}`); const j=await r.json();
+      if(typeof j.pos==='number' && j.pos>=0){
+        actual=j.pos; setRotor(actual);
+        $('#actualDeg').textContent=Math.round(c2d(actual))+'°';
+        $('#actualCount').textContent=actual;
+      }
+    }catch(e){ showOffline(true); }
+  }
+  setTimeout(poll, 90);
+}
+
+/* ---------- boot ---------- */
+async function boot(){
+  try{
+    const r=await fetch(API+"/api/status"); const j=await r.json();
+    connected=!!j.connected; sim=!!j.sim; liveIds=j.ids||[];
+    if(!sim && liveIds.length) motorId=liveIds[0];
+    setBadge(); buildMotorBtns(); await refreshPorts();
+  }catch(e){ showOffline(true); setBadge(); }
+  setTargetMarker(target); setRotor(actual);
+  poll();
+}
+boot();
+</script>
+</body>
+</html>
