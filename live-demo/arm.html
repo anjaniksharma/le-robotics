@@ -303,7 +303,7 @@ buildDials();
 let lastSend=0, pending=false;
 function setJoint(key,deg,fromMirror){
   const j=J[key]; deg=clamp(deg,j.min,j.max); target[key]=deg;
-  $('#v_'+key).textContent = (key==='grip'?Math.round(deg):deg);
+  $('#v_'+key).textContent = Math.round(deg);
   if(!fromMirror) $('#s_'+key).value=deg;
   if(!connected){ disp[key]=deg; }           // offline: move twin directly
   if(!fromMirror && mode==='drive' && connected) scheduleSend();
@@ -329,20 +329,25 @@ $('#torqueSw').addEventListener('click',async()=>{
   for(const j of JOINTS){ try{await fetch(API+"/api/torque",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id:j.id,on})});}catch(e){} }
 });
 const POSES={
-  home:{pan:0,lift:0,elbow:0,wflex:0,roll:0,grip:30},
+  home:{pan:0,lift:0,elbow:0,wflex:0,roll:0,grip:20},
   ready:{pan:0,lift:-35,elbow:70,wflex:35,roll:0,grip:60},
-  reach:{pan:25,lift:-70,elbow:40,wflex:60,roll:20,grip:100},
+  reach:{pan:15,lift:-92,elbow:18,wflex:12,roll:0,grip:100},   // arm laid out forward — a clear reach
 };
 document.querySelectorAll('.presets [data-pose]').forEach(b=>b.onclick=()=>{stopWave();applyPose(POSES[b.dataset.pose]);});
 function applyPose(p){ Object.entries(p).forEach(([k,v])=>setJoint(k,v)); if(mode==='drive'&&connected)sendArm(); }
 let waveT=null;
-function stopWave(){ if(waveT){clearInterval(waveT);waveT=null;$('#waveBtn').style.background='';$('#waveBtn').style.color='var(--pink)';} }
+function stopWave(){ if(waveT){clearInterval(waveT);waveT=null;$('#waveBtn').classList.remove('waving');$('#waveBtn').style.background='';$('#waveBtn').style.color='var(--pink)';} }
 $('#waveBtn').onclick=()=>{
   if(waveT){stopWave();return;}
-  $('#waveBtn').style.background='var(--pink)';$('#waveBtn').style.color='#0b1020';
-  let t=0; applyPose({pan:0,lift:-60,elbow:30,wflex:0,roll:0,grip:40});
-  waveT=setInterval(()=>{ t+=0.25; setJoint('roll',60*Math.sin(t)); setJoint('wflex',20+15*Math.sin(t*1.3));
-    if(mode==='drive'&&connected)scheduleSend(); },90);
+  $('#waveBtn').classList.add('waving');$('#waveBtn').style.background='var(--pink)';$('#waveBtn').style.color='#0b1020';
+  // raise the arm up high, then swing the whole arm side-to-side (base pan) like a big hello wave
+  applyPose({pan:0,lift:-15,elbow:-70,wflex:-25,roll:0,grip:55});
+  let t=0;
+  waveT=setInterval(()=>{ t+=0.3;
+    setJoint('pan', 32*Math.sin(t));          // big, obvious side-to-side swing
+    setJoint('roll', 45*Math.sin(t*1.1));     // plus a wrist twist for personality
+    if(mode==='drive'&&connected)scheduleSend();
+  },80);
 };
 
 /* ---- connection & mirror ---- */
