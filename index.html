@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LeRobot SO-101 · An Interactive Robotics Course</title>
+<style>
+  :root{
+    --bg:#0b1020;--bg2:#111834;--card:#161e40;--card2:#1d2750;--ink:#eaf0ff;--muted:#a6b3d9;--line:#2a3566;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--teal:#2dd4bf;--rose:#fb7185;
+    --shadow:0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.6;
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(56,189,248,.16), transparent 60%),
+      radial-gradient(1000px 700px at -10% 110%, rgba(163,230,53,.14), transparent 55%),
+      radial-gradient(900px 600px at 50% 120%, rgba(167,139,250,.12), transparent 60%),
+      linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed}
+  .wrap{max-width:1080px;margin:0 auto;padding:56px 24px 70px}
+  header{text-align:center;margin-bottom:14px}
+  .kicker{font-size:13px;letter-spacing:.24em;color:var(--lime);font-weight:700;text-transform:uppercase}
+  h1{font-size:clamp(34px,6vw,64px);line-height:1.05;margin:.2em 0 .25em;letter-spacing:-.02em;
+    background:linear-gradient(90deg,#fff 10%,var(--cyan) 45%,var(--lime) 90%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:#cfd9ff;font-size:clamp(16px,2vw,20px);max-width:720px;margin:0 auto}
+  .pills{margin:20px 0 8px;text-align:center}
+  .pill{display:inline-block;background:rgba(163,230,53,.13);color:var(--lime);border:1px solid rgba(163,230,53,.33);padding:5px 13px;border-radius:999px;font-size:13px;font-weight:600;margin:3px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:30px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  a.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;position:relative;overflow:hidden;
+    background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:20px;padding:22px 24px;box-shadow:var(--shadow);transition:.18s}
+  a.card:hover{transform:translateY(-4px);border-color:var(--acc);box-shadow:0 22px 55px rgba(0,0,0,.5)}
+  a.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--acc)}
+  .cnum{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:var(--acc);font-weight:800;letter-spacing:.1em}
+  .ctitle{font-size:22px;font-weight:800;color:#fff;margin:2px 0 6px;display:flex;align-items:center;gap:9px}
+  .cdesc{color:var(--muted);font-size:14.5px;flex:1}
+  .ctags{margin-top:12px;display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:11.5px;font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#cfe}
+  .go{margin-top:12px;font-weight:800;font-size:14px;color:var(--acc)}
+  .section-h{margin:44px 0 6px;font-size:14px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center}
+  .demos{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;margin-top:16px}
+  @media(max-width:760px){.demos{grid-template-columns:1fr}}
+  .demo{background:linear-gradient(180deg,#12183a,#141d44);border:1px dashed var(--line);border-radius:18px;padding:20px 22px;text-decoration:none;color:inherit;transition:.18s;display:block}
+  .demo:hover{border-color:var(--cyan);transform:translateY(-3px)}
+  .demo h3{margin:.1em 0 .3em;color:#fff;font-size:18px}
+  .demo p{color:var(--muted);font-size:14px;margin:0}
+  .note{max-width:760px;margin:26px auto 0;background:rgba(56,189,248,.07);border:1px solid rgba(56,189,248,.3);border-radius:14px;padding:14px 18px;color:#cfe;font-size:14px}
+  code{font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#cfe;font-size:.9em}
+  .flow{max-width:900px;margin:34px auto 0;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:13.5px}
+  .flow .chip{font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:6px;padding:3px 9px;color:#cfe}
+  .flow .ar{color:var(--pink)}
+  footer{text-align:center;color:#7c88b6;font-size:13px;margin-top:44px}
+  footer a{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Seeed Studio × Hugging Face · SO-101</div>
+    <h1>The Interactive Robotics Course</h1>
+    <p class="sub">Learn how a real robot arm works — from the motors in its joints to the neural network that lets it teach itself. Five hands-on chapters with animations, dials, and live simulations. Built for curious beginners. 🤖</p>
+    <div class="pills">
+      <span class="pill">🔧 Real hardware</span>
+      <span class="pill">🧠 Real neural nets</span>
+      <span class="pill">🎛️ Drive it live</span>
+      <span class="pill">📴 Works offline</span>
+    </div>
+  </header>
+
+  <div class="grid">
+    <a class="card" href="chapter-01/index.html" style="--acc:var(--lime)">
+      <span class="cnum">CHAPTER 1</span>
+      <span class="ctitle">🦾 The Muscles of a Robot</span>
+      <span class="cdesc">Meet the STS3215 servo. Torque, gear ratio, and degrees of freedom — then drive a 6-motor arm and change its numbers.</span>
+      <span class="ctags"><span class="tag">torque</span><span class="tag">gear ratio</span><span class="tag">DOF</span></span>
+      <span class="go">Start here →</span>
+    </a>
+    <a class="card" href="chapter-02/index.html" style="--acc:var(--violet)">
+      <span class="cnum">CHAPTER 2</span>
+      <span class="ctitle">🐍 Waking Up the Robot</span>
+      <span class="cdesc">Set up a Python virtual environment, install LeRobot on a Mac, and follow a command from your keyboard down the wire to a motor.</span>
+      <span class="ctags"><span class="tag">python 3.12</span><span class="tag">venv</span><span class="tag">USB / serial</span></span>
+      <span class="go">Open chapter →</span>
+    </a>
+    <a class="card" href="chapter-03/index.html" style="--acc:var(--teal)">
+      <span class="cnum">CHAPTER 3</span>
+      <span class="ctitle">🎯 Calibration</span>
+      <span class="cdesc">Teach both arms their center and range so the leader and follower finally speak the same language — the key to teleoperation.</span>
+      <span class="ctags"><span class="tag">homing</span><span class="tag">range</span><span class="tag">both arms</span></span>
+      <span class="go">Open chapter →</span>
+    </a>
+    <a class="card" href="chapter-04/index.html" style="--acc:var(--amber)">
+      <span class="cnum">CHAPTER 4</span>
+      <span class="ctitle">🧠 How Machines Learn</span>
+      <span class="cdesc">Neurons, loss, gradient descent, backprop — then train a real neural network live in your browser and watch it learn.</span>
+      <span class="ctags"><span class="tag">weights</span><span class="tag">backprop</span><span class="tag">live training</span></span>
+      <span class="go">Open chapter →</span>
+    </a>
+    <a class="card" href="chapter-05/index.html" style="--acc:var(--pink)">
+      <span class="cnum">CHAPTER 5</span>
+      <span class="ctitle">💬 From Words to Motion</span>
+      <span class="cdesc">Generate text one word at a time — then meet ACT, the robot's brain, which uses the very same idea to predict its next motions.</span>
+      <span class="ctags"><span class="tag">next-token</span><span class="tag">temperature</span><span class="tag">ACT</span></span>
+      <span class="go">Open chapter →</span>
+    </a>
+    <a class="card" href="live-demo/arm.html" style="--acc:var(--cyan)">
+      <span class="cnum">LIVE DEMO</span>
+      <span class="ctitle">🕹️ SO-101 Digital Twin</span>
+      <span class="cdesc">A 3D replica of the arm with six joint dials. Drive a real SO-101 (or a simulated one), or mirror the physical arm back.</span>
+      <span class="ctags"><span class="tag">3D twin</span><span class="tag">6 joints</span><span class="tag">real motors</span></span>
+      <span class="go">Launch demo →</span>
+    </a>
+  </div>
+
+  <div class="section-h">The story, end to end</div>
+  <div class="flow">
+    <span class="chip">motors &amp; torque</span><span class="ar">→</span>
+    <span class="chip">wiring &amp; Python</span><span class="ar">→</span>
+    <span class="chip">calibrate both arms</span><span class="ar">→</span>
+    <span class="chip">teleoperate &amp; record</span><span class="ar">→</span>
+    <span class="chip">how learning works</span><span class="ar">→</span>
+    <span class="chip">ACT learns to act</span>
+  </div>
+
+  <div class="section-h">Drive real hardware</div>
+  <div class="demos">
+    <a class="demo" href="live-demo/index.html">
+      <h3>🎛️ Live Motor Control</h3>
+      <p>One dial drives one real STS3215, with live encoder read-back. The gentlest first contact with the hardware.</p>
+    </a>
+    <a class="demo" href="live-demo/arm.html">
+      <h3>🦾 SO-101 Digital Twin</h3>
+      <p>The full 3D arm: six joint dials drive all the motors, or flip to Mirror mode and pose the real arm by hand.</p>
+    </a>
+  </div>
+  <div class="note">
+    💡 The live demos need the local bridge running (they fall back to simulation otherwise):
+    <code>source .venv/bin/activate</code> then <code>python le-robotics/live-demo/motor_bridge.py</code>, and open the URL it prints.
+    The five chapters need nothing — just click and learn.
+  </div>
+
+  <footer>
+    An interactive course for the LeRobot SO-101 · Photos &amp; specs from
+    <a href="https://github.com/huggingface/lerobot">lerobot</a> and
+    <a href="https://github.com/TheRobotStudio/SO-ARM100">SO-ARM101</a>.
+  </footer>
+</div>
+</body>
+</html>
