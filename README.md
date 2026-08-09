@@ -17,6 +17,7 @@ offline — just open `index.html`.
 | 5 | **From Words to Motion** | Text generation (next-token) → **ACT**, the robot's brain that predicts motions | [chapter-05](chapter-05/index.html) |
 | 6 | **Collecting Good Data** | Cameras, resolution, fps, encoding, lighting & episodes; a live good-vs-bad data auditor | [chapter-06](chapter-06/index.html) |
 | 7 | **Training & Running** | The loss curve, checkpoints, cloud training (Colab / HF Jobs), and deploying ACT on the arm | [chapter-07](chapter-07/index.html) |
+| 8 | **From One Task to Many** | Language-conditioned policies (VLAs): fine-tuning SmolVLA + a live instruction → action demo | [chapter-08](chapter-08/index.html) |
 
 ## Live hardware demos (`live-demo/`)
 Drive a **real STS3215 motor** — or a simulated one if none is plugged in — straight

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chapter 8 · From One Task to Many — Language-Conditioned Robots (SmolVLA)</title>
+<style>
+  :root{
+    --bg:#0b1020;--bg2:#170f22;--card:#20132e;--card2:#281838;--ink:#eaf0ff;--muted:#c4aed4;--line:#3d2a52;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;--fuchsia:#e879f9;--blue:#60a5fa;
+    --shadow:0 18px 50px rgba(0,0,0,.45);--r:20px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.6;
+    background:radial-gradient(1200px 700px at 82% -10%,rgba(232,121,249,.15),transparent 60%),
+      radial-gradient(1000px 700px at -10% 110%,rgba(56,189,248,.12),transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed}
+  .rail{position:fixed;top:50%;right:18px;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:12px}
+  .rail a{width:12px;height:12px;border-radius:50%;background:#3d2a52;transition:.25s;display:block}
+  .rail a:hover{transform:scale(1.25)} .rail a.active{background:var(--fuchsia);box-shadow:0 0 14px var(--fuchsia)}
+  .topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:60;background:rgba(255,255,255,.06)}
+  .topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--fuchsia),var(--cyan));transition:width .15s}
+  section{max-width:1080px;margin:0 auto;padding:78px 26px 46px}
+  .slide-num{font-size:13px;letter-spacing:.22em;color:var(--fuchsia);font-weight:700;text-transform:uppercase}
+  h1{font-size:clamp(30px,5vw,54px);line-height:1.1;margin:.25em 0 .3em;letter-spacing:-.02em}
+  h2{font-size:clamp(24px,3.4vw,36px);margin:.1em 0 .5em;letter-spacing:-.01em}
+  h3{font-size:20px;margin:.2em 0 .4em;color:#fff}
+  p{color:var(--muted);font-size:clamp(15px,1.7vw,18px)}
+  .lead{font-size:clamp(17px,2vw,21px);color:#efe0f5}
+  .fuchsia{color:var(--fuchsia)} .cyan{color:var(--cyan)} .pink{color:var(--pink)} .lime{color:var(--lime)} .violet{color:var(--violet)} .green{color:var(--green)} .amber{color:var(--amber)} .red{color:var(--red)} .blue{color:var(--blue)}
+  b,strong{color:#fff}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:18px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+  .pill{display:inline-block;background:rgba(232,121,249,.14);color:var(--fuchsia);border:1px solid rgba(232,121,249,.4);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:3px 4px 3px 0}
+  .kbd{font-family:ui-monospace,Menlo,monospace;background:#160d20;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 9px;font-size:13px;color:#f3e6f8}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:34px 0}
+  .callout{border-left:4px solid var(--fuchsia);background:rgba(232,121,249,.07);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
+  .callout.q{border-color:var(--cyan);background:rgba(56,189,248,.08)}
+  .callout.note{border-color:var(--amber);background:rgba(251,191,36,.08)}
+  .crumbs{color:#9d86ad;font-size:13px;margin-bottom:6px}.crumbs a{color:#c4aed4;text-decoration:none}
+  .hero{min-height:88vh;display:flex;flex-direction:column;justify-content:center}
+  .hero .big{background:linear-gradient(90deg,#fff 10%,var(--fuchsia) 50%,var(--cyan) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .scroll-hint{margin-top:38px;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:10px}
+  .mouse{width:24px;height:38px;border:2px solid var(--muted);border-radius:14px;position:relative}
+  .mouse::before{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--fuchsia);transform:translateX(-50%);animation:wheel 1.4s infinite}
+  @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#160d20;outline:none;margin:12px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--fuchsia);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--fuchsia);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--fuchsia);border:3px solid #0b1020;cursor:pointer}
+  .ctl-label{display:flex;justify-content:space-between;font-size:14px;color:#e8d5f0;font-weight:600}
+  .val{font-family:ui-monospace,Menlo,monospace;color:var(--fuchsia)}
+  button{cursor:pointer;font-family:inherit}
+  .btn{background:var(--fuchsia);color:#2a0a2e;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--fuchsia);border:1px solid var(--fuchsia)}
+  .btn.sm{padding:7px 12px;font-size:13px}
+  .stat{display:flex;flex-direction:column;gap:1px}.stat .n{font-size:24px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#fff}.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  code.inl{font-family:ui-monospace,Menlo,monospace;background:#160d20;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#f3e6f8;font-size:.92em}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#160d20;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#f3e6f8}
+  canvas{display:block;border-radius:12px;background:#0d0916;width:100%;height:auto}
+  .mathbox{font-family:ui-monospace,Menlo,monospace;font-size:clamp(15px,2vw,18px);color:#fff;background:#160d20;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;text-align:center}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--fuchsia);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .instr{display:inline-block;background:#241436;border:1px solid var(--line);border-radius:8px;padding:7px 12px;margin:4px;font-size:13.5px;cursor:pointer;transition:.15s}
+  .instr:hover{border-color:var(--fuchsia);color:#fff}
+  textarea,input[type=text]{width:100%;background:#160d20;border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,monospace;font-size:14px}
+  .cmdrow{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#120a1c;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:9px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .cmdrow code{color:#eaf0ff;white-space:pre-wrap;word-break:break-word}
+  .copy{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;flex:0 0 auto}
+  .copy:hover{border-color:var(--fuchsia);color:var(--fuchsia)}.copy.done{color:var(--green);border-color:var(--green)}
+  details{background:#160d20;border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
+  summary{cursor:pointer;padding:12px 0;font-weight:700;color:#fff}details[open] summary{color:var(--fuchsia)}
+  .quizopt{display:block;width:100%;text-align:left;background:#160d20;border:1px solid var(--line);color:var(--ink);padding:12px 16px;border-radius:10px;margin:8px 0;font-size:15px;transition:.15s}
+  .quizopt:hover{border-color:var(--fuchsia)} .quizopt.right{background:rgba(52,211,153,.18);border-color:var(--green)} .quizopt.wrong{background:rgba(251,113,133,.16);border-color:var(--red)}
+  .foot{text-align:center;color:#9d86ad;font-size:13px;padding:40px 20px 60px}.foot a{color:var(--cyan)}
+  .vla{display:flex;flex-direction:column;gap:8px}
+  .vla .io{background:#160d20;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="topbar"><i id="topbar"></i></div>
+<nav class="rail" id="rail"></nav>
+
+<!-- 0 HERO -->
+<section id="s0" class="hero">
+  <div class="crumbs"><a href="../chapter-07/index.html">← Chapter 7: Training &amp; Running</a> · <a href="../index.html">⌂ Course home</a></div>
+  <div class="slide-num">LeRobot · SO-101 · Chapter 8</div>
+  <h1 class="big">From One Task to Many</h1>
+  <p class="lead" style="max-width:790px">The ACT policy you trained is a <b>specialist</b>: one task, no words. But what if you could just <b class="fuchsia">tell</b> the robot what to do — <em>"put the red cube in the box"</em> — and it understood? That's a <b>VLA</b>: Vision + Language + Action. And instead of training from scratch, you start from a <b>foundation model</b> that already knows about pictures and words, then teach it your setup. Meet <b class="fuchsia">SmolVLA</b>.</p>
+  <div style="margin-top:22px">
+    <span class="pill">💬 Talk to the robot</span>
+    <span class="pill">🧩 One model, many tasks</span>
+    <span class="pill">🏗️ Foundation model + fine-tune</span>
+    <span class="pill">🤗 SmolVLA</span>
+  </div>
+  <div class="scroll-hint"><div class="mouse"></div> Scroll or use <span class="kbd">↓</span>/<span class="kbd">↑</span> to move through the lesson</div>
+</section>
+
+<!-- 1 LIMIT OF ACT -->
+<section id="s1">
+  <div class="slide-num">Part 1 · The Specialist</div>
+  <h2>ACT is brilliant — but <span class="fuchsia">narrow</span></h2>
+  <div class="grid g2" style="align-items:center">
+    <div>
+      <p>The policy from Chapters 5–7 does exactly <b>one</b> thing — the task you demonstrated — and it has no idea what words mean. Want a second task? Record a whole new dataset and train a whole new policy.</p>
+      <p>Humans aren't like that. You can be <em>told</em> "grab the blue one instead" and just… do it. To get robots closer to that, we need a model that takes a <b>language instruction</b> as input and can handle <b>many</b> tasks. That's the leap this chapter makes.</p>
+      <div class="callout"><b>The dream:</b> one robot brain you can <b>talk to</b> — "pick up the cube," then "now put it on the shelf" — no retraining between commands. 🗣️</div>
+    </div>
+    <div class="card">
+      <table>
+        <tr><th></th><th>ACT (Ch5–7)</th><th class="fuchsia">A VLA</th></tr>
+        <tr><td><b>Tasks</b></td><td>one</td><td>many</td></tr>
+        <tr><td><b>Takes words?</b></td><td>no</td><td class="fuchsia">yes</td></tr>
+        <tr><td><b>New task</b></td><td>retrain</td><td>just ask</td></tr>
+      </table>
+      <p style="font-size:13px;margin-top:10px;color:var(--muted)">Same robot, same motors, same recording pipeline — a smarter brain on top.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 2 WHAT IS A VLA (STAR DEMO) -->
+<section id="s2">
+  <div class="slide-num">Part 2 · The Big Idea</div>
+  <h2>A <span class="fuchsia">VLA</span>: Vision + Language + Action</h2>
+  <p class="lead">A VLA takes <b>three</b> inputs and turns them into motion. The new one is <b>language</b> — the instruction literally steers what the robot does.</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="card">
+      <canvas id="vlaCv" width="360" height="210"></canvas>
+      <div style="margin-top:8px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:4px">Tell the robot what to do:</div>
+        <div id="instrChips"></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <input id="instrText" type="text" placeholder="e.g. put the blue cube on the shelf" />
+          <button class="btn" id="instrGo">Go</button>
+        </div>
+      </div>
+      <p style="font-size:13px;margin-top:8px" id="vlaMsg">Pick an instruction — the robot reads the words and acts.</p>
+    </div>
+    <div>
+      <h3>What just happened</h3>
+      <div class="vla">
+        <div class="io">📷 <b>Vision</b> — the cameras see two cubes and two targets</div>
+        <div class="io">💬 <b>Language</b> — your instruction: <span class="chip" id="vlaInstr">—</span></div>
+        <div class="io">🔢 <b>State</b> — the arm's current joint numbers</div>
+        <div style="text-align:center;color:var(--fuchsia);font-size:20px">↓ &nbsp;🧠 the VLA combines all three &nbsp; ↓</div>
+        <div class="io">🎯 <b>Action</b> — a chunk of motions that does <em>that specific</em> task</div>
+      </div>
+      <div class="callout q"><b>The magic:</b> change only the <b>words</b> — keep the same cubes, same camera — and the robot does something different. The instruction is part of the input, so it changes the output. 🪄</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 FOUNDATION MODEL -->
+<section id="s3">
+  <div class="slide-num">Part 3 · The Shift</div>
+  <h2>Don't train from scratch — <span class="fuchsia">fine-tune</span></h2>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <p>Here's the second big idea. Remember how GPT (Chapter 5) is <b>pretrained</b> on mountains of text, then adapted to specific jobs? SmolVLA does the same for robots: it's a <b>foundation model</b> (450M parameters, <code class="inl">lerobot/smolvla_base</code>) already pretrained on lots of images, language, and robot data.</p>
+      <p>So you don't start from zero — you <b>fine-tune</b>: take the pretrained brain and nudge it with just <b>~50 episodes</b> of your own task. It arrives already knowing what a cube is and what "in the box" means.</p>
+      <div class="mathbox">pretrained foundation model + a little of <em>your</em> data → your robot
+        <small>fine-tuning, not training from scratch</small></div>
+      <div class="callout note"><b>Analogy:</b> training ACT from scratch is like teaching someone to cook from <em>zero</em>. Fine-tuning SmolVLA is hiring an <b>experienced chef</b> and just showing them <em>your</em> kitchen. Way less to teach. 👩‍🍳</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">How good is it, for N episodes of your data?</h3>
+      <div class="ctl-label"><span>Episodes you record</span><span class="val" id="feEp">30</span></div>
+      <input id="feEpS" type="range" min="0" max="150" step="5" value="30">
+      <canvas id="feCv" width="330" height="150" style="margin-top:6px"></canvas>
+      <div class="grid g2" style="margin-top:10px">
+        <div class="stat"><span class="n" style="color:var(--blue)" id="feAct">—</span><span class="l">ACT (from scratch)</span></div>
+        <div class="stat"><span class="n fuchsia" id="feVla">—</span><span class="l">SmolVLA (fine-tuned)</span></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:8px" id="feMsg"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ARCHITECTURE (LIGHT) -->
+<section id="s4">
+  <div class="slide-num">Part 4 · Under the Hood (lightly)</div>
+  <h2>How SmolVLA is <span class="fuchsia">wired</span></h2>
+  <div class="grid g2" style="align-items:center">
+    <div>
+      <p>Just two big pieces — you already know both ideas:</p>
+      <ul style="color:var(--muted)">
+        <li><b class="cyan">A vision-language model (SmolVLM)</b> — "eyes + words." It looks at the camera images and reads the instruction, and understands the scene together with the request. (Same family as the text model from Chapter 5, plus vision.)</li>
+        <li><b class="fuchsia">An action expert</b> — takes that understanding (plus the joint state) and produces the <b>action chunk</b> (Chapter 5's ACT idea).</li>
+      </ul>
+      <p style="font-size:14px">It generates the motion by <b>refining random noise into a smooth action</b> — a bit like a sculptor starting from a rough block. You don't need the details; the takeaway is: <b>understand the scene &amp; words → produce motion.</b></p>
+    </div>
+    <div class="card">
+      <div class="vla">
+        <div class="io" style="border-left:4px solid var(--cyan)">📷 images &nbsp;+&nbsp; 💬 instruction</div>
+        <div style="text-align:center;color:var(--muted)">↓</div>
+        <div class="io" style="border-left:4px solid var(--cyan)"><b>SmolVLM</b> — vision-language "understanding"</div>
+        <div style="text-align:center;color:var(--muted)">↓ &nbsp; (+ 🔢 joint state)</div>
+        <div class="io" style="border-left:4px solid var(--fuchsia)"><b>Action expert</b> — turns understanding into motion</div>
+        <div style="text-align:center;color:var(--muted)">↓</div>
+        <div class="io" style="border-left:4px solid var(--green)">🎯 action chunk → the motors</div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px">One light diagram — that's all you need to hold in your head.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5 MULTI-TASK -->
+<section id="s5">
+  <div class="slide-num">Part 5 · Many Tasks, One Brain</div>
+  <h2>The same model, <span class="fuchsia">many instructions</span></h2>
+  <p class="lead">Because the instruction is an input, <b>one</b> fine-tuned SmolVLA can do several tasks — you just say which. Try switching the order without touching anything else. 👇</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="card">
+      <canvas id="mtCv" width="360" height="210"></canvas>
+      <div id="mtChips" style="margin-top:8px"></div>
+      <p style="font-size:13px;margin-top:8px" id="mtMsg">Same scene, same brain — pick a task.</p>
+    </div>
+    <div>
+      <h3>How the data is built</h3>
+      <p>To teach several tasks, your dataset just includes episodes of <b>each</b> task, every one labelled with its own instruction (the <code class="inl">task</code> field from Chapter 6). SmolVLA learns to tie each instruction to the right behavior.</p>
+      <p><b>Data tip from the SmolVLA paper:</b> record <b>~50 episodes</b> and repeat each <b>variation</b> several times. They used <b>5 cube positions × 10 episodes</b>; a 25-episode version was <b>too few</b>. Quality and quantity still rule (Chapter 6). 📊</p>
+      <div class="callout q"><b>Notice:</b> the arm, cameras, and motors never changed across these tasks — only the sentence you gave it. That's the whole promise of language-conditioned robots.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 FINE-TUNE COMMANDS -->
+<section id="s6">
+  <div class="slide-num">Part 6 · Do It For Real</div>
+  <h2>Fine-tuning SmolVLA</h2>
+  <p class="lead">It's the Chapter-7 pipeline with a foundation model as the starting point. Two extra ideas: install the SmolVLA extra, and point <code class="inl">--policy.path</code> at the pretrained model instead of training a blank one.</p>
+  <div class="card" style="margin-top:8px">
+    <h4 style="color:var(--fuchsia);margin-top:0">1 · Install the SmolVLA dependencies</h4>
+    <div class="cmdrow"><code>pip install -e ".[smolvla]"</code><button class="copy">Copy</button></div>
+    <h4 style="color:var(--fuchsia)">2 · Fine-tune the pretrained model on your dataset</h4>
+    <div class="cmdrow"><code>lerobot-train --policy.path=lerobot/smolvla_base \
+  --dataset.repo_id=$HF_USER/mydataset \
+  --batch_size=64 --steps=20000 \
+  --output_dir=outputs/train/my_smolvla --job_name=my_smolvla \
+  --policy.device=cuda --wandb.enable=true</code><button class="copy">Copy</button></div>
+    <p style="font-size:13px;color:var(--muted)">~20k steps ≈ 4 hours on one A100 GPU — a great fit for the <b>cloud</b> training from Chapter 7 (Colab or HF Jobs). No local GPU needed.</p>
+    <h4 style="color:var(--fuchsia)">3 · Run it on the arm — now the instruction matters</h4>
+    <div class="cmdrow"><code>lerobot-rollout --policy.path=$HF_USER/my_smolvla \
+  --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX \
+  --robot.cameras="{front:{type:opencv,index_or_path:0,width:640,height:480,fps:30}}" \
+  --task="Put the red cube in the box" --duration=60</code><button class="copy">Copy</button></div>
+    <p style="font-size:13px;color:var(--muted)">Change <code class="inl">--task</code> to give a different order — same policy, different behavior.</p>
+  </div>
+</section>
+
+<!-- 7 ACT vs SmolVLA -->
+<section id="s7">
+  <div class="slide-num">Part 7 · Which To Use?</div>
+  <h2>ACT vs. SmolVLA</h2>
+  <p class="lead">Neither is "better" — they're different tools. Pick by what your project needs.</p>
+  <div class="card">
+    <table>
+      <tr><th>&nbsp;</th><th class="blue">ACT</th><th class="fuchsia">SmolVLA</th></tr>
+      <tr><td><b>Starting point</b></td><td>trained from scratch</td><td>pretrained foundation model, fine-tuned</td></tr>
+      <tr><td><b>Language</b></td><td>none</td><td>takes a text instruction</td></tr>
+      <tr><td><b>Tasks per model</b></td><td>one</td><td>many</td></tr>
+      <tr><td><b>Size</b></td><td>small &amp; fast</td><td>larger (~450M)</td></tr>
+      <tr><td><b>Data needed</b></td><td>a full dataset per task</td><td>~50 episodes to adapt</td></tr>
+      <tr><td><b>Best for</b></td><td>one fixed, well-defined task</td><td>several tasks, or "talk to it" control</td></tr>
+    </table>
+  </div>
+  <div class="callout"><b>Rule of thumb:</b> one repetitive job on a bench → <b class="blue">ACT</b> is simple and quick. Want to give orders in words, or handle several tasks → <b class="fuchsia">SmolVLA</b>. Both ride the same SO-101 you built. 🤝</div>
+</section>
+
+<!-- 8 RECAP -->
+<section id="s8">
+  <div class="slide-num">Wrap-up</div>
+  <h2>The frontier 🚀</h2>
+  <p class="lead">You've gone from a single motor (Chapter 1) to a robot you can <b>talk to</b>. VLAs like SmolVLA are how robots are becoming general-purpose — one brain, many jobs, guided by plain language.</p>
+  <div class="grid g3">
+    <div class="card"><h3 class="fuchsia">VLA</h3><p>Vision + Language + Action. The instruction is an input that steers the motion.</p></div>
+    <div class="card"><h3 class="cyan">Foundation model</h3><p>Pretrained once (SmolVLA base), then fine-tuned on a little of your data.</p></div>
+    <div class="card"><h3 class="green">One brain, many tasks</h3><p>Change the words, change the job — no retraining between commands.</p></div>
+  </div>
+  <div class="divider"></div>
+  <h2>Quiz 🧠</h2>
+  <div class="card"><p><b>Q1.</b> What does the "L" in VLA add over plain ACT?</p>
+    <div data-q="0" data-a="2"><button class="quizopt">Longer battery</button><button class="quizopt">Lighter motors</button><button class="quizopt">Language — a text instruction as input</button><button class="quizopt">Lower cost</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q2.</b> "Fine-tuning" SmolVLA means…</p>
+    <div data-q="1" data-a="1"><button class="quizopt">Training a blank model from zero</button><button class="quizopt">Adapting a pretrained model with a little of your data</button><button class="quizopt">Adjusting the motor screws</button><button class="quizopt">Deleting the dataset</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q3.</b> With one fine-tuned SmolVLA, to switch tasks you…</p>
+    <div data-q="2" data-a="0"><button class="quizopt">Change the instruction (--task)</button><button class="quizopt">Retrain from scratch</button><button class="quizopt">Swap the motors</button><button class="quizopt">Recalibrate the arm</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q4.</b> When is plain ACT the better choice?</p>
+    <div data-q="3" data-a="3"><button class="quizopt">When you want to talk to the robot</button><button class="quizopt">For many different tasks</button><button class="quizopt">When you have no data</button><button class="quizopt">For one fixed, well-defined task</button></div></div>
+  <div class="divider"></div>
+  <details><summary>🧪 Homework</summary><p>1) In your own words, what are the three inputs to a VLA, and which one is new versus ACT?<br>
+    2) Why does starting from <code class="inl">smolvla_base</code> need far fewer episodes than training ACT from scratch?<br>
+    3) You want a robot that can "pick up the red cube" <em>and</em> "put it on the shelf" on command. Which policy, and how would you build its dataset?</p></details>
+  <p style="margin-top:18px;color:var(--muted)">More chapters ahead — there's always another frontier. 🌅</p>
+</section>
+
+<nav style="max-width:1080px;margin:12px auto 0;padding:0 26px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+  <a class="btn ghost" href="../chapter-07/index.html" style="text-decoration:none">← Chapter 7</a>
+  <a class="btn ghost" href="../index.html" style="text-decoration:none">⌂ Course home</a>
+  <a class="btn" href="../live-demo/arm.html" style="text-decoration:none">🦾 Open the Digital Twin →</a>
+</nav>
+<div class="foot">Chapter 8 of the LeRobot SO-101 course · SmolVLA (450M VLA: SmolVLM vision-language + action expert, fine-tuned from <code class="inl">lerobot/smolvla_base</code>) per the open-source <a href="https://github.com/huggingface/lerobot">lerobot</a> docs &amp; the <a href="https://huggingface.co/papers/2506.01844">SmolVLA paper</a>. The instruction→action demos are simplified illustrations.</div>
+
+<script>
+/* rail + progress */
+const secs=[...document.querySelectorAll('section')],rail=document.getElementById('rail');
+const labels=['Intro','Specialist','VLA','Fine-tune','Architecture','Multi-task','Commands','ACT vs VLA','Recap'];
+secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
+const dots=[...rail.children],bar=document.getElementById('topbar');
+function onScroll(){const y=window.scrollY,h=document.body.scrollHeight-window.innerHeight;bar.style.width=(100*y/h)+'%';
+  let cur=0;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<window.innerHeight*0.45)cur=i;});
+  dots.forEach((d,i)=>d.classList.toggle('active',i===cur));}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+window.addEventListener('keydown',e=>{let cur=0;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<window.innerHeight*0.45)cur=i;});
+  if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();secs[Math.min(cur+1,secs.length-1)].scrollIntoView({behavior:'smooth'});}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();secs[Math.max(cur-1,0)].scrollIntoView({behavior:'smooth'});}});
+
+/* copy */
+document.querySelectorAll('.cmdrow').forEach(row=>{const code=row.querySelector('code'),btn=row.querySelector('.copy');if(!code||!btn)return;
+  btn.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(code.textContent);const t=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('done');setTimeout(()=>{btn.textContent=t;btn.classList.remove('done');},1200);};});
+
+/* ============ shared: instruction-conditioned scene (mock VLA) ============ */
+function makeArmScene(cv, opts){
+  const ctx=cv.getContext('2d');
+  const bx=50,by=182,L1=72,L2=64;
+  const home={sh:-1.25,el:1.2};
+  // objects & targets (within reach of base)
+  const start={ red:{x:150,y:170}, blue:{x:108,y:172} };
+  const targets={ box:{x:180,y:168,label:'📦 box'}, shelf:{x:96,y:120,label:'🗄️ shelf'} };
+  let cubes=JSON.parse(JSON.stringify(start));
+  let cur={...home}, carrying=null, anim=null;
+  function ik(tx,ty){let dx=tx-bx,dy=ty-by,d=Math.hypot(dx,dy);d=Math.min(L1+L2-2,Math.max(Math.abs(L1-L2)+2,d));
+    const ce=(d*d-L1*L1-L2*L2)/(2*L1*L2);const el=Math.acos(Math.max(-1,Math.min(1,ce)));
+    const sh=Math.atan2(dy,dx)-Math.atan2(L2*Math.sin(el),L1+L2*Math.cos(el));return {sh,el};}
+  function tip(sh,el){return {x:bx+Math.cos(sh)*L1+Math.cos(sh+el)*L2, y:by+Math.sin(sh)*L1+Math.sin(sh+el)*L2};}
+  function draw(grip){
+    grip=grip==null?1:grip;
+    ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#0d0916';ctx.fillRect(0,0,cv.width,cv.height);
+    // table + shelf
+    ctx.fillStyle='#201332';ctx.fillRect(0,186,cv.width,24);ctx.strokeStyle='#3d2a52';ctx.beginPath();ctx.moveTo(0,186);ctx.lineTo(cv.width,186);ctx.stroke();
+    // shelf platform
+    ctx.fillStyle='#2a1c3e';ctx.fillRect(targets.shelf.x-26,targets.shelf.y+12,52,7);
+    ctx.fillStyle='#9d86ad';ctx.font='11px ui-monospace';ctx.textAlign='center';ctx.fillText('shelf',targets.shelf.x,targets.shelf.y+34);
+    // box
+    ctx.strokeStyle='#c4aed4';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(targets.box.x-15,targets.box.y-6);ctx.lineTo(targets.box.x-15,targets.box.y+12);ctx.lineTo(targets.box.x+15,targets.box.y+12);ctx.lineTo(targets.box.x+15,targets.box.y-6);ctx.stroke();
+    ctx.fillStyle='#9d86ad';ctx.fillText('box',targets.box.x,targets.box.y+30);
+    // cubes
+    for(const c of ['blue','red']){const p=cubes[c];const col=c==='red'?'#fb7185':'#60a5fa';
+      ctx.fillStyle=col;ctx.fillRect(p.x-11,p.y-11,22,22);ctx.strokeStyle='#fff';ctx.lineWidth=1.4;ctx.strokeRect(p.x-11,p.y-11,22,22);}
+    // arm
+    const j1={x:bx+Math.cos(cur.sh)*L1,y:by+Math.sin(cur.sh)*L1},j2=tip(cur.sh,cur.el);
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=11;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(j1.x,j1.y);ctx.stroke();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(j1.x,j1.y);ctx.lineTo(j2.x,j2.y);ctx.stroke();
+    ctx.fillStyle='#0d0916';ctx.strokeStyle='#a78bfa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(bx,by,9,0,7);ctx.fill();ctx.stroke();
+    const perp=cur.sh+cur.el+Math.PI/2,gp=6+grip*8;ctx.strokeStyle='#e879f9';ctx.lineWidth=4;
+    [1,-1].forEach(s=>{ctx.beginPath();ctx.moveTo(j2.x,j2.y);ctx.lineTo(j2.x+Math.cos(cur.sh+cur.el)*11+Math.cos(perp)*gp*s,j2.y+Math.sin(cur.sh+cur.el)*11+Math.sin(perp)*gp*s);ctx.stroke();});
+  }
+  function animateTo(tx,ty,grip,onDone){
+    const tgt=ik(tx,ty);let i=0;const K=20;
+    (function loop(){i++;cur.sh+=(tgt.sh-cur.sh)*0.22;cur.el+=(tgt.el-cur.el)*0.22;
+      if(carrying){const t=tip(cur.sh,cur.el);cubes[carrying].x=t.x;cubes[carrying].y=t.y-2;}
+      draw(grip);
+      if(i<K){anim=requestAnimationFrame(loop);}else{anim=null;onDone&&onDone();}})();
+  }
+  function reset(){cubes=JSON.parse(JSON.stringify(start));cur={...home};carrying=null;draw(1);}
+  function run(instr, msgCb){
+    if(anim)return;
+    const t=instr.toLowerCase();
+    const color=t.includes('red')?'red':t.includes('blue')?'blue':null;
+    const target=t.includes('box')?'box':t.includes('shelf')?'shelf':null;
+    const pickOnly=(t.includes('pick')||t.includes('lift')||t.includes('grab'))&&!target;
+    if(!color){msgCb('❓ <b class="amber">I didn\'t catch which cube.</b> Name a colour — red or blue.',null);return;}
+    msgCb('🧠 understood → object: <b>'+color+' cube</b>'+(target?', target: <b>'+target+'</b>':(pickOnly?', just pick it up':'')),{color,target:target||(pickOnly?null:'box')});
+    const c=cubes[color];
+    // approach cube, close gripper, then go to target (or lift), release
+    animateTo(c.x,c.y-2,1,()=>{ // reached cube
+      animateTo(c.x,c.y-2,0.05,()=>{ carrying=color; // grabbed
+        if(pickOnly){ animateTo(c.x,c.y-40,0.05,()=>{ carrying=null; msgCb('✅ Picked up the <b>'+color+'</b> cube.',{color,target:null}); }); }
+        else { const g=targets[target||'box']; animateTo(g.x,g.y-4,0.05,()=>{ animateTo(g.x,g.y-4,1,()=>{ carrying=null; msgCb('✅ Put the <b>'+color+'</b> cube '+(target==='shelf'?'on the shelf':'in the box')+'. 🎉',{color,target:target||'box'}); }); }); }
+      });
+    });
+  }
+  reset();
+  return {run,reset,draw:()=>draw(1)};
+}
+
+/* ---- Part 2: VLA demo ---- */
+(function(){
+  const scene=makeArmScene(document.getElementById('vlaCv'));
+  const instrs=['put the red cube in the box','put the blue cube on the shelf','pick up the blue cube','put the blue cube in the box'];
+  const box=document.getElementById('instrChips');
+  function msg(html,parsed){document.getElementById('vlaMsg').innerHTML=html;
+    if(parsed){document.getElementById('vlaInstr').textContent=document.getElementById('_lastInstr').value||'—';}}
+  const hidden=document.createElement('input');hidden.id='_lastInstr';hidden.type='hidden';document.body.appendChild(hidden);
+  function fire(text){hidden.value=text;document.getElementById('vlaInstr').textContent='"'+text+'"';scene.reset();scene.run(text,msg);}
+  instrs.forEach(t=>{const c=document.createElement('span');c.className='instr';c.textContent='“'+t+'”';c.onclick=()=>fire(t);box.appendChild(c);});
+  document.getElementById('instrGo').onclick=()=>{const v=document.getElementById('instrText').value.trim();if(v)fire(v);};
+  document.getElementById('instrText').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=e.target.value.trim();if(v)fire(v);}});
+})();
+
+/* ---- Part 3: pretrain vs finetune ---- */
+(function(){
+  const cv=document.getElementById('feCv'),ctx=cv.getContext('2d');const ep=document.getElementById('feEpS');
+  function actPerf(n){return Math.max(0, Math.min(0.92, (n-8)/150));}          // needs lots, ~0 until many
+  function vlaPerf(n){return Math.min(0.94, 0.25 + 0.75*(1-Math.exp(-n/22)));}  // starts higher, rises fast
+  function draw(){
+    const n=+ep.value;const W=cv.width,H=cv.height,P=24;
+    ctx.clearRect(0,0,W,H);ctx.fillStyle='#0d0916';ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle='#3d2a52';ctx.beginPath();ctx.moveTo(P,H-18);ctx.lineTo(W-6,H-18);ctx.moveTo(P,H-18);ctx.lineTo(P,8);ctx.stroke();
+    ctx.fillStyle='#9d86ad';ctx.font='10px ui-monospace';ctx.textAlign='center';ctx.fillText('episodes →',W/2,H-4);
+    const X=e=>P+(e/150)*(W-P-6), Y=v=>H-18-v*(H-30);
+    [['#60a5fa',actPerf],['#e879f9',vlaPerf]].forEach(([col,fn])=>{ctx.strokeStyle=col;ctx.lineWidth=2.5;ctx.beginPath();
+      for(let e=0;e<=150;e+=3){const x=X(e),y=Y(fn(e));e?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();});
+    // marker at n
+    ctx.strokeStyle='#c4aed4';ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(X(n),8);ctx.lineTo(X(n),H-18);ctx.stroke();ctx.setLineDash([]);
+    [['#60a5fa',actPerf],['#e879f9',vlaPerf]].forEach(([col,fn])=>{ctx.fillStyle=col;ctx.beginPath();ctx.arc(X(n),Y(fn(n)),4,0,7);ctx.fill();});
+    document.getElementById('feEp').textContent=n;
+    const a=Math.round(actPerf(n)*100),v=Math.round(vlaPerf(n)*100);
+    document.getElementById('feAct').textContent=a+'%';document.getElementById('feVla').textContent=v+'%';
+    document.getElementById('feMsg').innerHTML = n<40
+      ? `With only <b>${n}</b> episodes, SmolVLA is already useful (<b class="fuchsia">${v}%</b>) while ACT from scratch lags (<b class="blue">${a}%</b>) — the pretraining pays off.`
+      : `With plenty of data both do well — but SmolVLA got there with far less.`;
+  }
+  ep.oninput=draw;draw();
+})();
+
+/* ---- Part 5: multi-task switcher ---- */
+(function(){
+  const scene=makeArmScene(document.getElementById('mtCv'));
+  const tasks=['put the red cube in the box','put the blue cube on the shelf','pick up the red cube'];
+  const box=document.getElementById('mtChips');
+  function msg(html){document.getElementById('mtMsg').innerHTML=html;}
+  tasks.forEach(t=>{const c=document.createElement('span');c.className='instr';c.textContent='“'+t+'”';c.onclick=()=>{scene.reset();scene.run(t,msg);};box.appendChild(c);});
+})();
+
+/* quiz */
+document.querySelectorAll('[data-q]').forEach(group=>{
+  const ans=+group.dataset.a,opts=[...group.querySelectorAll('.quizopt')];
+  opts.forEach((b,i)=>b.onclick=()=>{opts.forEach(o=>o.classList.remove('right','wrong'));
+    if(i===ans)b.classList.add('right');else{b.classList.add('wrong');opts[ans].classList.add('right');}});
+});
+</script>
+</body>
+</html>
