@@ -16,6 +16,7 @@ offline — just open `index.html`.
 | 4 | **How Machines Learn** | Neurons, loss, gradient descent, backprop — and a **real neural net you train live** | [chapter-04](chapter-04/index.html) |
 | 5 | **From Words to Motion** | Text generation (next-token) → **ACT**, the robot's brain that predicts motions | [chapter-05](chapter-05/index.html) |
 | 6 | **Collecting Good Data** | Cameras, resolution, fps, encoding, lighting & episodes; a live good-vs-bad data auditor | [chapter-06](chapter-06/index.html) |
+| 7 | **Training & Running** | The loss curve, checkpoints, cloud training (Colab / HF Jobs), and deploying ACT on the arm | [chapter-07](chapter-07/index.html) |
 
 ## Live hardware demos (`live-demo/`)
 Drive a **real STS3215 motor** — or a simulated one if none is plugged in — straight

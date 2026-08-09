@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Chapter 7 · Training & Running the Policy</title>
+<style>
+  :root{
+    --bg:#0b1020;--bg2:#0e1428;--card:#141d38;--card2:#172244;--ink:#eaf0ff;--muted:#a4b2d4;--line:#28345c;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;--blue:#3b82f6;--sky:#60a5fa;
+    --shadow:0 18px 50px rgba(0,0,0,.45);--r:20px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.6;
+    background:radial-gradient(1200px 700px at 82% -10%,rgba(59,130,246,.16),transparent 60%),
+      radial-gradient(1000px 700px at -10% 110%,rgba(52,211,153,.12),transparent 55%),
+      linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed}
+  .rail{position:fixed;top:50%;right:18px;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:12px}
+  .rail a{width:12px;height:12px;border-radius:50%;background:#2c3a63;transition:.25s;display:block}
+  .rail a:hover{transform:scale(1.25)} .rail a.active{background:var(--sky);box-shadow:0 0 14px var(--sky)}
+  .topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:60;background:rgba(255,255,255,.06)}
+  .topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:width .15s}
+  section{max-width:1080px;margin:0 auto;padding:78px 26px 46px}
+  .slide-num{font-size:13px;letter-spacing:.22em;color:var(--sky);font-weight:700;text-transform:uppercase}
+  h1{font-size:clamp(30px,5vw,54px);line-height:1.1;margin:.25em 0 .3em;letter-spacing:-.02em}
+  h2{font-size:clamp(24px,3.4vw,36px);margin:.1em 0 .5em;letter-spacing:-.01em}
+  h3{font-size:20px;margin:.2em 0 .4em;color:#fff}
+  h4{font-size:15px;margin:.2em 0 .3em;color:var(--sky);text-transform:uppercase;letter-spacing:.05em}
+  p{color:var(--muted);font-size:clamp(15px,1.7vw,18px)}
+  .lead{font-size:clamp(17px,2vw,21px);color:#dbe5ff}
+  .sky{color:var(--sky)} .blue{color:var(--blue)} .cyan{color:var(--cyan)} .pink{color:var(--pink)} .lime{color:var(--lime)} .violet{color:var(--violet)} .green{color:var(--green)} .amber{color:var(--amber)} .red{color:var(--red)}
+  b,strong{color:#fff}
+  .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow)}
+  .grid{display:grid;gap:18px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
+  .pill{display:inline-block;background:rgba(96,165,250,.14);color:var(--sky);border:1px solid rgba(96,165,250,.4);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:3px 4px 3px 0}
+  .kbd{font-family:ui-monospace,Menlo,monospace;background:#0d1428;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 9px;font-size:13px;color:#dbe9ff}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:34px 0}
+  .callout{border-left:4px solid var(--sky);background:rgba(96,165,250,.07);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
+  .callout.q{border-color:var(--cyan);background:rgba(56,189,248,.08)}
+  .callout.cloud{border-color:var(--violet);background:rgba(167,139,250,.08)}
+  .crumbs{color:#7f8db5;font-size:13px;margin-bottom:6px}.crumbs a{color:#a4b2d4;text-decoration:none}
+  .hero{min-height:88vh;display:flex;flex-direction:column;justify-content:center}
+  .hero .big{background:linear-gradient(90deg,#fff 10%,var(--sky) 50%,var(--green) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .scroll-hint{margin-top:38px;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:10px}
+  .mouse{width:24px;height:38px;border:2px solid var(--muted);border-radius:14px;position:relative}
+  .mouse::before{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--sky);transform:translateX(-50%);animation:wheel 1.4s infinite}
+  @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#0d1428;outline:none;margin:12px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--sky);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--sky);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--sky);border:3px solid #0b1020;cursor:pointer}
+  .ctl-label{display:flex;justify-content:space-between;font-size:14px;color:#cdd8f5;font-weight:600}
+  .val{font-family:ui-monospace,Menlo,monospace;color:var(--sky)}
+  button{cursor:pointer;font-family:inherit}
+  .btn{background:var(--sky);color:#08172e;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--sky);border:1px solid var(--sky)}
+  .btn.sm{padding:7px 12px;font-size:13px}
+  .btn.green{background:var(--green);color:#052e1e}
+  .stat{display:flex;flex-direction:column;gap:1px}.stat .n{font-size:24px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#fff}.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  code.inl{font-family:ui-monospace,Menlo,monospace;background:#0d1428;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#dbe9ff;font-size:.92em}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#0d1428;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#dbe9ff}
+  canvas{display:block;border-radius:12px;background:#0a0f1f;width:100%;height:auto}
+  .mathbox{font-family:ui-monospace,Menlo,monospace;font-size:clamp(15px,2vw,18px);color:#fff;background:#0d1428;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;text-align:center}
+  .mathbox small{display:block;font-family:"Segoe UI",sans-serif;color:var(--muted);font-size:13px;margin-top:6px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--sky);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  .mono{font-family:ui-monospace,Menlo,monospace}
+  .cmdrow{display:flex;justify-content:space-between;align-items:center;gap:12px;background:#0a1024;border:1px solid var(--line);border-radius:10px;padding:11px 12px;margin:9px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+  .cmdrow code{color:#eaf0ff;white-space:pre-wrap;word-break:break-word}
+  .copy{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;flex:0 0 auto}
+  .copy:hover{border-color:var(--sky);color:var(--sky)}.copy.done{color:var(--green);border-color:var(--green)}
+  .seg{display:inline-flex;background:#0d1428;border:1px solid var(--line);border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+  .seg button{background:transparent;border:none;color:var(--muted);padding:6px 12px;border-radius:7px;font-weight:700;font-size:13px}
+  .seg button.on{background:var(--sky);color:#08172e}
+  .switch{position:relative;width:48px;height:28px;border-radius:16px;background:#28345c;transition:.2s;flex:0 0 auto;border:1px solid var(--line);cursor:pointer}
+  .switch.on{background:var(--red)}
+  .switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+  .switch.on i{left:23px}
+  details{background:#0d1428;border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
+  summary{cursor:pointer;padding:12px 0;font-weight:700;color:#fff}details[open] summary{color:var(--sky)}
+  .quizopt{display:block;width:100%;text-align:left;background:#0d1428;border:1px solid var(--line);color:var(--ink);padding:12px 16px;border-radius:10px;margin:8px 0;font-size:15px;transition:.15s}
+  .quizopt:hover{border-color:var(--sky)} .quizopt.right{background:rgba(52,211,153,.18);border-color:var(--green)} .quizopt.wrong{background:rgba(251,113,133,.16);border-color:var(--red)}
+  .foot{text-align:center;color:#7f8db5;font-size:13px;padding:40px 20px 60px}.foot a{color:var(--cyan)}
+  .flow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:14px}
+  .flow .b{background:#0d1428;border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-weight:700}
+  .flow .ar{color:var(--sky);font-size:18px}
+</style>
+</head>
+<body>
+<div class="topbar"><i id="topbar"></i></div>
+<nav class="rail" id="rail"></nav>
+
+<!-- 0 HERO -->
+<section id="s0" class="hero">
+  <div class="crumbs"><a href="../chapter-06/index.html">← Chapter 6: Collecting Good Data</a> · <a href="../index.html">⌂ Course home</a></div>
+  <div class="slide-num">LeRobot · SO-101 · Chapter 7</div>
+  <h1 class="big">Training &amp; Running<br>the Policy</h1>
+  <p class="lead" style="max-width:780px">You recorded the demonstrations (Chapter 6). Now for the magic: turn that pile of examples into a working <b>brain</b> — that's <b class="sky">training</b> — then plug the brain into the arm and let it act <b>all by itself</b> — that's <b class="green">deployment</b>. This chapter closes the loop: <b>record → train → run.</b></p>
+  <div style="margin-top:22px">
+    <span class="pill">📉 The loss curve</span>
+    <span class="pill">💾 Checkpoints</span>
+    <span class="pill">☁️ Train in the cloud</span>
+    <span class="pill">🤖 Run it on the arm</span>
+  </div>
+  <div class="scroll-hint"><div class="mouse"></div> Scroll or use <span class="kbd">↓</span>/<span class="kbd">↑</span> to move through the lesson</div>
+</section>
+
+<!-- 1 WHAT TRAINING DOES -->
+<section id="s1">
+  <div class="slide-num">Part 1 · The Idea, At Scale</div>
+  <h2>Training = the <span class="sky">Chapter-4 loop</span>, 100,000 times</h2>
+  <div class="grid g2" style="align-items:center">
+    <div>
+      <p>Nothing new happens in training — it's the exact loop from Chapter 4, now run over your recorded dataset:</p>
+      <ol style="color:var(--muted)">
+        <li>Grab a <b>batch</b> of recorded frames (camera + joints).</li>
+        <li>ACT <b>predicts</b> the action chunk for each.</li>
+        <li>Compare to what you <b>actually did</b> → the <b class="sky">L1 loss</b> (Chapters 4 &amp; 5).</li>
+        <li><b>Backprop</b> → nudge every weight a little.</li>
+        <li>Repeat ~<b>100,000</b> times.</li>
+      </ol>
+      <div class="mathbox">loss = | ACT's predicted motion − your recorded motion |
+        <small>averaged over the batch — exactly the regression loss from Chapter 4</small></div>
+      <p>Each pass makes ACT copy you a tiny bit better. Do it enough times and the network can generalize the pattern to <b>new</b> situations it never saw.</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">One training step</h3>
+      <div class="flow" style="justify-content:flex-start;flex-direction:column;align-items:stretch;gap:8px">
+        <div class="b" style="border-left:4px solid var(--cyan)">📷 batch of frames from your dataset</div>
+        <div style="text-align:center" class="ar">↓</div>
+        <div class="b" style="border-left:4px solid var(--violet)">🧠 ACT predicts an action chunk</div>
+        <div style="text-align:center" class="ar">↓</div>
+        <div class="b" style="border-left:4px solid var(--sky)">📏 L1 loss: predicted vs. your real actions</div>
+        <div style="text-align:center" class="ar">↓</div>
+        <div class="b" style="border-left:4px solid var(--pink)">⬅️ backprop nudges every weight</div>
+        <div style="text-align:center" class="ar">🔁</div>
+        <div class="b" style="border-left:4px solid var(--green)">📉 loss drops — repeat 100k×</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 STEPS/BATCHES -->
+<section id="s2">
+  <div class="slide-num">Part 2 · Vocabulary</div>
+  <h2>Steps, batches &amp; epochs</h2>
+  <div class="grid g3" style="margin-top:8px">
+    <div class="card"><h3 class="cyan">Batch</h3><p>A handful of frames processed together before one weight update. LeRobot's default is <span class="chip">batch_size = 8</span>.</p></div>
+    <div class="card"><h3 class="sky">Step</h3><p>One batch → one nudge of the weights. ACT trains for <span class="chip">steps = 100,000</span> by default.</p></div>
+    <div class="card"><h3 class="violet">Epoch</h3><p>One full pass over your whole dataset. Big datasets = many steps per epoch; small ones repeat often.</p></div>
+  </div>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="card">
+      <h3 style="margin-top:0">How much training is that?</h3>
+      <div class="ctl-label"><span>Dataset size (frames)</span><span class="val" id="tvFrames">36,000</span></div>
+      <input id="tvFramesS" type="range" min="5000" max="150000" step="1000" value="36000">
+      <div class="ctl-label"><span>Training steps</span><span class="val" id="tvSteps">100,000</span></div>
+      <input id="tvStepsS" type="range" min="10000" max="200000" step="5000" value="100000">
+      <div class="grid g2" style="margin-top:12px">
+        <div class="stat"><span class="n sky" id="tvEpochs">—</span><span class="l">passes over the data (epochs)</span></div>
+        <div class="stat"><span class="n" id="tvSeen">—</span><span class="l">frames seen (batch×steps)</span></div>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:8px">Assumes batch size 8. The same frames get revisited many times — that repetition is how the pattern sinks in.</p>
+    </div>
+    <div>
+      <p>The network sees each frame <b>many</b> times over a training run — like reviewing the same flashcards until the pattern is second nature. Too few steps and it hasn't learned; the graph on the next slide tells you when to stop. 📉</p>
+      <div class="callout">On a good GPU, 100k steps for ACT takes <b>a few hours</b>. On a laptop CPU it could take days — which is exactly why we'll borrow a cloud GPU soon. ☁️</div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 LOSS CURVE (STAR) -->
+<section id="s3">
+  <div class="slide-num">Part 3 · The Heartbeat</div>
+  <h2>📉 Watch the <span class="sky">loss curve</span></h2>
+  <p class="lead">The loss curve is how you <em>see</em> learning happen. It should fall fast, then flatten. Press play, then push the learning rate around to feel what helps and what breaks training.</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="card">
+      <canvas id="lossCv" width="360" height="240"></canvas>
+      <div class="row" style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn" id="trainBtn">▶ Train</button>
+        <button class="btn ghost sm" id="trainReset">↺ Reset</button>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#cdd8f5"><span class="switch" id="overfitSw"><i></i></span> Too few episodes (overfit)</label>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctl-label"><span>Learning rate</span><span class="val" id="lrV">good</span></div>
+      <input id="lrS" type="range" min="0" max="3" step="1" value="1">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:-6px"><span>tiny</span><span>good</span><span>big</span><span>huge</span></div>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="stat"><span class="n sky" id="stepNum">0</span><span class="l">step</span></div>
+        <div class="stat"><span class="n" id="lossNum">—</span><span class="l">training loss</span></div>
+      </div>
+      <div id="realRow" class="stat" style="margin-top:12px;display:none"><span class="n green" id="realNum">—</span><span class="l">how well it <b>actually</b> works (on new scenes)</span></div>
+      <p style="font-size:13.5px;margin-top:12px" id="lossMsg">Press Train to watch the loss fall.</p>
+    </div>
+  </div>
+  <div class="callout q"><b>Two things to feel:</b> a <b>tiny</b> learning rate barely moves; a <b>huge</b> one makes the loss explode. And with <b>too few episodes</b>, the training loss keeps dropping while real-world performance gets <em>worse</em> — that's <b>overfitting</b> (memorizing instead of learning, straight from Chapter 6).</div>
+</section>
+
+<!-- 4 CHECKPOINTS -->
+<section id="s4">
+  <div class="slide-num">Part 4 · Save Points</div>
+  <h2><span class="sky">Checkpoints</span></h2>
+  <div class="grid g2" style="align-items:center">
+    <div>
+      <p>Training for hours is risky — what if it crashes at step 90,000? So LeRobot <b>saves the model to disk every <span class="chip">save_freq = 20,000</span> steps</b> (and at the end), into <code class="inl">output_dir/checkpoints/</code>.</p>
+      <p>Checkpoints are like <b>save points in a video game</b>:</p>
+      <ul style="color:var(--muted)">
+        <li><b>Resume</b> a crashed run with <code class="inl">--resume=true</code> instead of starting over.</li>
+        <li><b>Pick the best one</b> — a later checkpoint isn't always better (see: overfitting).</li>
+        <li><b>Deploy</b> any checkpoint by pointing <code class="inl">--policy.path</code> at it.</li>
+      </ul>
+      <div class="callout q"><b>Click a save point →</b> load different checkpoints and see how far along that version of the brain is.</div>
+    </div>
+    <div class="card">
+      <canvas id="ckptCv" width="360" height="120"></canvas>
+      <div class="row" id="ckptRow" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px"></div>
+      <div class="grid g2" style="margin-top:12px">
+        <div class="stat"><span class="n sky" id="ckStep">—</span><span class="l">checkpoint step</span></div>
+        <div class="stat"><span class="n" id="ckState">—</span><span class="l">this version…</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 COMPUTE + CLOUD -->
+<section id="s5">
+  <div class="slide-num">Part 5 · Where To Train</div>
+  <h2>Local vs. <span class="sky">the cloud</span></h2>
+  <p class="lead">Training hammers a <b>GPU</b> for hours. Your Mac can do it, but slowly — so the smart move is to borrow a powerful GPU in the cloud.</p>
+  <div class="card" style="margin-top:8px">
+    <h3 style="margin-top:0">Roughly how long for 100k ACT steps?</h3>
+    <div id="deviceBars"></div>
+    <p style="font-size:12.5px;color:var(--muted);margin-top:8px">Very rough, illustrative numbers — real times depend on cameras, image size, and the exact GPU.</p>
+  </div>
+
+  <div class="divider"></div>
+  <h3 class="sky" style="font-size:24px">☁️ Sub-section: Training in the cloud (Colab &amp; Hugging Face)</h3>
+  <p>Here's the beautiful part: your <b>Mac never needs a GPU</b>. The <b>Hugging Face Hub</b> is the bridge — you push the dataset up, a cloud GPU trains on it, and you pull the finished policy back down to run on the arm.</p>
+  <div class="card" style="margin:12px 0">
+    <div class="flow">
+      <div class="b" style="border-left:4px solid var(--green)">💻 Mac<br><span style="font-size:11px;color:var(--muted)">record + push_to_hub</span></div>
+      <div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--amber)">🤗 HF Hub<br><span style="font-size:11px;color:var(--muted)">your dataset</span></div>
+      <div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--violet)">☁️ Cloud GPU<br><span style="font-size:11px;color:var(--muted)">lerobot-train</span></div>
+      <div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--amber)">🤗 HF Hub<br><span style="font-size:11px;color:var(--muted)">trained policy</span></div>
+      <div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--green)">💻 Mac<br><span style="font-size:11px;color:var(--muted)">rollout on arm</span></div>
+    </div>
+  </div>
+  <div class="seg" id="cloudSel" style="margin:6px 0 10px"><button class="on" data-c="colab">🟠 Google Colab</button><button data-c="hfjobs">🤗 Hugging Face Jobs</button></div>
+  <div id="colabBlock">
+    <p style="margin-top:0"><b>Google Colab</b> gives you a free GPU in a browser notebook — great for a first training run. The flow:</p>
+    <ol style="color:var(--muted)">
+      <li>Record locally and let it upload: <code class="inl">--dataset.push_to_hub=true</code> (Chapter 6).</li>
+      <li>Open LeRobot's <b>ACT training notebook</b> in Colab, switch the runtime to a <b>GPU</b>, and sign in with <code class="inl">hf auth login</code>.</li>
+      <li>Run <code class="inl">lerobot-train</code> there — it pulls your dataset from the Hub and pushes the trained policy back.</li>
+    </ol>
+    <div class="cmdrow"><code># inside the Colab GPU notebook
+lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
+  --output_dir=outputs/train/act_grab_cube --policy.device=cuda \
+  --policy.repo_id=$HF_USER/act_grab_cube --wandb.enable=true</code><button class="copy">Copy</button></div>
+  </div>
+  <div id="hfjobsBlock" style="display:none">
+    <p style="margin-top:0"><b>Hugging Face Jobs</b> runs training on a managed GPU with <b>one extra flag</b> — no notebook, no setup. Add <code class="inl">--job.target=&lt;gpu&gt;</code> to the same command and it dispatches to the cloud.</p>
+    <div class="cmdrow"><code># run hf auth login first; list GPUs with: hf jobs hardware
+lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
+  --policy.repo_id=$HF_USER/act_grab_cube \
+  --job.target=h200 --job.timeout=8h</code><button class="copy">Copy</button></div>
+    <p style="font-size:13px">The pod trains on the Hub dataset and pushes the policy to your account. <code class="inl">--job.detach</code> submits and exits; <code class="inl">hf jobs hardware</code> shows the flavors &amp; pricing.</p>
+  </div>
+  <div class="callout cloud"><b>Why the Hub matters:</b> it decouples <em>where you record</em> (your Mac + arm) from <em>where you train</em> (a big GPU). Record here, train anywhere, run here. That's the whole cloud workflow. 🌉</div>
+</section>
+
+<!-- 6 DEPLOY (STAR) -->
+<section id="s6">
+  <div class="slide-num">Part 6 · Exam Day</div>
+  <h2>🤖 Run the policy on the arm</h2>
+  <p class="lead">Training done, policy in hand — now the robot performs <b>alone</b>. Deployment runs a tight loop: look → predict a chunk → move → look again. The command for this is <b><code class="inl">lerobot-rollout</code></b> (record was for data <em>only</em>).</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="card">
+      <canvas id="runCv" width="360" height="200"></canvas>
+      <div class="row" style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn green" id="runBtn">▶ Run policy</button>
+        <button class="btn ghost sm" id="runNew">🎲 New scene</button>
+        <label style="display:flex;align-items:center;gap:7px;font-size:13px;color:#cdd8f5"><span class="switch" id="mismatchSw"><i></i></span> Deploy scene ≠ training</label>
+      </div>
+      <p style="font-size:13px;margin-top:8px" id="runMsg">Press Run and watch the trained policy attempt the grasp on its own.</p>
+    </div>
+    <div>
+      <h4>The autonomous loop</h4>
+      <div class="flow" style="justify-content:flex-start;gap:6px;font-size:13px">
+        <span class="chip">📷 observe</span><span class="ar">→</span><span class="chip">🧠 ACT</span><span class="ar">→</span><span class="chip">🎯 action chunk</span><span class="ar">→</span><span class="chip">⚙️ motors</span><span class="ar">🔁</span>
+      </div>
+      <p style="margin-top:12px">It executes a few actions from the chunk, looks again, predicts the next chunk, and repeats — the same autoregression that writes text (Chapter 5), but for motion.</p>
+      <div class="cmdrow"><code>lerobot-rollout --policy.path=$HF_USER/act_grab_cube \
+  --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX \
+  --robot.cameras="{front:{type:opencv,index_or_path:0,width:640,height:480,fps:30}}" \
+  --task="Grab the cube" --duration=60</code><button class="copy">Copy</button></div>
+      <div class="callout"><b>Flip the mismatch switch:</b> if the camera or lighting at deploy time differs from training, the policy misses — the exact lesson from Chapter 6. Your data setup <em>is</em> your deploy setup.</div>
+    </div>
+  </div>
+</section>
+
+<!-- 7 DEBUG -->
+<section id="s7">
+  <div class="slide-num">Part 7 · When It Misbehaves</div>
+  <h2>Reading the failures</h2>
+  <p class="lead">A misbehaving policy is usually a <b>data</b> or <b>training</b> problem, not bad luck. The fix almost always points back to earlier chapters:</p>
+  <div class="card">
+    <table>
+      <tr><th>Symptom</th><th>Likely cause</th><th>Fix</th></tr>
+      <tr><td>🤪 Jittery, shaky motion</td><td>Jerky demos, or undertrained</td><td>Smoother demos (Ch6); train longer</td></tr>
+      <tr><td>🎯 Reaches the wrong spot</td><td>Camera moved since training</td><td>Put the camera back exactly (Ch6)</td></tr>
+      <tr><td>😴 Barely moves / gives up</td><td>Too few episodes; undertrained</td><td>Record more; more steps</td></tr>
+      <tr><td>🏠 Works on the bench, fails elsewhere</td><td>Overfit — no variety in data</td><td>Vary object position &amp; lighting (Ch6)</td></tr>
+      <tr><td>💥 Loss never dropped</td><td>Learning rate too high; bad labels</td><td>Lower LR; check the task/data</td></tr>
+    </table>
+  </div>
+  <div class="callout q">See the pattern? Every deploy failure traces back to <b>data quality</b> or <b>how long/how well you trained</b>. Great robots are built by great teachers with patience. 🧑‍🏫</div>
+</section>
+
+<!-- 8 FLYWHEEL + RECAP -->
+<section id="s8">
+  <div class="slide-num">Wrap-up</div>
+  <h2>The improvement flywheel 🔁</h2>
+  <p class="lead">You've now built the full pipeline. The last secret: it's a <b>loop</b>, not a one-shot. Each turn makes the robot better.</p>
+  <div class="card" style="margin-top:8px">
+    <div class="flow">
+      <div class="b" style="border-left:4px solid var(--amber)">🎥 Record demos</div><div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--sky)">🧠 Train</div><div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--green)">🤖 Run &amp; watch</div><div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--pink)">🔎 Spot failures</div><div class="ar">→</div>
+      <div class="b" style="border-left:4px solid var(--amber)">🎥 Record more of those</div>
+    </div>
+  </div>
+  <div class="divider"></div>
+  <h2>Quiz 🧠</h2>
+  <div class="card"><p><b>Q1.</b> During training, the loss curve should…</p>
+    <div data-q="0" data-a="1"><button class="quizopt">Rise steadily</button><button class="quizopt">Fall quickly, then flatten</button><button class="quizopt">Stay perfectly flat</button><button class="quizopt">Bounce forever</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q2.</b> A checkpoint is…</p>
+    <div data-q="1" data-a="2"><button class="quizopt">A camera setting</button><button class="quizopt">A type of motor</button><button class="quizopt">The model saved partway through training</button><button class="quizopt">The loss value</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q3.</b> Why train in the cloud (Colab / HF Jobs)?</p>
+    <div data-q="2" data-a="0"><button class="quizopt">To borrow a powerful GPU your laptop doesn't have</button><button class="quizopt">Because it's required by law</button><button class="quizopt">To make the arm move faster</button><button class="quizopt">It's the only way to record data</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q4.</b> Which command runs a <em>trained</em> policy on the real arm?</p>
+    <div data-q="3" data-a="3"><button class="quizopt">lerobot-record</button><button class="quizopt">lerobot-calibrate</button><button class="quizopt">lerobot-find-port</button><button class="quizopt">lerobot-rollout</button></div></div>
+  <div class="divider"></div>
+  <details><summary>🧪 Homework</summary><p>1) Your training loss looks great but the arm fails on the real table. Name two likely causes and the chapter that fixes each.<br>
+    2) Explain why the Hugging Face Hub lets you record on a Mac but train on a cloud GPU.<br>
+    3) You have checkpoints at 20k, 40k, …, 100k steps. Why might the 100k one <em>not</em> be the best to deploy?</p></details>
+  <p style="margin-top:18px;color:var(--muted)">More chapters are on the way — next we'll go beyond a single task toward smarter, language-driven policies. 🚀</p>
+</section>
+
+<nav style="max-width:1080px;margin:12px auto 0;padding:0 26px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+  <a class="btn ghost" href="../chapter-06/index.html" style="text-decoration:none">← Chapter 6</a>
+  <a class="btn ghost" href="../index.html" style="text-decoration:none">⌂ Course home</a>
+  <a class="btn" href="../live-demo/arm.html" style="text-decoration:none">🦾 Open the Digital Twin →</a>
+</nav>
+<div class="foot">Chapter 7 of the LeRobot SO-101 course · Training defaults (steps 100k, batch 8, save_freq 20k), <code class="inl">lerobot-train</code>, <code class="inl">lerobot-rollout</code>, HF Jobs (<code class="inl">--job.target</code>) &amp; Colab from the open-source <a href="https://github.com/huggingface/lerobot">lerobot</a> docs. The loss curve &amp; run are simulated illustrations.</div>
+
+<script>
+/* rail + progress */
+const secs=[...document.querySelectorAll('section')],rail=document.getElementById('rail');
+const labels=['Intro','At scale','Vocabulary','Loss curve','Checkpoints','Cloud','Deploy','Debug','Recap'];
+secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
+const dots=[...rail.children],bar=document.getElementById('topbar');
+function onScroll(){const y=window.scrollY,h=document.body.scrollHeight-window.innerHeight;bar.style.width=(100*y/h)+'%';
+  let cur=0;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<window.innerHeight*0.45)cur=i;});
+  dots.forEach((d,i)=>d.classList.toggle('active',i===cur));}
+window.addEventListener('scroll',onScroll,{passive:true});onScroll();
+window.addEventListener('keydown',e=>{let cur=0;secs.forEach((s,i)=>{if(s.getBoundingClientRect().top<window.innerHeight*0.45)cur=i;});
+  if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();secs[Math.min(cur+1,secs.length-1)].scrollIntoView({behavior:'smooth'});}
+  if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();secs[Math.max(cur-1,0)].scrollIntoView({behavior:'smooth'});}});
+
+/* copy */
+document.querySelectorAll('.cmdrow').forEach(row=>{const code=row.querySelector('code'),btn=row.querySelector('.copy');if(!code||!btn)return;
+  btn.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(code.textContent);const t=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('done');setTimeout(()=>{btn.textContent=t;btn.classList.remove('done');},1200);};});
+
+/* ---- Part 2: training vocab calc ---- */
+(function(){
+  const fr=document.getElementById('tvFramesS'),st=document.getElementById('tvStepsS');
+  function upd(){const F=+fr.value,S=+st.value,B=8;
+    document.getElementById('tvFrames').textContent=F.toLocaleString();
+    document.getElementById('tvSteps').textContent=S.toLocaleString();
+    document.getElementById('tvEpochs').textContent=Math.round(S*B/F)+'×';
+    document.getElementById('tvSeen').textContent=(S*B).toLocaleString();}
+  [fr,st].forEach(s=>s.oninput=upd);upd();
+})();
+
+/* ---- Part 3: loss curve simulator (STAR) ---- */
+(function(){
+  const cv=document.getElementById('lossCv'),ctx=cv.getContext('2d');
+  const lrS=document.getElementById('lrS');const lrNames=['tiny','good','big','huge'];
+  let step=0,anim=null,hist=[],realHist=[],overfit=false;
+  const MAXS=100000, PAD=30;
+  // seeded pseudo-noise (no Math.random dependence needed but fine here)
+  function noise(){return (Math.random()*2-1);}
+  function reset(){step=0;hist=[];realHist=[];draw();document.getElementById('stepNum').textContent='0';document.getElementById('lossNum').textContent='—';
+    document.getElementById('realNum').textContent='—';document.getElementById('lossMsg').textContent='Press Train to watch the loss fall.';}
+  function lossAt(s){ // base decaying curve
+    const lr=+lrS.value;
+    if(lr===3){ // huge: diverge
+      return 0.9 + 0.6*Math.min(3,s/12000) + Math.abs(noise())*0.5;
+    }
+    const tau = lr===0?90000 : lr===1?14000 : 9000;      // tiny=slow, good, big=fast-ish
+    const floor = lr===2?0.22:0.12;                       // big lr → noisier, higher floor
+    const nz = lr===0?0.01 : lr===1?0.03 : 0.14;
+    return floor + (0.95-floor)*Math.exp(-s/tau) + Math.abs(noise())*nz;
+  }
+  function realAt(s){ // "true" performance: improves then (if overfit) degrades
+    const up = 1-Math.exp(-s/18000);
+    if(overfit){ const peak=45000; const over = s>peak? (s-peak)/120000 : 0; return Math.max(0.15, up - over*1.4); }
+    return up*0.95;
+  }
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#0a0f1f';ctx.fillRect(0,0,cv.width,cv.height);
+    // axes
+    ctx.strokeStyle='#28345c';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD,10);ctx.lineTo(PAD,cv.height-22);ctx.lineTo(cv.width-8,cv.height-22);ctx.stroke();
+    ctx.fillStyle='#7f8db5';ctx.font='10px ui-monospace';ctx.textAlign='center';
+    ctx.fillText('steps →',cv.width/2,cv.height-6);ctx.save();ctx.translate(11,cv.height/2);ctx.rotate(-Math.PI/2);ctx.fillText('loss',0,0);ctx.restore();
+    const X=s=>PAD+(s/MAXS)*(cv.width-PAD-10);
+    const Y=v=>10+(1-Math.min(1.6,v)/1.6)*(cv.height-32);
+    // real perf (green, inverted so higher=up) if overfit shown
+    if(overfit && realHist.length>1){ctx.strokeStyle='#34d399';ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();
+      realHist.forEach((p,i)=>{const x=X(p.s),y=10+(1-p.v)*(cv.height-32);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();ctx.setLineDash([]);}
+    // loss (sky)
+    if(hist.length>1){ctx.strokeStyle='#60a5fa';ctx.lineWidth=2.5;ctx.beginPath();
+      hist.forEach((p,i)=>{const x=X(p.s),y=Y(p.v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.stroke();
+      const last=hist[hist.length-1];ctx.fillStyle='#60a5fa';ctx.beginPath();ctx.arc(X(last.s),Y(last.v),4,0,7);ctx.fill();}
+  }
+  function tick(){
+    step=Math.min(MAXS, step+2000);
+    const l=lossAt(step);hist.push({s:step,v:l});
+    if(overfit){realHist.push({s:step,v:realAt(step)});}
+    document.getElementById('stepNum').textContent=step.toLocaleString();
+    document.getElementById('lossNum').textContent=l.toFixed(3);
+    if(overfit)document.getElementById('realNum').textContent=Math.round(realAt(step)*100)+'%';
+    draw();
+    const lr=+lrS.value;const msg=document.getElementById('lossMsg');
+    if(lr===3)msg.innerHTML='💥 <b class="red">Diverging!</b> The learning rate is too high — steps overshoot and the loss blows up.';
+    else if(lr===0)msg.innerHTML='🐌 <b>Barely moving.</b> A tiny learning rate learns, but painfully slowly.';
+    else if(overfit && step>60000)msg.innerHTML='⚠️ <b class="amber">Overfitting:</b> loss keeps dropping but real performance is <b>falling</b> — it\'s memorizing.';
+    else if(step>=MAXS)msg.innerHTML='✅ <b class="green">Converged.</b> The loss has flattened — training is done.';
+    else msg.innerHTML='📉 Learning — loss falling nicely.';
+    if(step<MAXS)anim=requestAnimationFrame(()=>setTimeout(tick,60));else anim=null;
+  }
+  document.getElementById('trainBtn').onclick=(e)=>{if(anim){cancelAnimationFrame(anim);anim=null;e.target.textContent='▶ Train';return;}
+    if(step>=MAXS){reset();} e.target.textContent='⏸ Pause';tick();
+    e.target.dataset.run=1;};
+  document.getElementById('trainReset').onclick=()=>{if(anim){cancelAnimationFrame(anim);anim=null;}document.getElementById('trainBtn').textContent='▶ Train';reset();};
+  lrS.oninput=()=>{document.getElementById('lrV').textContent=lrNames[+lrS.value];if(!anim){reset();}};
+  document.getElementById('overfitSw').onclick=function(){overfit=!overfit;this.classList.toggle('on',overfit);
+    document.getElementById('realRow').style.display=overfit?'':'none';if(!anim)reset();};
+  reset();
+})();
+
+/* ---- Part 4: checkpoints ---- */
+(function(){
+  const cv=document.getElementById('ckptCv'),ctx=cv.getContext('2d');
+  const cks=[20000,40000,60000,80000,100000];
+  const states=['rough — barely reaches','getting there','decent grasp','good &amp; smooth','best — but watch overfit'];
+  const losses=[0.42,0.28,0.20,0.16,0.14];
+  let sel=2;
+  function draw(){ctx.clearRect(0,0,cv.width,cv.height);ctx.fillStyle='#0a0f1f';ctx.fillRect(0,0,cv.width,cv.height);
+    // track
+    const y=60,x0=30,x1=cv.width-20;ctx.strokeStyle='#28345c';ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x1,y);ctx.stroke();
+    // progress to selected
+    ctx.strokeStyle='#60a5fa';ctx.beginPath();ctx.moveTo(x0,y);ctx.lineTo(x0+(x1-x0)*(cks[sel]/100000),y);ctx.stroke();
+    cks.forEach((c,i)=>{const x=x0+(x1-x0)*(c/100000);ctx.fillStyle=i===sel?'#60a5fa':'#28345c';
+      ctx.beginPath();ctx.arc(x,y,i===sel?9:6,0,7);ctx.fill();
+      ctx.fillStyle='#7f8db5';ctx.font='9px ui-monospace';ctx.textAlign='center';ctx.fillText((c/1000)+'k',x,y+22);
+      ctx.fillText('💾',x,y-14);});
+    ctx.fillStyle='#a4b2d4';ctx.font='10px ui-monospace';ctx.textAlign='left';ctx.fillText('checkpoints/ (saved every 20k steps)',x0,20);
+  }
+  function upd(){document.getElementById('ckStep').textContent=(cks[sel]/1000)+'k';
+    document.getElementById('ckState').innerHTML=states[sel]+' <span style="color:#7f8db5">(loss '+losses[sel]+')</span>';draw();}
+  const row=document.getElementById('ckptRow');
+  cks.forEach((c,i)=>{const b=document.createElement('button');b.className='btn ghost sm';b.textContent='step '+(c/1000)+'k';
+    b.onclick=()=>{sel=i;upd();};row.appendChild(b);});
+  upd();
+})();
+
+/* ---- Part 5: device speed bars ---- */
+(function(){
+  const box=document.getElementById('deviceBars');
+  const rows=[['Laptop CPU','~ 3–5 days',4,'#fb7185'],['Mac (MPS)','~ 12–24 h',22,'#fbbf24'],['1× cloud GPU (Colab)','~ 2–4 h',80,'#34d399'],['Big GPU (H200, HF Jobs)','~ 1 h',100,'#60a5fa']];
+  box.innerHTML=rows.map(r=>`<div style="display:flex;align-items:center;gap:10px;margin:7px 0;font-size:13.5px">
+    <div style="width:180px;color:#cdd8f5">${r[0]}</div>
+    <div style="flex:1;height:16px;background:#0d1428;border-radius:6px;overflow:hidden"><div style="height:100%;width:${r[2]}%;background:${r[3]}"></div></div>
+    <div style="width:90px;color:var(--muted);font-family:ui-monospace;font-size:12px">${r[1]}</div></div>`).join('');
+})();
+
+/* ---- Part 5b: cloud tabs ---- */
+document.querySelectorAll('#cloudSel button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#cloudSel button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  const colab=b.dataset.c==='colab';
+  document.getElementById('colabBlock').style.display=colab?'':'none';
+  document.getElementById('hfjobsBlock').style.display=colab?'none':'';});
+
+/* ---- Part 6: deploy watch-it-run ---- */
+(function(){
+  const cv=document.getElementById('runCv'),ctx=cv.getContext('2d');
+  const bx=60,by=170,L1=64,L2=54;let cube={x:150,y:156},cur={sh:-1.2,el:1.1},mismatch=false,anim=null;
+  function ik(tx,ty){let dx=tx-bx,dy=ty-by,d=Math.hypot(dx,dy);d=Math.min(L1+L2-2,Math.max(Math.abs(L1-L2)+2,d));
+    const ce=(d*d-L1*L1-L2*L2)/(2*L1*L2);const el=Math.acos(Math.max(-1,Math.min(1,ce)));
+    const sh=Math.atan2(dy,dx)-Math.atan2(L2*Math.sin(el),L1+L2*Math.cos(el));return {sh,el};}
+  function draw(sh,el,grip,tint){ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.fillStyle=tint||'#0a0f1f';ctx.fillRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#141d38';ctx.fillRect(0,175,cv.width,25);ctx.strokeStyle='#28345c';ctx.beginPath();ctx.moveTo(0,175);ctx.lineTo(cv.width,175);ctx.stroke();
+    ctx.fillStyle='#9784a5';ctx.font='15px sans-serif';ctx.textAlign='left';ctx.fillText('📷',8,22);
+    ctx.fillStyle='#7f8db5';ctx.font='10px ui-monospace';ctx.fillText(mismatch?'deploy scene (moved!)':'deploy scene',28,20);
+    ctx.fillStyle='#fb7185';ctx.fillRect(cube.x-11,cube.y-11,22,22);ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.strokeRect(cube.x-11,cube.y-11,22,22);
+    const j1={x:bx+Math.cos(sh)*L1,y:by+Math.sin(sh)*L1},j2={x:j1.x+Math.cos(sh+el)*L2,y:j1.y+Math.sin(sh+el)*L2};
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=11;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(j1.x,j1.y);ctx.stroke();
+    ctx.strokeStyle='#38bdf8';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(j1.x,j1.y);ctx.lineTo(j2.x,j2.y);ctx.stroke();
+    ctx.fillStyle='#0a0f1f';ctx.strokeStyle='#a78bfa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(bx,by,9,0,7);ctx.fill();ctx.stroke();
+    const perp=sh+el+Math.PI/2,gp=6+grip*8;ctx.strokeStyle='#fb7185';ctx.lineWidth=4;
+    [1,-1].forEach(s=>{ctx.beginPath();ctx.moveTo(j2.x,j2.y);ctx.lineTo(j2.x+Math.cos(sh+el)*12+Math.cos(perp)*gp*s,j2.y+Math.sin(sh+el)*12+Math.sin(perp)*gp*s);ctx.stroke();});
+    return j2;}
+  function newScene(){cube.x=120+Math.random()*55;cube.y=150+Math.random()*14;cur={sh:-1.2,el:1.1};draw(cur.sh,cur.el,1);
+    document.getElementById('runMsg').textContent='New scene. Press Run.';}
+  function run(){
+    if(anim)return;
+    // target: if mismatch, the policy aims where the object USED to be (offset) -> misses
+    const aim = mismatch? {x:cube.x-70, y:cube.y+6} : {x:cube.x, y:cube.y-14};
+    const tgt=ik(aim.x,aim.y);const K=26;let i=0;
+    document.getElementById('runMsg').innerHTML='👁️ observe → 🧠 predict chunk → ⚙️ act …';
+    (function loop(){i++;const a=i/K;cur.sh+=(tgt.sh-cur.sh)*0.18;cur.el+=(tgt.el-cur.el)*0.18;
+      const grip=a>0.75?Math.max(0,1-(a-0.75)/0.25):1;draw(cur.sh,cur.el,grip);
+      if(i<K){anim=requestAnimationFrame(loop);}else{anim=null;
+        const j2={x:bx+Math.cos(cur.sh)*L1+Math.cos(cur.sh+cur.el)*L2,y:by+Math.sin(cur.sh)*L1+Math.sin(cur.sh+cur.el)*L2};
+        const miss=Math.hypot(j2.x-cube.x,j2.y-cube.y)>34;
+        document.getElementById('runMsg').innerHTML= miss
+          ? '❌ <b class="red">Missed.</b> The scene differs from training — it grabbed empty air. Fix the setup (Ch6) or add such scenes to the data.'
+          : '✅ <b class="green">Grasped it!</b> The trained policy did it alone. That\'s a working robot. 🎉';
+      }})();
+  }
+  document.getElementById('runBtn').onclick=run;
+  document.getElementById('runNew').onclick=newScene;
+  document.getElementById('mismatchSw').onclick=function(){mismatch=!mismatch;this.classList.toggle('on',mismatch);draw(cur.sh,cur.el,1);};
+  draw(cur.sh,cur.el,1);
+})();
+
+/* quiz */
+document.querySelectorAll('[data-q]').forEach(group=>{
+  const ans=+group.dataset.a,opts=[...group.querySelectorAll('.quizopt')];
+  opts.forEach((b,i)=>b.onclick=()=>{opts.forEach(o=>o.classList.remove('right','wrong'));
+    if(i===ans)b.classList.add('right');else{b.classList.add('wrong');opts[ans].classList.add('right');}});
+});
+</script>
+</body>
+</html>

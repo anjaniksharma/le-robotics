@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0b1020;--bg2:#111834;--card:#161e40;--card2:#1d2750;--ink:#eaf0ff;--muted:#a6b3d9;--line:#2a3566;
-    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--teal:#2dd4bf;--rose:#fb7185;--orange:#fb923c;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--teal:#2dd4bf;--rose:#fb7185;--orange:#fb923c;--sky:#60a5fa;
     --shadow:0 18px 50px rgba(0,0,0,.45);
   }
   *{box-sizing:border-box}
@@ -59,7 +59,7 @@
   <header>
     <div class="kicker">Seeed Studio × Hugging Face · SO-101</div>
     <h1>The Interactive Robotics Course</h1>
-    <p class="sub">Learn how a real robot arm works — from the motors in its joints to the neural network that lets it teach itself. Six hands-on chapters with animations, dials, and live simulations. Built for curious beginners. 🤖</p>
+    <p class="sub">Learn how a real robot arm works — from the motors in its joints to the neural network that lets it teach itself. Seven hands-on chapters with animations, dials, and live simulations. Built for curious beginners. 🤖</p>
     <div class="pills">
       <span class="pill">🔧 Real hardware</span>
       <span class="pill">🧠 Real neural nets</span>
@@ -109,6 +109,13 @@
       <span class="ctitle">📷 Collecting Good Data</span>
       <span class="cdesc">Cameras, resolution, fps, lighting, and episodes — how to record demonstrations so ACT can actually learn. Audit good vs bad data live.</span>
       <span class="ctags"><span class="tag">cameras</span><span class="tag">fps</span><span class="tag">data quality</span></span>
+      <span class="go">Open chapter →</span>
+    </a>
+    <a class="card" href="chapter-07/index.html" style="--acc:var(--sky)">
+      <span class="cnum">CHAPTER 7</span>
+      <span class="ctitle">📉 Training &amp; Running</span>
+      <span class="cdesc">Turn your recordings into a policy: the loss curve, checkpoints, training in the cloud (Colab / HF Jobs), then run ACT on the arm.</span>
+      <span class="ctags"><span class="tag">loss curve</span><span class="tag">cloud GPU</span><span class="tag">deploy</span></span>
       <span class="go">Open chapter →</span>
     </a>
   </div>
