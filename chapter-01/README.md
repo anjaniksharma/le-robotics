@@ -15,14 +15,21 @@ all images and code are self-contained in this folder.
 2. **The motor family** — DC, hobby servo, stepper, brushless, and how they differ.
 3. **Torque** 💪 — twisting strength, with a drag-the-load dial.
 4. **Gear ratio** ⚙️ — trading speed for strength, with spinning gears.
-5. **Degrees of freedom** — build up a robot arm one joint at a time.
-6. **SO-101 map** — the 6 motors, their IDs, and what each joint does.
-7. **Play!** — drive a live SO-101 simulator with 6 sliders (with real joint ranges).
-8. **Recap + quiz + homework.**
+5. **Work, power & energy** 🔋 — the torque→work→power→energy chain (`W = τ·θ`,
+   `P = τ·ω`, `E = P·t`), a motor power curve (stall / peak / free-spin), and a
+   battery-runtime calculator (wall power vs a fixed battery).
+6. **Degrees of freedom** — build up a robot arm one joint at a time.
+7. **SO-101 map** — the 6 motors, their IDs, and what each joint does.
+8. **Play!** — drive a live SO-101 simulator with 6 sliders (with real joint ranges).
+9. **Recap + quiz + homework.**
 
 ## Interactive bits to try
 - Torque dial: make the load too heavy and watch the motor "stall."
 - Gear slider: see torque go up as speed goes down.
+- Power curve: slide the operating point and watch power peak in the middle
+  (zero at both stall and free-spin); "Run 5 s" banks joules of work (0 J at stall).
+- Battery calculator: change capacity / voltage / power draw → stored energy (Wh &
+  joules) and run time (E ÷ P).
 - Arm simulator: pose the arm and watch the **encoder count (0–4095)** update.
 
 ## Files

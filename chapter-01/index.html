@@ -247,9 +247,80 @@
   </div>
 </section>
 
-<!-- ============ 5 · DEGREES OF FREEDOM ============ -->
+<!-- ============ 5 · WORK, POWER & ENERGY ============ -->
+<section id="spower">
+  <div class="slide-num">Part 5 · Deep Dive</div>
+  <h2>From torque to <span class="accent">work, power &amp; energy</span></h2>
+  <p class="lead">Torque is only half the story. To actually <em>move</em> a load a motor does <b>work</b>; how fast it works is <b>power</b>; and the fuel for all of it is <b>energy</b>. Four ideas, one neat chain. 🔗</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div>
+      <h3>The chain, in one line</h3>
+      <div style="font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center;color:#fff;font-size:15px;margin:8px 0">
+        torque × angle = <span class="accent">Work</span> = <span class="accent">Energy</span> used, &nbsp; ÷ time = <span class="cyan">Power</span></div>
+      <p><b>Work</b> is what happens when a torque turns through an angle: <span class="readout accent">W = τ × θ</span>. Do work and you've spent <b>energy</b> — same thing, same unit, the <b>joule (J)</b>. <b>Power</b> is just how fast: <span class="readout cyan">P = W ÷ t</span>.</p>
+      <div class="callout"><b>The key motor formula:</b> <span class="readout" style="font-size:16px">P = τ × ω</span> — power equals torque times spin speed (ω, in rad/s). It's the twisting twin of “push × speed.”</div>
+      <p style="font-size:14px">And here's the payoff from <b>Part 4</b>: gears trade torque for speed but keep <b>power</b> about the same (τ×ω stays put). You never get free power — only a different mix of its two ingredients.</p>
+      <table style="margin-top:10px">
+        <tr><th>Straight-line</th><th>Spinning</th></tr>
+        <tr><td>force F</td><td>torque τ</td></tr>
+        <tr><td>work = F × distance</td><td>work = τ × angle</td></tr>
+        <tr><td>power = F × speed</td><td>power = τ × ω</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Motor power curve</h3>
+      <p style="font-size:13.5px;margin-top:0">Slide the motor's <b>operating point</b> from a dead stop to free spinning. Watch torque fall, speed rise, and <b class="accent">power</b> peak right in the middle.</p>
+      <svg id="pwrSvg" viewBox="0 0 360 210" style="width:100%;height:auto"></svg>
+      <div class="ctl-label" style="margin-top:6px"><span>Operating point</span><span class="val" id="opLbl">50%</span></div>
+      <input id="opS" type="range" min="0" max="100" value="50">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#8a97c4;margin-top:-6px"><span>◀ stall (max twist)</span><span>free spin ▶</span></div>
+      <div class="grid g3" style="margin-top:12px">
+        <div class="stat"><span class="n amber" id="pTau">1.5</span><span class="l">torque (N·m)</span></div>
+        <div class="stat"><span class="n cyan" id="pRpm">25</span><span class="l">speed (rpm)</span></div>
+        <div class="stat"><span class="n accent" id="pPow">3.9</span><span class="l">power (W)</span></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <button class="btn" id="pRun">▶ Run 5 s</button>
+        <div class="stat"><span class="n" id="pWork">0</span><span class="l">work done (joules)</span></div>
+      </div>
+      <div id="pWorkBar" style="height:10px;border-radius:8px;background:#0e1533;margin-top:6px;overflow:hidden"><div id="pWorkFill" style="height:100%;width:0;background:linear-gradient(90deg,var(--lime),var(--cyan))"></div></div>
+      <p style="font-size:12.5px;margin-top:8px" id="pMsg">At the two ends, power is <b>zero</b> — no motion (stall) or no force (free spin) means no work gets done.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h3>🔋 What if the arm ran on a <span class="accent">battery</span> instead of the wall?</h3>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <p>The SO-101 normally plugs into the wall: an adapter turns AC mains into steady DC, and the energy is effectively <b>unlimited</b> — as long as it's plugged in.</p>
+      <p>A <b>battery</b> is different: it holds a <b>fixed</b> amount of energy. And because <b>energy = power × time</b>, that fixed tank sets how long the arm can run:</p>
+      <div style="font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:12px;padding:12px 16px;text-align:center;color:#fff;font-size:14.5px;margin:10px 0">
+        energy = capacity(Ah) × voltage(V) &nbsp;→&nbsp; Wh<br>
+        <span class="accent">run time = energy ÷ power</span> &nbsp; <span style="color:#8a97c4">( E = P × t )</span></div>
+      <div class="callout q">It's the <b>same</b> <span class="readout">E = P·t</span> from the power curve above — just rearranged. Bigger battery = more energy = longer runtime; a hungrier motion (more watts) drains it faster.</div>
+      <p style="font-size:14px">That's why a fixed workshop arm uses the <b>wall</b> (endless energy, stable voltage), while a mobile robot carries a <b>battery</b> and must budget every joule. ⚖️</p>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Battery runtime calculator</h3>
+      <div class="ctl-label"><span>Battery capacity</span><span class="val"><span id="bCap">2200</span> mAh</span></div>
+      <input id="bCapS" type="range" min="500" max="6000" step="100" value="2200">
+      <div class="ctl-label"><span>Battery voltage</span><span class="val"><span id="bV">12</span> V</span></div>
+      <input id="bVS" type="range" min="6" max="24" step="0.4" value="12">
+      <div class="ctl-label"><span>Average power the arm draws</span><span class="val"><span id="bP">8</span> W</span></div>
+      <input id="bPS" type="range" min="2" max="24" step="0.5" value="8">
+      <svg id="battSvg" viewBox="0 0 320 60" style="width:100%;height:auto;margin-top:8px"></svg>
+      <div class="grid g2" style="margin-top:10px">
+        <div class="stat"><span class="n accent" id="bWh">26.4</span><span class="l">stored energy (Wh)</span></div>
+        <div class="stat"><span class="n" id="bRun">3 h 18 m</span><span class="l">run time (E ÷ P)</span></div>
+      </div>
+      <p style="font-size:12.5px;color:#8a97c4;margin-top:8px" id="bMsg"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 6 · DEGREES OF FREEDOM ============ -->
 <section id="s5">
-  <div class="slide-num">Part 5 · Big Idea #3</div>
+  <div class="slide-num">Part 6 · Big Idea #3</div>
   <h2><span class="violet">Degrees of Freedom</span> (DOF)</h2>
   <p class="lead">A <b>degree of freedom</b> is one independent way a robot can move. Each motor in the SO-101 adds <b>one</b> DOF. More DOF = the robot can reach more poses and orientations.</p>
   <div class="grid g2">
@@ -272,7 +343,7 @@
 
 <!-- ============ 6 · SO-101 MAP ============ -->
 <section id="s6">
-  <div class="slide-num">Part 6 · Putting It Together</div>
+  <div class="slide-num">Part 7 · Putting It Together</div>
   <h2>The SO-101 arm: 6 motors, 6 IDs</h2>
   <div class="grid g2" style="align-items:start">
     <div class="card" style="padding:12px">
@@ -297,7 +368,7 @@
 
 <!-- ============ 7 · INTERACTIVE ARM ============ -->
 <section id="s7">
-  <div class="slide-num">Part 7 · Play!</div>
+  <div class="slide-num">Part 8 · Play!</div>
   <h2>🎛️ Drive the SO-101 yourself</h2>
   <p class="lead">Move each motor with its dial and watch the arm respond — just like sending a command in code. Each slider stays inside that joint's real <b>range of motion</b>.</p>
   <div class="grid g2" style="align-items:start;margin-top:8px">
@@ -374,7 +445,7 @@
 /* ================= Navigation rail + progress ================= */
 const secs=[...document.querySelectorAll('section')];
 const rail=document.getElementById('rail');
-const labels=['Intro','The Motor','Motor Family','Torque','Gear Ratio','DOF','SO-101 Map','Play','Recap'];
+const labels=['Intro','The Motor','Motor Family','Torque','Gear Ratio','Power','DOF','SO-101 Map','Play','Recap'];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
 const dots=[...rail.children];
 const bar=document.getElementById('topbar');
@@ -571,6 +642,86 @@ window.addEventListener('keydown',e=>{
     document.getElementById('whichM').textContent=watch;
   }
   draw();
+})();
+
+/* ================= 5 · Power curve (τ, ω, P, Work) ================= */
+(function(){
+  const TAU=2.94, WMAX=5.236;            // stall torque (N·m), no-load speed (rad/s ≈ 50 rpm)
+  const PPEAK=TAU*WMAX/4;
+  const svg=document.getElementById('pwrSvg'),opS=document.getElementById('opS');
+  const PX0=40,PX1=340,PY0=195,PY1=22;
+  const X=w=>PX0+(w/WMAX)*(PX1-PX0);
+  const Yt=t=>PY0-(t/TAU)*(PY0-PY1);
+  const Yp=p=>PY0-(p/PPEAK)*(PY0-PY1);
+  let runRaf=null;
+  function draw(){
+    const op=+opS.value/100, w=op*WMAX, tau=TAU*(1-op), P=tau*w, rpm=w*60/(2*Math.PI);
+    document.getElementById('opLbl').textContent=(+opS.value)+'%';
+    document.getElementById('pTau').textContent=tau.toFixed(2);
+    document.getElementById('pRpm').textContent=Math.round(rpm);
+    document.getElementById('pPow').textContent=P.toFixed(1);
+    // power parabola path
+    let pp='';for(let i=0;i<=40;i++){const ww=WMAX*i/40;const P2=TAU*(1-ww/WMAX)*ww;pp+=(i?'L':'M')+X(ww).toFixed(1)+','+Yp(P2).toFixed(1)+' ';}
+    let s='';
+    // axes
+    s+=`<line x1="${PX0}" y1="${PY0}" x2="${PX1}" y2="${PY0}" stroke="#2a3566"/><line x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}" stroke="#2a3566"/>`;
+    s+=`<text x="${(PX0+PX1)/2}" y="208" fill="#6b78a8" font-size="10" text-anchor="middle">spin speed  ω  →</text>`;
+    // torque line (amber)
+    s+=`<line x1="${X(0)}" y1="${Yt(TAU)}" x2="${X(WMAX)}" y2="${Yt(0)}" stroke="#fbbf24" stroke-width="2.5"/>`;
+    s+=`<text x="${X(0.15*WMAX)}" y="${Yt(TAU)-6}" fill="#fbbf24" font-size="10">torque</text>`;
+    // power curve (lime)
+    s+=`<path d="${pp}" fill="none" stroke="#a3e635" stroke-width="2.5"/>`;
+    s+=`<text x="${X(WMAX/2)}" y="${Yp(PPEAK)-8}" fill="#a3e635" font-size="10" text-anchor="middle">power = τ·ω</text>`;
+    // operating marker
+    s+=`<line x1="${X(w)}" y1="${PY1}" x2="${X(w)}" y2="${PY0}" stroke="#eaf0ff" stroke-dasharray="3 3" opacity=".5"/>`;
+    s+=`<circle cx="${X(w)}" cy="${Yt(tau)}" r="5" fill="#fbbf24"/><circle cx="${X(w)}" cy="${Yp(P)}" r="5" fill="#a3e635"/>`;
+    s+=`<text x="${PX0}" y="${PY0-2}" fill="#6b78a8" font-size="9">stall</text><text x="${PX1}" y="${PY0-2}" fill="#6b78a8" font-size="9" text-anchor="end">free spin</text>`;
+    svg.innerHTML=s;
+    return {P,tau,w};
+  }
+  opS.oninput=()=>{if(runRaf){cancelAnimationFrame(runRaf);runRaf=null;}document.getElementById('pWorkFill').style.width='0';document.getElementById('pWork').textContent='0';draw();
+    const P=(+opS.value/100)*TAU*(1-+opS.value/100)*WMAX;
+    document.getElementById('pMsg').innerHTML = P<0.15
+      ? 'At the ends, power is <b>zero</b> — no motion (stall) or no force (free spin) means <b>no work</b> gets done.'
+      : 'Sweet spot! Moderate torque × moderate speed = the most work per second. Press <b>Run 5 s</b> to bank some joules.';
+  };
+  document.getElementById('pRun').onclick=()=>{
+    if(runRaf)cancelAnimationFrame(runRaf);
+    const {P}=draw();const total=P*5;let t0=null;
+    const fill=document.getElementById('pWorkFill'),num=document.getElementById('pWork');
+    function loop(ts){if(t0===null)t0=ts;const el=(ts-t0)/1000;const frac=Math.min(1,el/5);
+      num.textContent=(total*frac).toFixed(1);fill.style.width=(total>0?frac*100:0)+'%';
+      if(frac<1)runRaf=requestAnimationFrame(loop);else{runRaf=null;
+        document.getElementById('pMsg').innerHTML=total<0.2?'⚡ <b>0 joules</b> — nothing moved (or no force). Torque alone isn\'t work!':`💪 Banked <b class="accent">${total.toFixed(1)} J</b> of work in 5 s (that's ${P.toFixed(1)} W × 5 s = energy used).`;}
+    }
+    runRaf=requestAnimationFrame(loop);
+  };
+  draw();
+})();
+
+/* ================= 5b · Battery runtime ================= */
+(function(){
+  const cap=document.getElementById('bCapS'),volt=document.getElementById('bVS'),pw=document.getElementById('bPS');
+  const svg=document.getElementById('battSvg');
+  function fmt(h){const H=Math.floor(h),M=Math.round((h-H)*60);return (H>0?H+' h ':'')+M+' m';}
+  function draw(){
+    const mAh=+cap.value,V=+volt.value,P=+pw.value;
+    const Wh=(mAh/1000)*V, J=Wh*3600, h=Wh/P;
+    document.getElementById('bCap').textContent=mAh;
+    document.getElementById('bV').textContent=V.toFixed(V%1?1:0);
+    document.getElementById('bP').textContent=P.toFixed(P%1?1:0);
+    document.getElementById('bWh').textContent=Wh.toFixed(1);
+    document.getElementById('bRun').textContent=fmt(h);
+    document.getElementById('bMsg').innerHTML=`= ${Math.round(J).toLocaleString()} joules of stored energy. At ${P} W, that lasts <b>${fmt(h)}</b> — then it's recharge time. 🔌`;
+    // battery glyph, fill ∝ Wh (relative to a 60 Wh reference)
+    const frac=Math.max(.04,Math.min(1,Wh/60));
+    svg.innerHTML=`<rect x="6" y="12" width="280" height="36" rx="6" fill="#0e1533" stroke="#2a3566" stroke-width="2"/>`+
+      `<rect x="288" y="22" width="9" height="16" rx="2" fill="#2a3566"/>`+
+      `<rect x="10" y="16" width="${272*frac}" height="28" rx="4" fill="url(#bg1)"/>`+
+      `<defs><linearGradient id="bg1" x1="0" x2="1"><stop offset="0" stop-color="#a3e635"/><stop offset="1" stop-color="#34d399"/></linearGradient></defs>`+
+      `<text x="146" y="34" fill="#eaf0ff" font-size="14" font-weight="800" text-anchor="middle" font-family="ui-monospace" style="paint-order:stroke" stroke="#0b1020" stroke-width="3">${Wh.toFixed(1)} Wh</text>`;
+  }
+  [cap,volt,pw].forEach(s=>s.oninput=draw);draw();
 })();
 
 /* ================= 8 · Quiz ================= */
