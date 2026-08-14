@@ -318,9 +318,54 @@
   </div>
 </section>
 
-<!-- ============ 6 · DEGREES OF FREEDOM ============ -->
+<!-- ============ 6 · PID CONTROL ============ -->
+<section id="spid">
+  <div class="slide-num">Part 6 · Deep Dive</div>
+  <h2>How the motor <span class="accent">holds a position</span>: PID</h2>
+  <p class="lead">When you tell a joint “go to 90°,” something has to actually drive it there and <b>keep</b> it there while gravity pulls and hands nudge. That something is a <b class="accent">PID controller</b> — the little loop of math running inside every STS3215.</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div>
+      <p>Every instant, the controller measures the <b>error</b> = <span class="readout">target − actual</span> (from the encoder, Part 1) and decides how hard to push. It blends <b>three</b> reactions:</p>
+      <table style="margin-top:6px">
+        <tr><th>Term</th><th>Reacts to</th><th>Its job</th></tr>
+        <tr><td><b class="cyan">P</b> — proportional</td><td>the error <b>now</b></td><td>“Far away? Push harder.”</td></tr>
+        <tr><td><b class="amber">I</b> — integral</td><td>error <b>piled up</b></td><td>“Still a bit short? Close the last gap.”</td></tr>
+        <tr><td><b class="violet">D</b> — derivative</td><td><b>how fast</b> error changes</td><td>“Coming in hot? Ease off — brake.”</td></tr>
+      </table>
+      <div style="font-family:ui-monospace,Menlo,monospace;background:#0d1330;border:1px solid var(--line);border-radius:12px;padding:12px 16px;text-align:center;color:#fff;font-size:15px;margin:12px 0">
+        push = <span class="cyan">Kp·e</span> + <span class="amber">Ki·∑e</span> + <span class="violet">Kd·Δe</span></div>
+      <p>The <b>K</b>s are tuning knobs (“gains”). Good tuning = reach the target <b>fast</b>, without <b>overshooting</b>, and without <b>wobbling</b>. Try to find it →</p>
+      <div class="callout"><b>Real SO-101:</b> position-mode PID gains are written into each STS3215 when LeRobot connects (Chapter 2). Without PID the arm would droop, oscillate, or never quite land on the angle you asked for.</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Tune the joint 🎛️</h3>
+      <p style="font-size:13px;margin-top:0">Command: go to <b>90°</b> from rest. The curve is the joint's angle over time; the dashed line is the target.</p>
+      <svg id="pidSvg" viewBox="0 0 360 190" style="width:100%;height:auto"></svg>
+      <div class="ctl-label"><span class="cyan">Kp — proportional</span><span class="val" id="kpV">1.6</span></div>
+      <input id="kpS" type="range" min="0" max="3" step="0.1" value="1.6">
+      <div class="ctl-label"><span class="amber">Ki — integral</span><span class="val" id="kiV">0.5</span></div>
+      <input id="kiS" type="range" min="0" max="1.5" step="0.05" value="0.5">
+      <div class="ctl-label"><span class="violet">Kd — derivative</span><span class="val" id="kdV">1.0</span></div>
+      <input id="kdS" type="range" min="0" max="1.5" step="0.05" value="1.0">
+      <div class="grid g3" style="margin-top:10px">
+        <div class="stat"><span class="n" id="pidOver">—</span><span class="l">overshoot</span></div>
+        <div class="stat"><span class="n" id="pidErr">—</span><span class="l">final gap</span></div>
+        <div class="stat"><span class="n" id="pidState" style="font-size:15px">—</span><span class="l">verdict</span></div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">
+        <button class="btn" id="pidPlay">▶ Play</button>
+        <button class="btn ghost" style="font-size:13px;padding:7px 12px" id="preSlug">🐌 Sluggish</button>
+        <button class="btn ghost" style="font-size:13px;padding:7px 12px" id="preOsc">〰️ Wobbly</button>
+        <button class="btn ghost" style="font-size:13px;padding:7px 12px" id="preTuned">✅ Tuned</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#cbd6ff;margin-top:10px"><input type="checkbox" id="pidGrav" checked> Gravity load on the joint (watch <b class="amber">I</b> earn its keep)</label>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7 · DEGREES OF FREEDOM ============ -->
 <section id="s5">
-  <div class="slide-num">Part 6 · Big Idea #3</div>
+  <div class="slide-num">Part 7 · Big Idea #3</div>
   <h2><span class="violet">Degrees of Freedom</span> (DOF)</h2>
   <p class="lead">A <b>degree of freedom</b> is one independent way a robot can move. Each motor in the SO-101 adds <b>one</b> DOF. More DOF = the robot can reach more poses and orientations.</p>
   <div class="grid g2">
@@ -343,7 +388,7 @@
 
 <!-- ============ 6 · SO-101 MAP ============ -->
 <section id="s6">
-  <div class="slide-num">Part 7 · Putting It Together</div>
+  <div class="slide-num">Part 8 · Putting It Together</div>
   <h2>The SO-101 arm: 6 motors, 6 IDs</h2>
   <div class="grid g2" style="align-items:start">
     <div class="card" style="padding:12px">
@@ -368,7 +413,7 @@
 
 <!-- ============ 7 · INTERACTIVE ARM ============ -->
 <section id="s7">
-  <div class="slide-num">Part 8 · Play!</div>
+  <div class="slide-num">Part 9 · Play!</div>
   <h2>🎛️ Drive the SO-101 yourself</h2>
   <p class="lead">Move each motor with its dial and watch the arm respond — just like sending a command in code. Each slider stays inside that joint's real <b>range of motion</b>.</p>
   <div class="grid g2" style="align-items:start;margin-top:8px">
@@ -445,7 +490,7 @@
 /* ================= Navigation rail + progress ================= */
 const secs=[...document.querySelectorAll('section')];
 const rail=document.getElementById('rail');
-const labels=['Intro','The Motor','Motor Family','Torque','Gear Ratio','Power','DOF','SO-101 Map','Play','Recap'];
+const labels=['Intro','The Motor','Motor Family','Torque','Gear Ratio','Power','PID','DOF','SO-101 Map','Play','Recap'];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
 const dots=[...rail.children];
 const bar=document.getElementById('topbar');
@@ -722,6 +767,77 @@ window.addEventListener('keydown',e=>{
       `<text x="146" y="34" fill="#eaf0ff" font-size="14" font-weight="800" text-anchor="middle" font-family="ui-monospace" style="paint-order:stroke" stroke="#0b1020" stroke-width="3">${Wh.toFixed(1)} Wh</text>`;
   }
   [cap,volt,pw].forEach(s=>s.oninput=draw);draw();
+})();
+
+/* ================= 6 · PID tuner ================= */
+(function(){
+  const svg=document.getElementById('pidSvg');
+  const kp=document.getElementById('kpS'),ki=document.getElementById('kiS'),kd=document.getElementById('kdS'),grav=document.getElementById('pidGrav');
+  const N=220,dt=0.02,J=1.0,b=0.5,G=4.0;
+  const W=360,H=190,PX0=30,PX1=W-8,PY0=H-22,PY1=12;
+  let curve=[],playRaf=null;
+  function simulate(){
+    const Kp=+kp.value,Ki=+ki.value,Kd=+kd.value,bias=grav.checked?-0.9:0;
+    let theta=0,omega=0,integ=0,ePrev=1;const arr=[];
+    for(let i=0;i<N;i++){
+      const e=1-theta;integ+=e*dt;integ=Math.max(-3,Math.min(3,integ));
+      const der=(e-ePrev)/dt;ePrev=e;
+      const u=G*(Kp*e+Ki*integ+Kd*der);
+      const acc=(u+bias-b*omega)/J;
+      omega+=acc*dt;theta+=omega*dt;arr.push(theta);
+    }
+    return arr;
+  }
+  const X=i=>PX0+(i/(N-1))*(PX1-PX0);
+  const Y=v=>PY0-(Math.max(-0.15,Math.min(1.5,v))/1.5)*(PY0-PY1);
+  function draw(playIdx){
+    curve=curve.length?curve:simulate();
+    let s='';
+    // axes + target line
+    s+=`<line x1="${PX0}" y1="${PY0}" x2="${PX1}" y2="${PY0}" stroke="#2a3566"/><line x1="${PX0}" y1="${PY0}" x2="${PX0}" y2="${PY1}" stroke="#2a3566"/>`;
+    s+=`<line x1="${PX0}" y1="${Y(1)}" x2="${PX1}" y2="${Y(1)}" stroke="#a3e635" stroke-dasharray="4 3" opacity=".7"/><text x="${PX1}" y="${Y(1)-4}" fill="#a3e635" font-size="10" text-anchor="end">target 90°</text>`;
+    s+=`<text x="${PX0+4}" y="${PY0-3}" fill="#6b78a8" font-size="9">time →</text>`;
+    // curve
+    let p='';curve.forEach((v,i)=>{p+=(i?'L':'M')+X(i).toFixed(1)+','+Y(v).toFixed(1)+' ';});
+    s+=`<path d="${p}" fill="none" stroke="#38bdf8" stroke-width="2.5"/>`;
+    // moving dot + arm during play
+    const idx=playIdx==null?curve.length-1:playIdx;
+    const val=curve[idx];
+    s+=`<circle cx="${X(idx)}" cy="${Y(val)}" r="4" fill="#fff"/>`;
+    // little joint arm (top-right), 0°=up, sweeps to val*90
+    const ax=W-40,ay=44,R=26,ang=(-90+val*90)*Math.PI/180;
+    s+=`<circle cx="${ax}" cy="${ay}" r="3" fill="#a6b3d9"/>`;
+    s+=`<line x1="${ax}" y1="${ay}" x2="${ax+Math.cos(ang)*R}" y2="${ay+Math.sin(ang)*R}" stroke="#a3e635" stroke-width="4" stroke-linecap="round"/>`;
+    s+=`<line x1="${ax}" y1="${ay}" x2="${ax}" y2="${ay-R}" stroke="#3a4780" stroke-width="1" stroke-dasharray="2 2"/>`;
+    s+=`<text x="${ax}" y="${ay+34}" fill="#6b78a8" font-size="9" text-anchor="middle">${Math.round(val*90)}°</text>`;
+    svg.innerHTML=s;
+  }
+  function metrics(){
+    const peak=Math.max(...curve),final=curve[curve.length-1];
+    const over=Math.max(0,(peak-1))*100;
+    document.getElementById('pidOver').textContent=over.toFixed(0)+'%';
+    document.getElementById('pidErr').textContent=(final*90-90).toFixed(0)+'°';
+    // settled: last 30 samples within 5% of target
+    const settled=curve.slice(-30).every(v=>Math.abs(v-1)<0.05);
+    const st=document.getElementById('pidState');
+    if(over>20){st.textContent='wobbly 〰️';st.style.color='#fb7185';}
+    else if(settled){st.textContent='tuned ✅';st.style.color='#34d399';}
+    else if(Math.abs(final-1)>0.05){st.textContent='sluggish 🐌';st.style.color='#fbbf24';}
+    else {st.textContent='settling…';st.style.color='#a6b3d9';}
+    document.getElementById('pidOver').style.color=over>20?'#fb7185':'#fff';
+  }
+  function refresh(){document.getElementById('kpV').textContent=(+kp.value).toFixed(1);
+    document.getElementById('kiV').textContent=(+ki.value).toFixed(2);
+    document.getElementById('kdV').textContent=(+kd.value).toFixed(2);
+    curve=simulate();draw();metrics();}
+  [kp,ki,kd,grav].forEach(el=>el.oninput=el.onchange=()=>{if(playRaf)cancelAnimationFrame(playRaf);refresh();});
+  document.getElementById('pidPlay').onclick=()=>{if(playRaf)cancelAnimationFrame(playRaf);curve=simulate();let i=0;
+    (function loop(){draw(i);i+=2;if(i<curve.length)playRaf=requestAnimationFrame(loop);else{draw();metrics();}})();};
+  function preset(p,i,d){kp.value=p;ki.value=i;kd.value=d;refresh();}
+  document.getElementById('preSlug').onclick=()=>preset(0.4,0.05,0.3);
+  document.getElementById('preOsc').onclick=()=>preset(2.8,0.2,0.05);
+  document.getElementById('preTuned').onclick=()=>preset(1.6,0.4,1.0);
+  refresh();
 })();
 
 /* ================= 8 · Quiz ================= */

@@ -18,10 +18,13 @@ all images and code are self-contained in this folder.
 5. **Work, power & energy** 🔋 — the torque→work→power→energy chain (`W = τ·θ`,
    `P = τ·ω`, `E = P·t`), a motor power curve (stall / peak / free-spin), and a
    battery-runtime calculator (wall power vs a fixed battery).
-6. **Degrees of freedom** — build up a robot arm one joint at a time.
-7. **SO-101 map** — the 6 motors, their IDs, and what each joint does.
-8. **Play!** — drive a live SO-101 simulator with 6 sliders (with real joint ranges).
-9. **Recap + quiz + homework.**
+6. **PID control** 🎛️ — how the servo *holds* a position: P/I/D explained, and a
+   real step-response simulator you tune (Kp/Ki/Kd) to get overshoot, wobble, or a
+   smooth settle; a gravity load shows why the **I** term matters.
+7. **Degrees of freedom** — build up a robot arm one joint at a time.
+8. **SO-101 map** — the 6 motors, their IDs, and what each joint does.
+9. **Play!** — drive a live SO-101 simulator with 6 sliders (with real joint ranges).
+10. **Recap + quiz + homework.**
 
 ## Interactive bits to try
 - Torque dial: make the load too heavy and watch the motor "stall."
@@ -30,6 +33,9 @@ all images and code are self-contained in this folder.
   (zero at both stall and free-spin); "Run 5 s" banks joules of work (0 J at stall).
 - Battery calculator: change capacity / voltage / power draw → stored energy (Wh &
   joules) and run time (E ÷ P).
+- PID tuner: presets for Sluggish / Wobbly / Tuned, or drag Kp/Ki/Kd yourself and
+  watch the joint's response curve overshoot, ring, or settle smoothly (real
+  second-order simulation; gravity load demonstrates the integral term).
 - Arm simulator: pose the arm and watch the **encoder count (0–4095)** update.
 
 ## Files
