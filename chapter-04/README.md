@@ -1,44 +1,43 @@
-# Chapter 4 — How Machines Learn 🧠
+# Chapter 4 — Program it or Teach it? 🤔
 
-An interactive HTML lesson introducing deep-learning **training** from scratch for a
-9th-grade student: neurons, weights, error/loss, gradient descent, and
-backpropagation — building to a **real neural network you train live in the browser**.
+An interactive HTML lesson that builds intuition for **why** robotics uses AI at all,
+by contrasting learning with the other ways to control a robot — and landing on
+"right tool for the job." Sits right before the learning chapters.
 
 ## How to use it
 Open **`index.html`** in any browser. Self-contained, no internet needed.
 Scroll or use **↓ / ↑**; the dots on the right jump between sections.
 
 ## What it teaches
-1. **The big idea** — a network is a *function with knobs*; training is the same
-   5-step loop (data → guess → error → blame → nudge) for *every* model.
-2. **The neuron** — weighted sum + activation: `y = f(w₁x₁ + w₂x₂ + b)`.
-3. **Loss** — two flavors, both revisited in Chapter 5:
-   distance/L1 `|ŷ−y|` (regression — what the robot uses) and
-   surprise/cross-entropy `−log(p)` (classification — what text uses).
-4. **Gradient descent** — slope points downhill; `w ← w − lr·slope`; the
-   learning-rate trade-off (too big overshoots).
-5. **Backpropagation** — the chain rule as "multiply the slopes along the path."
-6. **Train a real network — live.**
+1. **Two ways to give a robot a brain** — *program it* (write exact rules) vs.
+   *teach it* (show examples / AI).
+2. **The ladder of robot brains** — an interactive spectrum: playback → rules &
+   sensors → classical control (IK/PID) → learning; click each rung for how it
+   decides, when it shines, and when it breaks, with real robot examples.
+3. **★ Playback vs. Learned** — two arms taught to grab a cube in the center; move
+   the cube and run both: the **playback** arm blindly repeats and grabs empty air,
+   the **learned** arm finds the cube. (Mirrors LeRobot's real `lerobot-replay` vs
+   `lerobot-rollout`.)
+4. **The wall rules hit** — why hand-writing rules explodes in the messy real world
+   (any position, lighting, soft objects, perception from pixels); an interactive
+   "rules pile up" counter.
+5. **★ "Program it or Teach it?" sorter** — a decision game: pick the smarter
+   approach for real tasks and get the reasoning; teaches the pattern.
+6. **The honest answer** — a comparison table (rules/control are often *better*:
+   cheaper, 100% reliable, explainable) → AI is for messy tasks → the SO-101's tasks
+   *are* messy → so we go AI. Bridges into Chapter 5.
+7. **Recap + quiz + homework.**
 
-## The interactive pieces (all real math, no libraries)
-- **Perceptron playground** — turn the weight knobs to separate two clusters; the
-  weights *are* the boundary line.
-- **Loss meter** — drag a prediction toward a target; watch L1 & squared loss.
-- **Gradient-descent ball** — press Step to roll downhill; crank the learning rate
-  until it overshoots and flies out of the valley.
-- **Backprop visual** — a real 1-2-1 net; each Train step nudges the weights and
-  the loss drops toward 0.
-- **★ Live-trained classifier** — a genuine 2-8-1 network running real
-  gradient descent + backprop on **interlocking two-moons** data. With the hidden
-  layer on it reaches **100%** (the boundary bends to fit); turn the hidden layer
-  off and a single straight line **stalls near ~85–88%** — a hands-on proof of why
-  depth matters.
+## Framing
+Deliberately **"right tool for the job,"** not "AI good, rules bad." Kids learn that
+engineers pick the simplest method that works, and climb toward learning only when a
+task is too messy for rules — which the SO-101's tasks are.
 
-## Notes on accuracy
-The math shown (weighted sum, L1/squared/cross-entropy loss, the update rule, the
-chain rule) is real and drives the demos. The L1 loss is highlighted deliberately
-because it's exactly what the robot's **ACT** policy uses — the thread we pick up in
-Chapter 5.
+## Accuracy notes
+`lerobot-replay` (playback of a recording) and `lerobot-rollout` (run a trained
+policy) are real LeRobot CLIs; classical control (inverse kinematics, PID) is the
+SO-101's low-level control (Chapter 1). All scenes are **synthetic illustrations**.
 
-Verified in-browser: the live network converges (loss → ~0.006, accuracy → 100%
-with a hidden layer; ~88% without), no console errors.
+Verified in-browser: the ladder, the playback-vs-learned demo (playback misses when
+the cube moves, learned adapts), the rules-pile-up counter, and the sorter all work;
+no console errors.

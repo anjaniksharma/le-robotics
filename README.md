@@ -13,11 +13,12 @@ offline — just open `index.html`.
 | 1 | **The Muscles of a Robot** | STS3215 servos, torque, gear ratio, degrees of freedom; a driveable 6-motor arm | [chapter-01](chapter-01/index.html) |
 | 2 | **Waking Up the Robot** | Python virtual env, installing LeRobot on a Mac, USB/serial wiring & ports | [chapter-02](chapter-02/index.html) |
 | 3 | **Calibration** | Teaching both arms their center & range so leader and follower share one language | [chapter-03](chapter-03/index.html) |
-| 4 | **How Machines Learn** | Neurons, loss, gradient descent, backprop — and a **real neural net you train live** | [chapter-04](chapter-04/index.html) |
-| 5 | **From Words to Motion** | Text generation (next-token) → **ACT**, the robot's brain that predicts motions | [chapter-05](chapter-05/index.html) |
-| 6 | **Collecting Good Data** | Cameras, resolution, fps, encoding, lighting & episodes; a live good-vs-bad data auditor | [chapter-06](chapter-06/index.html) |
-| 7 | **Training & Running** | The loss curve, checkpoints, cloud training (Colab / HF Jobs), and deploying ACT on the arm | [chapter-07](chapter-07/index.html) |
-| 8 | **From One Task to Many** | Language-conditioned policies (VLAs): fine-tuning SmolVLA + a live instruction → action demo | [chapter-08](chapter-08/index.html) |
+| 4 | **Program it or Teach it?** | Why use AI at all — playback, rules, classical control vs. learning; when each is the right tool | [chapter-04](chapter-04/index.html) |
+| 5 | **How Machines Learn** | Neurons, loss, gradient descent, backprop — and a **real neural net you train live** | [chapter-05](chapter-05/index.html) |
+| 6 | **From Words to Motion** | Text generation (next-token) → **ACT**, the robot's brain that predicts motions | [chapter-06](chapter-06/index.html) |
+| 7 | **Collecting Good Data** | Cameras, resolution, fps, encoding, lighting & episodes; a live good-vs-bad data auditor | [chapter-07](chapter-07/index.html) |
+| 8 | **Training & Running** | The loss curve, checkpoints, cloud training (Colab / HF Jobs), and deploying ACT on the arm | [chapter-08](chapter-08/index.html) |
+| 9 | **From One Task to Many** | Language-conditioned policies (VLAs): fine-tuning SmolVLA + a live instruction → action demo | [chapter-09](chapter-09/index.html) |
 
 ## Live hardware demos (`live-demo/`)
 Drive a **real STS3215 motor** — or a simulated one if none is plugged in — straight

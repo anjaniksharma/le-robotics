@@ -1,46 +1,45 @@
-# Chapter 6 — Collecting Good Data 📷
+# Chapter 6 — From Words to Motion 💬🤖
 
-An interactive HTML lesson on how to record demonstrations for the SO-101 so the
-ACT policy (Chapter 5) can actually learn: cameras, resolution, fps, image
-encoding, lighting/scene setup, episodes, the dataset format, and — the
-centerpiece — a hands-on **good-vs-bad data auditor**.
+An interactive HTML lesson connecting the training fundamentals from Chapter 5 to
+**text generation** and then to the SO-101's own brain, **ACT**.
 
 ## How to use it
 Open **`index.html`** in any browser. Self-contained, no internet needed.
 Scroll or use **↓ / ↑**; the dots on the right jump between sections.
 
 ## What it teaches
-1. **Garbage in, garbage out** — ACT imitates you, so it copies your data's flaws.
-2. **One frame** = a synchronized snapshot: `observation.images.<cam>`,
-   `observation.state` (6 joints), `action` (6 targets), `timestamp`, `task`.
-3. **Cameras: position & resolution** — a fixed front/top view + a wrist cam;
-   keep it still and identical at deploy; default `640×480`. Interactive camera
-   sim with an occlusion toggle (arm hides the cube from the front cam → wrist cam
-   still sees it) and a resolution/pixelation slider.
-4. **Frames per second** — `fps=30` default; the loop must keep up or frames drop.
-   Interactive fps sampler (choppy vs smooth); `frames = fps × seconds`.
-5. **Image encoding** — frames stored as compressed **MP4 video** (not raw), ~10–100×
-   smaller. Interactive dataset-size estimator (cameras × resolution × episodes).
-6. **Lighting, background & object** — the consistency ↔ variety balance: hold the
-   camera/lighting/background steady; vary the object position and approach.
-7. **Episodes** — same home start, tight `episode_time_s`, `reset_time_s` between,
-   many `num_episodes`. Interactive episode timeline + total-frames calculator.
-8. **The dataset on disk** — the real LeRobotDataset layout (`data/*.parquet`,
-   `videos/observation.images.<cam>/*.mp4`, `meta/`). Interactive frame scrubber.
-9. **★ Data-quality auditor** — toggle seven recording factors (camera moved,
-   flickering light, object always same spot, jerky demos, too few episodes,
-   dropped frames, wrong label) → a predicted task-success gauge and the specific
-   failure mode each one causes.
-10. **A printable good-data checklist, the real `lerobot-record` command, quiz &
-    homework.**
+1. **Same loop, three jobs** — a comparison table (image classifier / GPT / ACT):
+   only the input, output, and loss change.
+2. **Seeing (ResNet, briefly)** — images are grids of numbers; layers find edges →
+   objects. Interactive edge-detector you slide across a scene.
+3. **Next-token prediction** — text is tokens; the model outputs a probability for
+   every next token (classification over a vocabulary); training is
+   self-supervised (the answer is the next word in the text).
+4. **★ Text generation** — a **real tiny next-token model** (trigram+bigram blend
+   built live from a robot-themed corpus) with a **temperature** slider. Watch the
+   probability bars reshape and a sentence build word by word (autoregression).
+5. **Transformer in one line** — attention lets each token look back at the others;
+   an attention sketch. (Deliberately minimal, per the brief.)
+6. **★ ACT — the robot's brain** — ResNet vision + joint numbers → a **Transformer**
+   → a **chunk of future motor targets**. The key contrast: GPT **classifies** the
+   next token (cross-entropy); ACT **regresses** the next motions (L1). Training
+   data = your own teleop recordings. A **Mock-ACT** demo "sees" a cube, predicts a
+   chunk of 6-motor action vectors (shown as a live grid), and executes them.
+7. **The whole course, connected** — Ch1 motors → Ch2 wiring → Ch3 calibration →
+   record → Ch5 learning → Ch6 ACT — plus a quiz and homework.
 
 ## Accuracy notes
-Defaults and the dataset layout come from lerobot's `lerobot-record` /
-`DatasetRecordConfig` (`fps=30`, `episode_time_s=60`, `reset_time_s=60`,
-`num_episodes=50`, `video=True`, `640×480` cameras) and `LeRobotDataset`
-(`data/*.parquet` + `videos/*.mp4` + `meta/*.json`). The predicted "success %" in
-the auditor is **illustrative**, not measured, and all scenes are **synthetic**
-drawings (there's no camera/dataset on this machine).
+- **ACT = Action Chunking Transformer** (ResNet image encoder + Transformer,
+  predicts a chunk of continuous actions), matching lerobot's `policies/act`
+  (`modeling_act.py`): the training loss is **L1** (`F.l1_loss`), and the output is
+  `(batch, chunk_size, action_dim)` continuous actions — **not** discrete tokens.
+- The lesson honours the "motor digits" idea but makes the one correction that
+  matters: ACT outputs **continuous numbers**, so it uses regression (L1), whereas
+  text models classify a token (cross-entropy).
+- The **Mock-ACT** demo is a clearly-labelled simplified stand-in (a scripted
+  reach), not a trained network — used to visualize the input → action-chunk →
+  motion loop. The **text generator is real** (a genuine small next-token model).
 
-Verified in-browser: auditor 100% (all careful) → 3% (all careless) with per-factor
-failure modes; fps/size/episode calculators correct; no console errors.
+Verified in-browser: text generation works and temperature visibly sharpens
+(top word 100% at low T) / flattens (37% at high T) the distribution; Mock-ACT
+predicts and executes an 8-step chunk; no console errors.

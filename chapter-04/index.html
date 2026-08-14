@@ -3,78 +3,87 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chapter 4 · How Machines Learn — Neural Networks from Scratch</title>
+<title>Chapter 4 · Program it or Teach it? — When Robots Need AI</title>
 <style>
   :root{
-    --bg:#0b1020;--bg2:#141026;--card:#1c1836;--card2:#241a44;--ink:#eaf0ff;--muted:#b6aede;--line:#352a5e;
-    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;--gold:#f59e0b;
+    --bg:#0b1020;--bg2:#1a1016;--card:#2a1622;--card2:#331a26;--ink:#eaf0ff;--muted:#d3aeb8;--line:#4a2b39;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--green:#34d399;--coral:#fb7185;--red:#f43f5e;--blue:#60a5fa;
     --shadow:0 18px 50px rgba(0,0,0,.45);--r:20px;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.6;
-    background:radial-gradient(1200px 700px at 82% -10%,rgba(251,191,36,.14),transparent 60%),
-      radial-gradient(1000px 700px at -10% 110%,rgba(244,114,182,.14),transparent 55%),
+    background:radial-gradient(1200px 700px at 82% -10%,rgba(251,113,133,.16),transparent 60%),
+      radial-gradient(1000px 700px at -10% 110%,rgba(52,211,153,.12),transparent 55%),
       linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed}
   .rail{position:fixed;top:50%;right:18px;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:12px}
-  .rail a{width:12px;height:12px;border-radius:50%;background:#3a316b;transition:.25s;display:block}
-  .rail a:hover{transform:scale(1.25)} .rail a.active{background:var(--amber);box-shadow:0 0 14px var(--amber)}
+  .rail a{width:12px;height:12px;border-radius:50%;background:#4a2b39;transition:.25s;display:block}
+  .rail a:hover{transform:scale(1.25)} .rail a.active{background:var(--coral);box-shadow:0 0 14px var(--coral)}
   .topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:60;background:rgba(255,255,255,.06)}
-  .topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--pink));transition:width .15s}
+  .topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--coral),var(--amber));transition:width .15s}
   section{max-width:1080px;margin:0 auto;padding:78px 26px 46px}
-  .slide-num{font-size:13px;letter-spacing:.22em;color:var(--amber);font-weight:700;text-transform:uppercase}
+  .slide-num{font-size:13px;letter-spacing:.22em;color:var(--coral);font-weight:700;text-transform:uppercase}
   h1{font-size:clamp(30px,5vw,54px);line-height:1.1;margin:.25em 0 .3em;letter-spacing:-.02em}
   h2{font-size:clamp(24px,3.4vw,36px);margin:.1em 0 .5em;letter-spacing:-.01em}
   h3{font-size:20px;margin:.2em 0 .4em;color:#fff}
   p{color:var(--muted);font-size:clamp(15px,1.7vw,18px)}
-  .lead{font-size:clamp(17px,2vw,21px);color:#e6e0ff}
-  .gold{color:var(--gold)} .amber{color:var(--amber)} .cyan{color:var(--cyan)} .pink{color:var(--pink)} .lime{color:var(--lime)} .violet{color:var(--violet)} .green{color:var(--green)}
+  .lead{font-size:clamp(17px,2vw,21px);color:#f4dfe6}
+  .coral{color:var(--coral)} .cyan{color:var(--cyan)} .pink{color:var(--pink)} .lime{color:var(--lime)} .violet{color:var(--violet)} .green{color:var(--green)} .amber{color:var(--amber)} .blue{color:var(--blue)} .red{color:var(--red)}
   b,strong{color:#fff}
   .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow)}
   .grid{display:grid;gap:18px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
   @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
-  .pill{display:inline-block;background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.4);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:3px 4px 3px 0}
-  .kbd{font-family:ui-monospace,Menlo,monospace;background:#140f2b;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 9px;font-size:13px;color:#f0e9ff}
+  .pill{display:inline-block;background:rgba(251,113,133,.14);color:var(--coral);border:1px solid rgba(251,113,133,.4);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:3px 4px 3px 0}
+  .kbd{font-family:ui-monospace,Menlo,monospace;background:#1a0f16;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 9px;font-size:13px;color:#f7e6ec}
   .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:34px 0}
-  .callout{border-left:4px solid var(--amber);background:rgba(251,191,36,.07);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
+  .callout{border-left:4px solid var(--coral);background:rgba(251,113,133,.07);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
   .callout.q{border-color:var(--cyan);background:rgba(56,189,248,.08)}
-  .callout.math{border-color:var(--pink);background:rgba(244,114,182,.07)}
-  .crumbs{color:#8a80b8;font-size:13px;margin-bottom:6px}.crumbs a{color:#b6aede;text-decoration:none}
+  .callout.key{border-color:var(--amber);background:rgba(251,191,36,.08)}
+  .crumbs{color:#a98a97;font-size:13px;margin-bottom:6px}.crumbs a{color:#d3aeb8;text-decoration:none}
   .hero{min-height:88vh;display:flex;flex-direction:column;justify-content:center}
-  .hero .big{background:linear-gradient(90deg,#fff 10%,var(--amber) 50%,var(--pink) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .big{background:linear-gradient(90deg,#fff 10%,var(--coral) 50%,var(--amber) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
   .scroll-hint{margin-top:38px;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:10px}
   .mouse{width:24px;height:38px;border:2px solid var(--muted);border-radius:14px;position:relative}
-  .mouse::before{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--amber);transform:translateX(-50%);animation:wheel 1.4s infinite}
+  .mouse::before{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--coral);transform:translateX(-50%);animation:wheel 1.4s infinite}
   @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#140f2b;outline:none;margin:12px 0}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--amber);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--amber);cursor:pointer}
-  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--amber);border:3px solid #0b1020;cursor:pointer}
-  .ctl-label{display:flex;justify-content:space-between;font-size:14px;color:#d9d2ff;font-weight:600}
-  .val{font-family:ui-monospace,Menlo,monospace;color:var(--amber)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#1a0f16;outline:none;margin:12px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--coral);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--coral);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--coral);border:3px solid #0b1020;cursor:pointer}
+  .ctl-label{display:flex;justify-content:space-between;font-size:14px;color:#e6d0d8;font-weight:600}
+  .val{font-family:ui-monospace,Menlo,monospace;color:var(--coral)}
   button{cursor:pointer;font-family:inherit}
-  .btn{background:var(--amber);color:#241400;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
+  .btn{background:var(--coral);color:#2a0a12;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
   .btn:disabled{opacity:.4;cursor:not-allowed}
-  .btn.ghost{background:transparent;color:var(--amber);border:1px solid var(--amber)}
+  .btn.ghost{background:transparent;color:var(--coral);border:1px solid var(--coral)}
   .btn.sm{padding:7px 12px;font-size:13px}
   .stat{display:flex;flex-direction:column;gap:1px}.stat .n{font-size:24px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#fff}.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-  code.inl{font-family:ui-monospace,Menlo,monospace;background:#140f2b;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#f0e9ff;font-size:.92em}
-  .mathbox{font-family:ui-monospace,Menlo,monospace;font-size:clamp(15px,2vw,19px);color:#fff;background:#140f2b;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;text-align:center}
-  .mathbox small{display:block;font-family:"Segoe UI",sans-serif;color:var(--muted);font-size:13px;margin-top:6px}
-  canvas{display:block;border-radius:12px;background:#0d0a1e;width:100%;height:auto}
-  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#140f2b;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#f0e9ff}
+  code.inl{font-family:ui-monospace,Menlo,monospace;background:#1a0f16;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#f7e6ec;font-size:.92em}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#1a0f16;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#f7e6ec}
+  canvas{display:block;border-radius:12px;background:#140b11;width:100%;height:auto}
   table{width:100%;border-collapse:collapse;font-size:14.5px}
-  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
-  th{color:var(--amber);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
-  details{background:#140f2b;border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
-  summary{cursor:pointer;padding:12px 0;font-weight:700;color:#fff}details[open] summary{color:var(--amber)}
-  .quizopt{display:block;width:100%;text-align:left;background:#140f2b;border:1px solid var(--line);color:var(--ink);padding:12px 16px;border-radius:10px;margin:8px 0;font-size:15px;transition:.15s}
-  .quizopt:hover{border-color:var(--amber)} .quizopt.right{background:rgba(52,211,153,.18);border-color:var(--green)} .quizopt.wrong{background:rgba(251,113,133,.16);border-color:var(--red)}
-  .foot{text-align:center;color:#8a80b8;font-size:13px;padding:40px 20px 60px}.foot a{color:var(--cyan)}
-  .loop{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
-  .loop .n{flex:1;min-width:130px;background:#140f2b;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
-  .loop .n b{color:#fff;display:block;font-size:15px}
-  .loop .n span{font-size:12.5px;color:var(--muted)}
-  .arrow{align-self:center;color:var(--amber);font-size:20px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--coral);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  /* ladder */
+  .rungs{display:flex;flex-direction:column;gap:8px}
+  .rung{display:flex;align-items:center;gap:12px;background:#1a0f16;border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer;transition:.15s;border-left-width:5px}
+  .rung:hover{transform:translateX(4px)} .rung.on{background:#241420}
+  .rung .em{font-size:22px} .rung .nm{font-weight:800;color:#fff;font-size:15px} .rung .sub{font-size:12px;color:var(--muted)}
+  .rung .lvl{margin-left:auto;font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
+  /* sorter */
+  .task{background:#1a0f16;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:10px 0}
+  .task .q{font-weight:700;color:#fff;font-size:15.5px;margin-bottom:8px}
+  .task .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .task .opt{background:#241420;border:1px solid var(--line);color:var(--ink);border-radius:9px;padding:8px 14px;font-weight:700;font-size:13.5px;cursor:pointer;transition:.15s}
+  .task .opt:hover{border-color:var(--coral)}
+  .task .opt.right{background:rgba(52,211,153,.2);border-color:var(--green);color:#fff}
+  .task .opt.wrong{background:rgba(244,63,94,.18);border-color:var(--red);color:#fff}
+  .task .fb{font-size:13.5px;color:var(--muted);margin-top:8px;display:none}
+  .task.done .fb{display:block}
+  details{background:#1a0f16;border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
+  summary{cursor:pointer;padding:12px 0;font-weight:700;color:#fff}details[open] summary{color:var(--coral)}
+  .quizopt{display:block;width:100%;text-align:left;background:#1a0f16;border:1px solid var(--line);color:var(--ink);padding:12px 16px;border-radius:10px;margin:8px 0;font-size:15px;transition:.15s}
+  .quizopt:hover{border-color:var(--coral)} .quizopt.right{background:rgba(52,211,153,.18);border-color:var(--green)} .quizopt.wrong{background:rgba(244,63,94,.16);border-color:var(--red)}
+  .foot{text-align:center;color:#a98a97;font-size:13px;padding:40px 20px 60px}.foot a{color:var(--cyan)}
 </style>
 </head>
 <body>
@@ -83,179 +92,131 @@
 
 <!-- 0 HERO -->
 <section id="s0" class="hero">
-  <div class="crumbs"><a href="../chapter-03/index.html">← Chapter 3: Calibration</a></div>
+  <div class="crumbs"><a href="../chapter-03/index.html">← Chapter 3: Calibration</a> · <a href="../index.html">⌂ Course home</a></div>
   <div class="slide-num">LeRobot · SO-101 · Chapter 4</div>
-  <h1 class="big">How Machines Learn</h1>
-  <p class="lead" style="max-width:770px">So far we've told the robot <em>exactly</em> what to do. But how does it learn to do things <b>on its own</b>? The answer behind image recognizers, ChatGPT, <em>and</em> our robot's brain is one surprisingly simple idea: a <b class="amber">network of tiny knobs</b> that gets tuned, automatically, until its guesses match reality. In this chapter you'll build that intuition — and <b>train a real neural network right here in your browser</b>.</p>
+  <h1 class="big">Program it, or Teach it?</h1>
+  <p class="lead" style="max-width:790px">Before we dive into training, one big question: <b>why use AI at all?</b> Robots have been doing useful work for decades without it. The secret every engineer knows is that AI isn't always the answer — it's a <b class="coral">tool</b> you reach for when a task gets too <b>messy</b> to spell out in rules. This chapter builds that instinct: meet the other ways to control a robot, then see <em>exactly</em> when learning wins.</p>
   <div style="margin-top:22px">
-    <span class="pill">🧠 Neurons & weights</span>
-    <span class="pill">📉 Error & gradient descent</span>
-    <span class="pill">🔁 Backpropagation</span>
-    <span class="pill">🎯 Train a live model</span>
+    <span class="pill">🎵 Playback robots</span>
+    <span class="pill">🔀 Rules & sensors</span>
+    <span class="pill">📐 Classical control</span>
+    <span class="pill">🧠 …and finally, learning</span>
   </div>
   <div class="scroll-hint"><div class="mouse"></div> Scroll or use <span class="kbd">↓</span>/<span class="kbd">↑</span> to move through the lesson</div>
 </section>
 
-<!-- 1 BIG IDEA -->
+<!-- 1 TWO WAYS -->
 <section id="s1">
-  <div class="slide-num">Part 1 · The Big Idea</div>
-  <h2>A network is a <span class="amber">function with knobs</span></h2>
-  <p class="lead">A neural network is just a machine that takes numbers in and puts numbers out. Inside are thousands of little dials called <b>weights</b>. <b class="amber">Training</b> means turning those dials — automatically — until the machine's output matches examples we already know the answer to.</p>
-  <div class="card" style="margin-top:8px">
-    <h3 style="text-align:center">The training loop — the same 5 steps for <em>every</em> model</h3>
-    <div class="loop">
-      <div class="n"><b>1 · Data</b><span>examples of input → correct answer</span></div>
-      <div class="arrow">→</div>
-      <div class="n"><b>2 · Guess</b><span>run it forward, get a prediction</span></div>
-      <div class="arrow">→</div>
-      <div class="n"><b>3 · Error</b><span>how wrong was the guess?</span></div>
-      <div class="arrow">→</div>
-      <div class="n"><b>4 · Blame</b><span>which knob to turn, which way?</span></div>
-      <div class="arrow">→</div>
-      <div class="n"><b>5 · Nudge</b><span>turn each knob a little</span></div>
-    </div>
-    <p style="text-align:center;margin:6px 0 0">…then repeat, thousands of times. That's it. That's all of deep learning. 🔁</p>
+  <div class="slide-num">Part 1 · The Big Question</div>
+  <h2>Two ways to give a robot a “brain”</h2>
+  <p class="lead">There are really only two ways to make a robot do something:</p>
+  <div class="grid g2" style="margin-top:8px">
+    <div class="card"><h3 class="coral">📝 Program it</h3><p>You write the <b>exact rules</b>: "move here, then there, if this then that." You are in full control. The robot only ever does what you spelled out.</p><p style="font-size:13.5px;margin:0"><b>Great when</b> the task is exact and predictable.</p></div>
+    <div class="card"><h3 class="lime">🧠 Teach it</h3><p>You <b>show examples</b> and let the robot figure out the rules itself — including things too fuzzy to write down. That's <b>learning / AI</b>.</p><p style="font-size:13.5px;margin:0"><b>Great when</b> the task is messy and varied.</p></div>
   </div>
-  <div class="callout">Whether the model recognizes a cat, writes a sentence, or moves a robot arm, <b>only steps 1's data changes</b> — the loop is identical. We'll meet all three by the end of Chapter 5.</div>
+  <div class="callout key"><b>The whole chapter in one sentence:</b> use the <b>simplest</b> method that does the job — and only climb toward AI when the world gets too messy for rules. 🪜</div>
 </section>
 
-<!-- 2 NEURON -->
+<!-- 2 THE LADDER -->
 <section id="s2">
-  <div class="slide-num">Part 2 · The Building Block</div>
-  <h2>One <span class="amber">neuron</span> = a weighted vote</h2>
-  <div class="grid g2" style="align-items:start">
-    <div>
-      <p>A neuron looks at its inputs, decides <b>how much each one matters</b> (that's the weight), adds them up with a <b>bias</b>, and squishes the result into a decision.</p>
-      <div class="mathbox">y = f( w₁·x₁ + w₂·x₂ + b )
-        <small>weighted sum of inputs, then an activation f</small></div>
-      <p>Think of a judge scoring a science fair: creativity counts <span class="chip">×3</span>, neatness <span class="chip">×1</span>. The judge weights each, adds them, and gives a thumbs up or down. The activation <b>f</b> is that final squish — e.g. <b>ReLU</b> (“negatives become 0”) or <b>sigmoid</b> (“squish to a 0–1 probability”).</p>
-      <div class="callout q"><b>Try it →</b> You are the neuron! Turn the weight knobs so the line cleanly separates the <span style="color:#38bdf8">blue</span> from the <span style="color:#f472b6">pink</span> dots. The weights literally <em>are</em> the line.</div>
-    </div>
-    <div class="card">
-      <canvas id="perceptron" width="360" height="300"></canvas>
-      <div class="ctl-label" style="margin-top:8px"><span>w₁ (weight on x)</span><span class="val" id="pw1">1.0</span></div>
-      <input id="pw1s" type="range" min="-3" max="3" step="0.05" value="1">
-      <div class="ctl-label"><span>w₂ (weight on y)</span><span class="val" id="pw2">1.0</span></div>
-      <input id="pw2s" type="range" min="-3" max="3" step="0.05" value="1">
-      <div class="ctl-label"><span>b (bias)</span><span class="val" id="pb">0.0</span></div>
-      <input id="pbs" type="range" min="-3" max="3" step="0.05" value="0">
-      <div class="stat" style="margin-top:8px"><span class="n"><span id="pacc">?</span>%</span><span class="l">Dots classified correctly</span></div>
-    </div>
+  <div class="slide-num">Part 2 · The Ladder</div>
+  <h2>The ladder of robot “brains”</h2>
+  <p class="lead">From dead-simple to full AI, here are the rungs engineers actually use. Click each one. 👇</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="rungs" id="rungs"></div>
+    <div class="card" id="rungDetail" style="min-height:260px"></div>
   </div>
+  <div class="callout">Notice: each rung handles <b>more variety</b> than the one below — but also costs more (data, computing, complexity) and is harder to fully trust. You climb only as high as the task <em>forces</em> you to.</div>
 </section>
 
-<!-- 3 LOSS -->
+<!-- 3 PLAYBACK vs LEARNED (STAR) -->
 <section id="s3">
-  <div class="slide-num">Part 3 · Measuring Wrongness</div>
-  <h2>Error, a.k.a. the <span class="amber">loss</span></h2>
-  <p class="lead">To improve, the network needs a single number that says how wrong it is: the <b>loss</b>. There are two great flavors — and we'll see <em>both</em> again later (one for text, one for the robot).</p>
-  <div class="grid g2">
-    <div class="card"><h3 class="cyan">Predicting a number → “distance” loss</h3>
-      <p>If the network should output <b>3.0</b> but says <b>2.4</b>, it's off by 0.6. Two common measures:</p>
-      <div class="mathbox" style="font-size:16px">|ŷ − y|  <span style="color:var(--muted)">(L1)</span> &nbsp; or &nbsp; ½(ŷ − y)²  <span style="color:var(--muted)">(squared)</span></div>
-      <p style="font-size:14px">This <b>regression</b> loss is exactly what our robot's brain will use. Keep <span class="chip">|ŷ − y|</span> in mind. 🤖</p>
-    </div>
-    <div class="card"><h3 class="pink">Picking a category → “surprise” loss</h3>
-      <p>If the network must choose <em>cat vs dog</em>, it outputs a <b>probability</b>. The loss is how <b>surprised</b> it was by the right answer: confident-and-right = tiny loss; confident-and-wrong = huge loss.</p>
-      <div class="mathbox" style="font-size:16px">loss = −log( probability of the correct class )</div>
-      <p style="font-size:14px">This <b>cross-entropy</b> is what text models use to pick the next word. 💬</p>
-    </div>
-  </div>
-  <div class="card" style="margin-top:8px">
-    <div class="ctl-label"><span>Drag the prediction toward the target (★ = 3.0)</span><span class="val"><span id="lpred">2.0</span></span></div>
-    <input id="lslider" type="range" min="0" max="6" step="0.05" value="2">
-    <canvas id="lcanvas" width="720" height="90" style="margin-top:6px"></canvas>
-    <div class="grid g3" style="margin-top:10px">
-      <div class="stat"><span class="n cyan" id="lL1">1.00</span><span class="l">L1 loss |ŷ−y|</span></div>
-      <div class="stat"><span class="n cyan" id="lSq">0.50</span><span class="l">Squared loss</span></div>
-      <div class="stat"><span class="n" id="lmsg" style="font-size:16px">off target</span><span class="l">Status</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- 4 GRADIENT DESCENT -->
-<section id="s4">
-  <div class="slide-num">Part 4 · The Math That Learns</div>
-  <h2><span class="amber">Gradient descent</span>: walk downhill</h2>
-  <div class="grid g2" style="align-items:start">
-    <div>
-      <p>Picture the loss as a <b>valley</b>. Each weight is a position on the hillside. We want the bottom (lowest loss). How do we know which way is down? The <b>slope</b>.</p>
-      <p>The slope (mathematicians call it the <b>derivative</b> or <b>gradient</b>) tells us two things: which direction is downhill, and how steep. Then we take one small step that way:</p>
-      <div class="mathbox">new weight = old weight − <span class="amber">learning rate</span> × slope
-        <small>“slope” = how much the loss changes when you wiggle this weight</small></div>
-      <p>The <b>learning rate</b> is the step size. Too small → learning crawls. Too big → you overshoot and bounce out of the valley. <b>Try both →</b></p>
-      <div class="callout q"><b>Roll the ball →</b> Press <b>Step</b> to take gradient-descent steps. Crank the learning rate up until it overshoots and flies out. 🎢</div>
+  <div class="slide-num">Part 3 · See The Difference</div>
+  <h2><span class="coral">Playback</span> vs. <span class="lime">Learned</span></h2>
+  <p class="lead">Here's the difference you can feel. Both arms were "taught" to grab a cube in the middle. Now <b>move the cube</b> and run them. The playback robot blindly repeats its motion; the learned robot actually finds the cube.</p>
+  <div class="grid g2" style="margin-top:8px">
+    <div class="card">
+      <div style="font-weight:800;color:var(--coral)">🎵 Playback robot</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">“Always repeat the exact recorded motion.”</div>
+      <canvas id="pbCv" width="330" height="180"></canvas>
+      <div class="chip" id="pbResult" style="margin-top:8px">—</div>
     </div>
     <div class="card">
-      <canvas id="gd" width="360" height="240"></canvas>
-      <div class="ctl-label" style="margin-top:8px"><span>Learning rate</span><span class="val" id="gdlr">0.15</span></div>
-      <input id="gdlrs" type="range" min="0.01" max="1.05" step="0.01" value="0.15">
-      <div class="row" style="display:flex;gap:10px;margin-top:10px">
-        <button class="btn" id="gdStep">▶ Step downhill</button>
-        <button class="btn" id="gdRun">⏩ Auto</button>
-        <button class="btn ghost sm" id="gdReset">↺ New start</button>
-      </div>
-      <div class="grid g2" style="margin-top:10px">
-        <div class="stat"><span class="n amber" id="gdw">—</span><span class="l">weight</span></div>
-        <div class="stat"><span class="n" id="gdloss">—</span><span class="l">loss</span></div>
-      </div>
+      <div style="font-weight:800;color:var(--lime)">🧠 Learned robot</div>
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:6px">“Look, find the cube, then reach for it.”</div>
+      <canvas id="lnCv" width="330" height="180"></canvas>
+      <div class="chip" id="lnResult" style="margin-top:8px">—</div>
     </div>
   </div>
+  <div class="card" style="margin-top:14px">
+    <div class="ctl-label"><span>Move the cube 🧊</span><span class="val" id="cubeLbl">center</span></div>
+    <input id="cubeS" type="range" min="0" max="100" value="50">
+    <div style="display:flex;gap:10px;margin-top:8px;align-items:center;flex-wrap:wrap">
+      <button class="btn" id="runBoth">▶ Run both robots</button>
+      <span style="font-size:13px;color:var(--muted)">Leave the cube in the center and both win. Move it, and only the learned one keeps up.</span>
+    </div>
+  </div>
+  <div class="callout q"><b>This is real:</b> LeRobot literally has <code class="inl">lerobot-replay</code> (dumb playback of a recording) and <code class="inl">lerobot-rollout</code> (run a <em>learned</em> policy). Same robot — two totally different philosophies. 🎯</div>
 </section>
 
-<!-- 5 BACKPROP -->
-<section id="s5">
-  <div class="slide-num">Part 5 · Sharing the Blame</div>
-  <h2><span class="amber">Backpropagation</span></h2>
+<!-- 4 THE WALL -->
+<section id="s4">
+  <div class="slide-num">Part 4 · Why Not Just Write Rules?</div>
+  <h2>The wall that rules hit 🧱</h2>
   <div class="grid g2" style="align-items:center">
     <div>
-      <p>A big network has thousands of weights. When the final answer is wrong, <b>which</b> ones caused it, and how much? Backprop answers this by letting the error <b>flow backwards</b> through the network — from the output back to every weight.</p>
-      <p>The trick is the <b>chain rule</b>, which sounds fancy but just means: to see how a weight deep inside affects the final loss, <b>multiply the slopes along the path</b> from that weight to the output.</p>
-      <div class="mathbox">how weight affects loss = slope × slope × … along the path
-        <small>a chain of gears: a tiny turn at the end traces back through each gear</small></div>
-      <p>Then every weight gets its own nudge (step 4). Do this for all of them at once, and the whole network inches toward better answers.</p>
-      <div class="callout q"><b>Watch it →</b> Press <b>Train step</b>: green shows the forward guess flowing right, the error appears, then <span class="pink">pink</span> blame flows back and every weight gets nudged. The loss drops each time.</div>
+      <p>"Fine," you say, "I'll just write <b>more</b> rules — one for every cube position." But the real world is endless:</p>
+      <ul style="color:var(--muted)">
+        <li>The cube can be at <b>any</b> position and angle. 🧊</li>
+        <li>The <b>lighting</b> changes; shadows move.</li>
+        <li>Some objects are <b>soft</b> — a towel or cable has infinite shapes you can't list.</li>
+        <li>Just <b>finding</b> the cube in a grid of camera pixels is nearly impossible to hand-code.</li>
+      </ul>
+      <p>Add a rule for each case and your program <b>explodes</b> into millions of branches — and some things (“grasp any crumpled towel”) you <b>can't</b> put into words at all.</p>
+      <div class="callout"><b>The key realization:</b> when you can <em>show</em> a task far more easily than you can <em>describe</em> it, stop writing rules and start collecting examples. That's the door to AI. 🚪</div>
     </div>
     <div class="card">
-      <canvas id="bp" width="360" height="260"></canvas>
-      <div class="row" style="display:flex;gap:10px;margin-top:10px">
-        <button class="btn" id="bpStep">▶ Train step</button>
-        <button class="btn" id="bpRun">⏩ Train 50×</button>
-        <button class="btn ghost sm" id="bpReset">↺</button>
+      <h3 style="margin-top:0">Watch the rules pile up</h3>
+      <p style="font-size:13.5px;margin-top:0">Add real-world curveballs and see how many hand-written rules you'd need.</p>
+      <div id="ruleChips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:80px;margin:8px 0"></div>
+      <div class="stat"><span class="n coral" id="ruleCount">1</span><span class="l">rules you'd have to write</span></div>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn sm" id="addCurve">+ Add a curveball</button>
+        <button class="btn ghost sm" id="ruleReset">↺</button>
       </div>
-      <div class="stat" style="margin-top:10px"><span class="n" id="bploss">—</span><span class="l">loss (want → 0)</span></div>
+      <p style="font-size:13px;margin-top:8px" id="ruleMsg">Start: one cube, one fixed spot → one simple rule.</p>
     </div>
   </div>
 </section>
 
-<!-- 6 LIVE TRAIN -->
-<section id="s6">
-  <div class="slide-num">Part 6 · Put It All Together</div>
-  <h2>🎯 Train a real neural network — live</h2>
-  <p class="lead">No pretend animation this time: below is an actual neural network running real gradient descent and backprop in your browser. Its job is to separate two interlocking “moons” of dots — a curvy pattern a single straight line <b>cannot</b> split. Press <b>Train</b> and watch it learn.</p>
-  <div class="grid g2" style="align-items:start;margin-top:8px">
-    <div class="card">
-      <canvas id="nn" width="360" height="320"></canvas>
-      <p style="font-size:12.5px;color:var(--muted);text-align:center;margin:8px 0 0">Background colour = the network's current guess for each spot (<span style="color:#38bdf8">blue</span> vs <span style="color:#f472b6">pink</span>). Watch the boundary bend to fit.</p>
-    </div>
-    <div class="card">
-      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
-        <button class="btn" id="nnTrain">▶ Train</button>
-        <button class="btn ghost sm" id="nnStep">Step ×20</button>
-        <button class="btn ghost sm" id="nnReset">↺ Reset weights</button>
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-size:14px;color:#d9d2ff"><input type="checkbox" id="nnHidden" checked> Use a hidden layer (uncheck = one straight line only)</label>
-      <div class="ctl-label" style="margin-top:8px"><span>Learning rate</span><span class="val" id="nnlr">0.5</span></div>
-      <input id="nnlrs" type="range" min="0.02" max="2" step="0.02" value="0.5">
-      <div class="grid g2" style="margin-top:12px">
-        <div class="stat"><span class="n amber" id="nnEpoch">0</span><span class="l">Training steps</span></div>
-        <div class="stat"><span class="n green" id="nnAcc">50%</span><span class="l">Accuracy</span></div>
-      </div>
-      <div class="ctl-label" style="margin-top:12px"><span>Loss over time</span><span class="val" id="nnLoss">—</span></div>
-      <canvas id="nnLossC" width="330" height="90" style="margin-top:4px"></canvas>
-      <p style="font-size:13px;margin-top:8px" id="nnMsg">Press Train. With the hidden layer on, accuracy should climb past 95%. Turn it off and watch a single line get stuck near 85% — proof that depth lets networks bend.</p>
-    </div>
+<!-- 5 SORTER (STAR) -->
+<section id="s5">
+  <div class="slide-num">Part 5 · You Decide</div>
+  <h2>🗂️ Program it, or teach it?</h2>
+  <p class="lead">Here's the instinct in action. For each real robot task, choose the smarter approach. There's a “best” answer each time — see if you can feel the pattern.</p>
+  <div id="sorter" style="margin-top:8px"></div>
+  <div class="card" style="margin-top:6px;display:flex;justify-content:space-between;align-items:center">
+    <div class="stat"><span class="n coral"><span id="score">0</span> / <span id="scoreTot">0</span></span><span class="l">nailed it</span></div>
+    <div style="font-size:13.5px;color:var(--muted);max-width:60%" id="sorterMsg">Tip: if you can describe the task perfectly in a few exact steps → program it. If you'd rather just <em>show</em> it → teach it.</div>
   </div>
+</section>
+
+<!-- 6 RIGHT TOOL -->
+<section id="s6">
+  <div class="slide-num">Part 6 · The Honest Answer</div>
+  <h2>AI isn't “better” — it's the <span class="coral">right tool</span> for messy jobs</h2>
+  <div class="card">
+    <table>
+      <tr><th>&nbsp;</th><th class="coral">Program it (rules / control)</th><th class="lime">Teach it (AI)</th></tr>
+      <tr><td><b>Best for</b></td><td>exact, repeatable, describable</td><td>messy, varied, hard to describe</td></tr>
+      <tr><td><b>Cost</b></td><td>cheap, no data needed</td><td>needs data + computing</td></tr>
+      <tr><td><b>Reliability</b></td><td>100% predictable</td><td>usually great, not guaranteed</td></tr>
+      <tr><td><b>Explainable?</b></td><td>yes — you wrote every step</td><td>harder — it learned its own way</td></tr>
+      <tr><td><b>Handles surprises</b></td><td>only ones you foresaw</td><td>generalizes to new ones</td></tr>
+    </table>
+  </div>
+  <div class="callout key" style="margin-top:14px"><b>So why does <em>this</em> course go the AI way?</b> Because the SO-101's jobs — grab a cube that's anywhere, on a real table, under changing light — are exactly the <b>messy</b> kind. Playback and rules hit the wall; learning is the tool that fits. Now you know <em>why</em> we train. 🧠</div>
+  <p style="font-size:14px">Up next (Chapter 5): we open up that "learning" box and see <b>how machines actually learn</b> — neurons, error, and a network you train yourself.</p>
 </section>
 
 <!-- 7 RECAP -->
@@ -263,36 +224,38 @@
   <div class="slide-num">Wrap-up</div>
   <h2>Recap &amp; quiz 🎓</h2>
   <div class="grid g3">
-    <div class="card"><h3 class="amber">Weights</h3><p>The tunable knobs. A neuron = weighted sum + a squish (activation).</p></div>
-    <div class="card"><h3 class="cyan">Loss</h3><p>One number for “how wrong.” Distance for numbers, surprise for categories.</p></div>
-    <div class="card"><h3 class="pink">Descent + backprop</h3><p>Slope says which way is downhill; backprop nudges every weight a little.</p></div>
+    <div class="card"><h3 class="coral">The ladder</h3><p>Playback → rules → control → learning. Each handles more mess, at more cost.</p></div>
+    <div class="card"><h3 class="lime">Show vs tell</h3><p>Easier to <em>show</em> than <em>describe</em>? That's the signal to use AI.</p></div>
+    <div class="card"><h3 class="amber">Right tool</h3><p>Simplest method that works. AI for the messy jobs — like the SO-101's.</p></div>
   </div>
   <div class="divider"></div>
-  <div class="card"><p><b>Q1.</b> What does “training” actually adjust inside a network?</p>
-    <div data-q="0" data-a="1"><button class="quizopt">The screen brightness</button><button class="quizopt">The weights (the knobs)</button><button class="quizopt">The input images</button><button class="quizopt">Nothing — it's fixed</button></div></div>
-  <div class="card" style="margin-top:14px"><p><b>Q2.</b> The <em>loss</em> is…</p>
-    <div data-q="1" data-a="2"><button class="quizopt">How fast the model runs</button><button class="quizopt">The number of neurons</button><button class="quizopt">A single number for how wrong the guess is</button><button class="quizopt">The learning rate</button></div></div>
-  <div class="card" style="margin-top:14px"><p><b>Q3.</b> If the learning rate is far too big, training will…</p>
-    <div data-q="2" data-a="0"><button class="quizopt">Overshoot and bounce around instead of settling</button><button class="quizopt">Always be perfect</button><button class="quizopt">Run out of battery</button><button class="quizopt">Turn off the loss</button></div></div>
-  <div class="card" style="margin-top:14px"><p><b>Q4.</b> Backpropagation's job is to…</p>
-    <div data-q="3" data-a="3"><button class="quizopt">Draw the graphics</button><button class="quizopt">Take the photo</button><button class="quizopt">Charge the robot</button><button class="quizopt">Figure out how to nudge every weight</button></div></div>
+  <div class="task-quiz">
+  <div class="card"><p><b>Q1.</b> A "playback" robot fails when…</p>
+    <div data-q="0" data-a="1"><button class="quizopt">The lights are on</button><button class="quizopt">Anything in the scene moves from the recorded spot</button><button class="quizopt">You give it a name</button><button class="quizopt">It's plugged into the wall</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q2.</b> The best signal that a task needs AI is…</p>
+    <div data-q="1" data-a="2"><button class="quizopt">It uses a motor</button><button class="quizopt">It's outdoors</button><button class="quizopt">It's far easier to <em>show</em> than to <em>describe</em> in rules</button><button class="quizopt">It's expensive</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q3.</b> Which task is best done by <em>programming</em> (not AI)?</p>
+    <div data-q="2" data-a="0"><button class="quizopt">Weld the same seam on identical parts, all day</button><button class="quizopt">Fold random crumpled towels</button><button class="quizopt">Grab a cube that could be anywhere</button><button class="quizopt">Tidy a messy desk</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q4.</b> Why does the SO-101 course use AI?</p>
+    <div data-q="3" data-a="3"><button class="quizopt">AI is always better</button><button class="quizopt">Rules are illegal</button><button class="quizopt">To use more electricity</button><button class="quizopt">Its tasks are messy/varied — too hard for fixed rules</button></div></div>
+  </div>
   <div class="divider"></div>
-  <details><summary>🔎 Bonus: why do we need a hidden layer at all?</summary><p>One neuron can only draw a <b>straight</b> boundary. Many real patterns (like the two moons above) can't be split by any single line. Stacking a <b>hidden layer</b> of neurons lets the network combine several bent pieces into a curvy boundary — the more neurons, the more flexible the shape. That flexibility is exactly why deep networks are so powerful.</p></details>
-  <p style="margin-top:20px"><a class="btn ghost" href="../chapter-03/index.html">← Chapter 3</a> &nbsp; <a class="btn" style="background:var(--pink);color:#2a0a1c;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:800" href="../chapter-05/index.html">Chapter 5: From Words to Motion →</a></p>
-  <p style="color:var(--muted);font-size:14px;margin-top:6px">Next: how this exact loop powers <b>text generation</b> — and then the robot's own brain, <b>ACT</b>. 🧠🤖</p>
+  <details><summary>🧪 Homework</summary><p>1) Name a robot in the real world that uses <b>playback or rules</b> (not AI), and say why that's the right choice for it.<br>
+    2) Describe a task where writing rules would "explode," and explain what you'd <b>show</b> the robot instead.<br>
+    3) The SO-101 has both <code class="inl">lerobot-replay</code> and <code class="inl">lerobot-rollout</code>. In one sentence each, when would you use which?</p></details>
 </section>
 
 <nav style="max-width:1080px;margin:12px auto 0;padding:0 26px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
   <a class="btn ghost" href="../chapter-03/index.html" style="text-decoration:none">← Chapter 3</a>
   <a class="btn ghost" href="../index.html" style="text-decoration:none">⌂ Course home</a>
-  <a class="btn" href="../chapter-05/index.html" style="text-decoration:none">Chapter 5: From Words to Motion →</a>
+  <a class="btn" href="../chapter-05/index.html" style="text-decoration:none">Chapter 5: How Machines Learn →</a>
 </nav>
-<div class="foot">Chapter 4 of the LeRobot SO-101 course · The neural network in Part 6 is real: it runs gradient descent &amp; backpropagation live in your browser, no libraries.</div>
+<div class="foot">Chapter 4 of the LeRobot SO-101 course · Builds intuition for <em>why</em> robotics uses learning. <code class="inl">lerobot-replay</code> (playback) vs <code class="inl">lerobot-rollout</code> (learned policy) are real LeRobot tools. Scenes are synthetic illustrations.</div>
 
 <script>
 /* rail + progress */
 const secs=[...document.querySelectorAll('section')],rail=document.getElementById('rail');
-const labels=['Intro','Big idea','Neuron','Loss','Gradient descent','Backprop','Train it','Recap'];
+const labels=['Intro','Two ways','The ladder','Playback vs Learned','The wall','You decide','Right tool','Recap'];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
 const dots=[...rail.children],bar=document.getElementById('topbar');
 function onScroll(){const y=window.scrollY,h=document.body.scrollHeight-window.innerHeight;bar.style.width=(100*y/h)+'%';
@@ -303,218 +266,149 @@ window.addEventListener('keydown',e=>{let cur=0;secs.forEach((s,i)=>{if(s.getBou
   if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();secs[Math.min(cur+1,secs.length-1)].scrollIntoView({behavior:'smooth'});}
   if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();secs[Math.max(cur-1,0)].scrollIntoView({behavior:'smooth'});}});
 
-/* ============ Part 2: perceptron playground ============ */
+/* ============ Part 2: the ladder ============ */
 (function(){
-  const cv=document.getElementById('perceptron'),ctx=cv.getContext('2d');
-  const dom={xmin:-3,xmax:3,ymin:-3,ymax:3};
-  function toPx(x,y){return [(x-dom.xmin)/(dom.xmax-dom.xmin)*cv.width,cv.height-(y-dom.ymin)/(dom.ymax-dom.ymin)*cv.height];}
-  // two linearly-separable clusters
-  const pts=[];
-  function seed(){pts.length=0;
-    for(let i=0;i<30;i++){pts.push({x:-1+rn()*0.9,y:1+rn()*0.9,c:0});pts.push({x:1+rn()*0.9,y:-1+rn()*0.9,c:1});}
+  const rungs=[
+    {c:'#fb7185',em:'🎵',nm:'Playback (record & replay)',sub:'repeat a fixed motion',lvl:'simplest',
+     decides:'It stores a fixed list of joint angles and replays them, exactly, every time.',
+     great:'A welding arm hitting the identical spot on identical cars, forever.',
+     breaks:'Anything moves — a part shifts an inch and it welds thin air.',
+     ex:'🏭 Factory welding/paint arms · 🎹 a player piano'},
+    {c:'#fbbf24',em:'🔀',nm:'Rules & sensors (if-this-then-that)',sub:'sense, then react',lvl:'reactive',
+     decides:'"If the bumper hits → turn. If the sensor sees black → steer left." You write a rule per situation.',
+     great:'Simple, contained tasks with a few clear cases.',
+     breaks:'You must foresee every case; new situations you didn\'t plan for confuse it.',
+     ex:'🧹 A Roomba bouncing off walls · ➖ a line-following robot'},
+    {c:'#38bdf8',em:'📐',nm:'Classical control & math (IK, PID)',sub:'compute the exact motion',lvl:'precise',
+     decides:'Uses physics and geometry to calculate the perfect motion — inverse kinematics to reach a point, PID to hold it.',
+     great:'Super precise and reliable — it\'s how the SO-101\'s servos hold position (Chapter 1).',
+     breaks:'You must TELL it the exact coordinates of everything. It can\'t figure out where the cube is on its own.',
+     ex:'🖨️ 3D printers & CNC machines · 🦾 the arm\'s low-level control'},
+    {c:'#a3e635',em:'🧠',nm:'Learning from examples (AI)',sub:'show, don\'t tell',lvl:'most flexible',
+     decides:'You show hundreds of examples; it learns the pattern itself — including how to SEE the cube in pixels — and generalizes to new cases.',
+     great:'Messy, varied, real-world tasks you can\'t fully describe in rules.',
+     breaks:'Needs lots of data + computing, and isn\'t 100% guaranteed or fully explainable.',
+     ex:'🤖 The SO-101 with ACT/SmolVLA · 🚗 self-driving cars'},
+  ];
+  const box=document.getElementById('rungs'),detail=document.getElementById('rungDetail');
+  function show(i){const r=rungs[i];
+    document.querySelectorAll('#rungs .rung').forEach((el,k)=>el.classList.toggle('on',k===i));
+    detail.innerHTML=`<div style="font-size:30px">${r.em}</div><h3 style="color:${r.c};margin:.2em 0">${r.nm}</h3>
+      <p style="margin:.2em 0"><b>How it decides:</b> ${r.decides}</p>
+      <p style="margin:.2em 0"><span class="green">✔ Great when:</span> ${r.great}</p>
+      <p style="margin:.2em 0"><span class="red">✗ Breaks when:</span> ${r.breaks}</p>
+      <p style="margin:.6em 0 0;font-size:13px;color:var(--muted)">Real examples: ${r.ex}</p>`;
   }
-  function rn(){return (Math.random()*2-1);}
-  seed();
-  const w1=document.getElementById('pw1s'),w2=document.getElementById('pw2s'),b=document.getElementById('pbs');
-  function draw(){
-    const W1=+w1.value,W2=+w2.value,B=+b.value;
-    document.getElementById('pw1').textContent=W1.toFixed(2);document.getElementById('pw2').textContent=W2.toFixed(2);document.getElementById('pb').textContent=B.toFixed(2);
-    ctx.clearRect(0,0,cv.width,cv.height);
-    // shade half planes
-    const img=ctx.getImageData(0,0,cv.width,cv.height);
-    for(let py=0;py<cv.height;py+=4)for(let px=0;px<cv.width;px+=4){
-      const x=dom.xmin+px/cv.width*(dom.xmax-dom.xmin), y=dom.ymin+(1-py/cv.height)*(dom.ymax-dom.ymin);
-      const s=W1*x+W2*y+B; const on=s>0;
-      for(let dy=0;dy<4;dy++)for(let dx=0;dx<4;dx++){const idx=((py+dy)*cv.width+(px+dx))*4;
-        img.data[idx]=on?56:244;img.data[idx+1]=on?110:120;img.data[idx+2]=on?170:150;img.data[idx+3]=38;}
-    }
-    ctx.putImageData(img,0,0);
-    // boundary line W1*x+W2*y+B=0
-    ctx.strokeStyle='#fbbf24';ctx.lineWidth=3;ctx.beginPath();
-    if(Math.abs(W2)>1e-6){const y0=-(W1*dom.xmin+B)/W2,y1=-(W1*dom.xmax+B)/W2;let a=toPx(dom.xmin,y0),c=toPx(dom.xmax,y1);ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);}
-    else if(Math.abs(W1)>1e-6){const x0=-B/W1,a=toPx(x0,dom.ymin),c=toPx(x0,dom.ymax);ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);}
-    ctx.stroke();
-    // points + accuracy
-    let ok=0;
-    for(const p of pts){const s=W1*p.x+W2*p.y+B;const pred=s>0?1:0;if(pred===p.c)ok++;
-      const q=toPx(p.x,p.y);ctx.beginPath();ctx.arc(q[0],q[1],5,0,7);ctx.fillStyle=p.c?'#f472b6':'#38bdf8';ctx.fill();ctx.strokeStyle='#0d0a1e';ctx.lineWidth=1.5;ctx.stroke();}
-    document.getElementById('pacc').textContent=Math.round(100*ok/pts.length);
-  }
-  [w1,w2,b].forEach(s=>s.oninput=draw);draw();
+  rungs.forEach((r,i)=>{const el=document.createElement('div');el.className='rung';el.style.borderLeftColor=r.c;
+    el.innerHTML=`<span class="em">${r.em}</span><div><div class="nm">${r.nm}</div><div class="sub">${r.sub}</div></div><span class="lvl">${r.lvl}</span>`;
+    el.onclick=()=>show(i);box.appendChild(el);});
+  show(0);
 })();
 
-/* ============ Part 3: loss meter ============ */
+/* ============ Part 3: playback vs learned ============ */
 (function(){
-  const sl=document.getElementById('lslider'),cv=document.getElementById('lcanvas'),ctx=cv.getContext('2d');
-  const target=3.0,MIN=0,MAX=6;
-  function toX(v){return 30+(v-MIN)/(MAX-MIN)*(cv.width-60);}
-  function draw(){
-    const pred=+sl.value;const l1=Math.abs(pred-target),sq=0.5*(pred-target)**2;
-    document.getElementById('lpred').textContent=pred.toFixed(2);
-    document.getElementById('lL1').textContent=l1.toFixed(2);
-    document.getElementById('lSq').textContent=sq.toFixed(2);
-    const m=document.getElementById('lmsg');
-    m.textContent=l1<0.1?'bullseye! 🎯':l1<0.8?'close':'off target';m.style.color=l1<0.1?'#34d399':l1<0.8?'#fbbf24':'#fb7185';
-    ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.strokeStyle='#352a5e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(30,55);ctx.lineTo(cv.width-30,55);ctx.stroke();
-    for(let v=0;v<=6;v++){const x=toX(v);ctx.strokeStyle='#2a2350';ctx.beginPath();ctx.moveTo(x,50);ctx.lineTo(x,60);ctx.stroke();
-      ctx.fillStyle='#8a80b8';ctx.font='11px ui-monospace';ctx.textAlign='center';ctx.fillText(v,x,78);}
-    // target star
-    const tx=toX(target);ctx.fillStyle='#fbbf24';ctx.font='20px sans-serif';ctx.fillText('★',tx,42);
-    // error bar
-    const px=toX(pred);ctx.strokeStyle='#fb7185';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(tx,30);ctx.lineTo(px,30);ctx.stroke();
-    // prediction marker
-    ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(px,55,8,0,7);ctx.fill();
+  const bx=48,by=150,L1=58,L2=50;const HOME=165;   // recorded cube x (center)
+  let cubeX=165;
+  function ik(cv,tx,ty){let dx=tx-bx,dy=ty-by,d=Math.hypot(dx,dy);d=Math.min(L1+L2-2,Math.max(Math.abs(L1-L2)+2,d));
+    const ce=(d*d-L1*L1-L2*L2)/(2*L1*L2);const el=Math.acos(Math.max(-1,Math.min(1,ce)));
+    const sh=Math.atan2(dy,dx)-Math.atan2(L2*Math.sin(el),L1+L2*Math.cos(el));return {sh,el};}
+  function drawArm(ctx,W,sh,el,grip,tint){
+    ctx.clearRect(0,0,W,180);ctx.fillStyle='#140b11';ctx.fillRect(0,0,W,180);
+    ctx.fillStyle='#241420';ctx.fillRect(0,158,W,22);ctx.strokeStyle='#4a2b39';ctx.beginPath();ctx.moveTo(0,158);ctx.lineTo(W,158);ctx.stroke();
+    // cube
+    ctx.fillStyle='#fbbf24';ctx.fillRect(cubeX-10,146,20,20);ctx.strokeStyle='#fff';ctx.lineWidth=1.4;ctx.strokeRect(cubeX-10,146,20,20);
+    const j1={x:bx+Math.cos(sh)*L1,y:by+Math.sin(sh)*L1},j2={x:j1.x+Math.cos(sh+el)*L2,y:j1.y+Math.sin(sh+el)*L2};
+    ctx.strokeStyle='#a78bfa';ctx.lineWidth=10;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(j1.x,j1.y);ctx.stroke();
+    ctx.strokeStyle=tint;ctx.lineWidth=8;ctx.beginPath();ctx.moveTo(j1.x,j1.y);ctx.lineTo(j2.x,j2.y);ctx.stroke();
+    ctx.fillStyle='#140b11';ctx.strokeStyle='#a78bfa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(bx,by,8,0,7);ctx.fill();ctx.stroke();
+    const perp=sh+el+Math.PI/2,gp=5+grip*7;ctx.strokeStyle=tint;ctx.lineWidth=4;
+    [1,-1].forEach(s=>{ctx.beginPath();ctx.moveTo(j2.x,j2.y);ctx.lineTo(j2.x+Math.cos(sh+el)*10+Math.cos(perp)*gp*s,j2.y+Math.sin(sh+el)*10+Math.sin(perp)*gp*s);ctx.stroke();});
+    return j2;
   }
-  sl.oninput=draw;draw();
+  const pb=document.getElementById('pbCv').getContext('2d'), ln=document.getElementById('lnCv').getContext('2d');
+  const W=330;let cur1={sh:-1.1,el:1.2},cur2={sh:-1.1,el:1.2},anim=null;
+  function still(){drawArm(pb,W,cur1.sh,cur1.el,1,'#fb7185');drawArm(ln,W,cur2.sh,cur2.el,1,'#a3e635');}
+  const cubeS=document.getElementById('cubeS');
+  cubeS.oninput=()=>{cubeX=90+(+cubeS.value/100)*150;
+    document.getElementById('cubeLbl').textContent = Math.abs(cubeX-HOME)<10?'center (recorded spot)':(cubeX<HOME?'moved left':'moved right');
+    cur1={sh:-1.1,el:1.2};cur2={sh:-1.1,el:1.2};still();
+    document.getElementById('pbResult').textContent='—';document.getElementById('lnResult').textContent='—';};
+  function run(){
+    if(anim)return;
+    const tPB=ik(pb,HOME,150);          // playback ALWAYS aims at the recorded spot
+    const tLN=ik(ln,cubeX,150);         // learned aims at the actual cube
+    let i=0;const K=22;
+    (function loop(){i++;const a=i/K;
+      cur1.sh+=(tPB.sh-cur1.sh)*0.2;cur1.el+=(tPB.el-cur1.el)*0.2;
+      cur2.sh+=(tLN.sh-cur2.sh)*0.2;cur2.el+=(tLN.el-cur2.el)*0.2;
+      const g=a>0.7?Math.max(0,1-(a-0.7)/0.3):1;
+      const p1=drawArm(pb,W,cur1.sh,cur1.el,g,'#fb7185');
+      const p2=drawArm(ln,W,cur2.sh,cur2.el,g,'#a3e635');
+      if(i<K)anim=requestAnimationFrame(loop);else{anim=null;
+        const miss1=Math.abs(p1.x-cubeX)>22;
+        document.getElementById('pbResult').innerHTML=miss1?'❌ grabbed empty air — cube isn\'t where it "remembered"':'✅ got it (cube was in the recorded spot)';
+        document.getElementById('pbResult').style.color=miss1?'#f43f5e':'#34d399';
+        document.getElementById('lnResult').innerHTML='✅ found &amp; grabbed the cube';
+        document.getElementById('lnResult').style.color='#34d399';
+      }})();
+  }
+  document.getElementById('runBoth').onclick=run;
+  cubeS.dispatchEvent(new Event('input'));
 })();
 
-/* ============ Part 4: gradient descent ball ============ */
+/* ============ Part 4: rules pile up ============ */
 (function(){
-  const cv=document.getElementById('gd'),ctx=cv.getContext('2d');
-  // loss(w) = 0.5*(w-1.3)^2*... use a nice bowl with slight asymmetry
-  const wmin=-3,wmax=3;
-  function loss(w){return 0.6*Math.pow(w-1.1,2)+0.15*Math.pow(w-1.1,4)*0.2+0.4;}
-  function grad(w){return 1.2*(w-1.1)+0.15*0.8*Math.pow(w-1.1,3);}
-  let w=-2.4;let raf=null;
-  const lrs=document.getElementById('gdlrs');
-  function toPx(x,y){const px=20+(x-wmin)/(wmax-wmin)*(cv.width-40);
-    const ymax=6,py=cv.height-16-(y/ymax)*(cv.height-40);return [px,py];}
-  function draw(){
-    ctx.clearRect(0,0,cv.width,cv.height);
-    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;ctx.beginPath();
-    for(let i=0;i<=120;i++){const x=wmin+i/120*(wmax-wmin);const p=toPx(x,loss(x));i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
-    ctx.stroke();
-    // ball
-    const bp=toPx(w,loss(w));ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(bp[0],bp[1]-8,9,0,7);ctx.fill();
-    // slope arrow
-    const g=grad(w);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bp[0],bp[1]-8);
-    ctx.lineTo(bp[0]-Math.sign(g)*26,bp[1]-8);ctx.stroke();
-    ctx.fillStyle='#8a80b8';ctx.font='12px ui-monospace';ctx.textAlign='center';ctx.fillText('loss',cv.width/2,14);
-    document.getElementById('gdw').textContent=w.toFixed(2);
-    document.getElementById('gdloss').textContent=loss(w).toFixed(2);
-  }
-  function step(){const lr=+lrs.value;w=w-lr*grad(w);w=Math.max(wmin,Math.min(wmax,w));draw();}
-  lrs.oninput=()=>{document.getElementById('gdlr').textContent=(+lrs.value).toFixed(2);};
-  document.getElementById('gdStep').onclick=step;
-  document.getElementById('gdReset').onclick=()=>{w=wmin+Math.random()*0.5+0.1;if(Math.random()<.5)w=wmax-Math.random()*0.6;draw();};
-  document.getElementById('gdRun').onclick=()=>{if(raf){cancelAnimationFrame(raf);raf=null;return;}
-    (function loop(){step();raf=requestAnimationFrame(loop);})();};
-  draw();
+  const curves=[
+    ['🧊➡️ cube can be anywhere','× every position'],
+    ['🔄 cube at any angle','× every rotation'],
+    ['💡 lighting changes','× every shadow'],
+    ['🧴 a different object','× new shape rules'],
+    ['🧻 a soft, crumpled towel','∞ can\'t list the shapes'],
+    ['👁️ find it in raw pixels','?? nearly impossible'],
+  ];
+  let n=0,rules=1;
+  const box=document.getElementById('ruleChips');
+  function render(){document.getElementById('ruleCount').textContent = rules>9000?'∞':rules.toLocaleString();}
+  document.getElementById('addCurve').onclick=()=>{
+    if(n>=curves.length){document.getElementById('ruleMsg').innerHTML='🧱 <b class="coral">You hit the wall.</b> No list of rules can cover a crumpled towel or raw pixels — time to <b>show</b> examples instead.';return;}
+    const c=curves[n++];const chip=document.createElement('span');chip.className='chip';chip.style.borderColor='#fb7185';chip.textContent=c[0];box.appendChild(chip);
+    if(c[1].includes('∞')||c[1].includes('??'))rules=99999; else rules=rules*12;
+    render();
+    document.getElementById('ruleMsg').innerHTML = n>=curves.length
+      ? '🧱 <b class="coral">You hit the wall.</b> Some cases can\'t be written as rules <em>at all</em>. This is where learning takes over.'
+      : `Add “${c[0]}” and the rules multiply: <b>${c[1]}</b>.`;
+  };
+  document.getElementById('ruleReset').onclick=()=>{n=0;rules=1;box.innerHTML='';render();document.getElementById('ruleMsg').textContent='Start: one cube, one fixed spot → one simple rule.';};
+  render();
 })();
 
-/* ============ Part 5: backprop visual (real tiny net 1-2-1) ============ */
+/* ============ Part 5: the sorter ============ */
 (function(){
-  const cv=document.getElementById('bp'),ctx=cv.getContext('2d');
-  // net: input x=1 (fixed), 2 hidden (tanh), 1 output (linear); target=1
-  let W1=[0.8,-0.6],b1=[0.1,0.1],W2=[0.7,0.5],b2=0.0;const X=1,T=1;
-  let fwd=null;
-  function forward(){const h=[],hp=[];for(let i=0;i<2;i++){hp[i]=W1[i]*X+b1[i];h[i]=Math.tanh(hp[i]);}
-    let y=b2;for(let i=0;i<2;i++)y+=W2[i]*h[i];return {h,hp,y};}
-  function lossVal(y){return 0.5*(y-T)**2;}
-  function trainStep(){const f=forward();const dy=(f.y-T);
-    const dW2=[0,0];for(let i=0;i<2;i++)dW2[i]=dy*f.h[i];const db2=dy;
-    const dW1=[0,0],db1=[0,0];for(let i=0;i<2;i++){const dh=dy*W2[i];const dz=dh*(1-f.h[i]**2);dW1[i]=dz*X;db1[i]=dz;}
-    const lr=0.15;for(let i=0;i<2;i++){W2[i]-=lr*dW2[i];W1[i]-=lr*dW1[i];b1[i]-=lr*db1[i];}b2-=lr*db2;
-    fwd=forward();draw();}
-  function node(x,y,r,col,txt){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle='#140f2b';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();
-    ctx.fillStyle='#fff';ctx.font='12px ui-monospace';ctx.textAlign='center';ctx.fillText(txt,x,y+4);}
-  function edge(x1,y1,x2,y2,w,col){ctx.strokeStyle=col;ctx.lineWidth=Math.min(6,1+Math.abs(w)*3);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
-  function draw(){
-    const f=fwd||forward();ctx.clearRect(0,0,cv.width,cv.height);
-    const ix=55,hx=180,ox=305,iy=130,hy=[80,180],oy=130;
-    for(let i=0;i<2;i++)edge(ix,iy,hx,hy[i],W1[i],'#38bdf8');
-    for(let i=0;i<2;i++)edge(hx,hy[i],ox,oy,W2[i],'#38bdf8');
-    node(ix,iy,22,'#a78bfa','x=1');
-    for(let i=0;i<2;i++)node(hx,hy[i],22,'#fbbf24',f.h[i].toFixed(2));
-    node(ox,oy,24,f.y>0.6?'#34d399':'#f472b6','ŷ='+f.y.toFixed(2));
-    ctx.fillStyle='#8a80b8';ctx.font='12px ui-monospace';ctx.textAlign='center';
-    ctx.fillText('input',ix,iy+40);ctx.fillText('hidden (tanh)',hx,225);ctx.fillText('target = 1.0',ox,oy+42);
-    document.getElementById('bploss').textContent=lossVal(f.y).toFixed(4);
-  }
-  document.getElementById('bpStep').onclick=trainStep;
-  document.getElementById('bpRun').onclick=()=>{let n=0;const t=setInterval(()=>{trainStep();if(++n>=50)clearInterval(t);},40);};
-  document.getElementById('bpReset').onclick=()=>{W1=[0.8,-0.6];b1=[0.1,0.1];W2=[0.7,0.5];b2=0;fwd=forward();draw();};
-  draw();
-})();
-
-/* ============ Part 6: REAL trainable neural net (2-H-1, two moons) ============ */
-(function(){
-  const cv=document.getElementById('nn'),ctx=cv.getContext('2d');
-  const lossC=document.getElementById('nnLossC'),lctx=lossC.getContext('2d');
-  const dom={xmin:-1.9,xmax:3.3,ymin:-1.7,ymax:1.9};
-  function toPx(x,y){return [(x-dom.xmin)/(dom.xmax-dom.xmin)*cv.width,cv.height-(y-dom.ymin)/(dom.ymax-dom.ymin)*cv.height];}
-  const H=8;let W1,b1,W2,b2,useHidden=true;
-  let data=[],lossHist=[],steps=0,raf=null;
-  function randn(){return (Math.random()+Math.random()+Math.random()+Math.random()-2)/1.2;}
-  function makeMoons(){data=[];const N=90,S=1.25;
-    // canonical interlocking two-moons — NOT separable by a single straight line
-    for(let i=0;i<N;i++){const t=Math.PI*i/N;data.push({x:[S*Math.cos(t)+randn()*0.10, S*Math.sin(t)+randn()*0.10],c:0});}
-    for(let i=0;i<N;i++){const t=Math.PI*i/N;data.push({x:[S*(1-Math.cos(t))+randn()*0.10, S*(0.5-Math.sin(t))+randn()*0.10],c:1});}
-  }
-  function init(){W1=[];b1=[];W2=[];b2=0;
-    for(let i=0;i<H;i++){W1.push([(Math.random()*2-1),(Math.random()*2-1)]);b1.push(0);W2.push((Math.random()*2-1));}
-    steps=0;lossHist=[];updateUI();}
-  function forward(x){
-    if(!useHidden){const z=W2[0]*x[0]+W2[1]*x[1]+b2;return {y:1/(1+Math.exp(-z))};}
-    const h=[];for(let i=0;i<H;i++){let z=b1[i]+W1[i][0]*x[0]+W1[i][1]*x[1];h[i]=Math.tanh(z);}
-    let z2=b2;for(let i=0;i<H;i++)z2+=W2[i]*h[i];return {h,y:1/(1+Math.exp(-z2))};}
-  function trainEpoch(lr){
-    let L=0;
-    // accumulate grads
-    let gW1=W1.map(()=>[0,0]),gb1=b1.map(()=>0),gW2=W2.map(()=>0),gb2=0;
-    for(const d of data){const f=forward(d.x);const y=Math.min(1-1e-7,Math.max(1e-7,f.y));const t=d.c;
-      L+= -(t*Math.log(y)+(1-t)*Math.log(1-y));
-      const dz2=y-t; // dL/dz2 for sigmoid+BCE
-      if(!useHidden){gW2[0]+=dz2*d.x[0];gW2[1]+=dz2*d.x[1];gb2+=dz2;continue;}
-      for(let i=0;i<H;i++){gW2[i]+=dz2*f.h[i];}gb2+=dz2;
-      for(let i=0;i<H;i++){const dh=dz2*W2[i];const dz=dh*(1-f.h[i]**2);gW1[i][0]+=dz*d.x[0];gW1[i][1]+=dz*d.x[1];gb1[i]+=dz;}
-    }
-    const n=data.length;
-    if(!useHidden){W2[0]-=lr*gW2[0]/n;W2[1]-=lr*gW2[1]/n;b2-=lr*gb2/n;}
-    else{for(let i=0;i<H;i++){W2[i]-=lr*gW2[i]/n;W1[i][0]-=lr*gW1[i][0]/n;W1[i][1]-=lr*gW1[i][1]/n;b1[i]-=lr*gb1[i]/n;}b2-=lr*gb2/n;}
-    steps++;lossHist.push(L/n);if(lossHist.length>240)lossHist.shift();
-    return L/n;
-  }
-  function accuracy(){let ok=0;for(const d of data){const f=forward(d.x);if((f.y>0.5?1:0)===d.c)ok++;}return ok/data.length;}
-  function drawBoundary(){
-    const step=6;
-    for(let py=0;py<cv.height;py+=step)for(let px=0;px<cv.width;px+=step){
-      const x=dom.xmin+px/cv.width*(dom.xmax-dom.xmin),y=dom.ymin+(1-py/cv.height)*(dom.ymax-dom.ymin);
-      const p=forward([x,y]).y; // 0..1
-      const r=Math.round(56+(244-56)*p),g=Math.round(110+(120-110)*p),b=Math.round(170+(150-170)*p);
-      ctx.fillStyle=`rgba(${r},${g},${b},0.5)`;ctx.fillRect(px,py,step,step);
-    }
-  }
-  function draw(){
-    ctx.clearRect(0,0,cv.width,cv.height);drawBoundary();
-    for(const d of data){const q=toPx(d.x[0],d.x[1]);ctx.beginPath();ctx.arc(q[0],q[1],4.5,0,7);
-      ctx.fillStyle=d.c?'#f472b6':'#38bdf8';ctx.fill();ctx.strokeStyle='#0d0a1e';ctx.lineWidth=1.3;ctx.stroke();}
-    // loss curve
-    lctx.clearRect(0,0,lossC.width,lossC.height);
-    if(lossHist.length>1){const mx=Math.max(...lossHist),mn=Math.min(...lossHist);
-      lctx.strokeStyle='#fbbf24';lctx.lineWidth=2;lctx.beginPath();
-      lossHist.forEach((v,i)=>{const x=i/(lossHist.length-1)*lossC.width;const y=lossC.height-4-(mx>mn?(v-mn)/(mx-mn):0)*(lossC.height-8);i?lctx.lineTo(x,y):lctx.moveTo(x,y);});
-      lctx.stroke();}
-  }
-  function updateUI(){document.getElementById('nnEpoch').textContent=steps;
-    const a=accuracy();document.getElementById('nnAcc').textContent=Math.round(a*100)+'%';
-    document.getElementById('nnLoss').textContent=lossHist.length?lossHist[lossHist.length-1].toFixed(3):'—';
-    draw();}
-  const lrs=document.getElementById('nnlrs');
-  lrs.oninput=()=>document.getElementById('nnlr').textContent=(+lrs.value).toFixed(2);
-  function stepN(n){const lr=+lrs.value;for(let i=0;i<n;i++)trainEpoch(lr);updateUI();
-    const a=accuracy();const msg=document.getElementById('nnMsg');
-    if(!useHidden)msg.innerHTML='A single straight line can\'t bend around the moons — it stalls around <b>~85%</b>. Turn the hidden layer back on!';
-    else if(a>0.95)msg.innerHTML='🎉 It learned the curvy boundary! The hidden layer bent the line to fit both moons.';
-    else msg.innerHTML='Learning… keep training; the boundary is bending to fit.';}
-  document.getElementById('nnStep').onclick=()=>stepN(20);
-  document.getElementById('nnTrain').onclick=(e)=>{
-    if(raf){cancelAnimationFrame(raf);raf=null;e.target.textContent='▶ Train';return;}
-    e.target.textContent='⏸ Pause';(function loop(){stepN(3);raf=requestAnimationFrame(loop);})();};
-  document.getElementById('nnReset').onclick=()=>{init();draw();document.getElementById('nnMsg').textContent='Weights reset. Press Train.';};
-  document.getElementById('nnHidden').onchange=(e)=>{useHidden=e.target.checked;init();draw();};
-  makeMoons();init();draw();
+  const tasks=[
+    {q:'Weld the same seam on identical car parts, all day',a:'program',why:'Everything is identical every time → a fixed playback motion is perfect (and rock-solid reliable).'},
+    {q:'Pick up a cube that could be anywhere on the table',a:'teach',why:'The position varies and you must find it in the camera → show examples and let it learn.'},
+    {q:'Follow a black line painted on the floor',a:'program',why:'One simple sensor rule: "off the line? steer back." No AI needed.'},
+    {q:'Fold a random crumpled towel',a:'teach',why:'Infinite shapes you can\'t possibly list → the classic case for learning.'},
+    {q:'Move the tip to exact coordinates (x, y, z)',a:'program',why:'Pure geometry — inverse kinematics computes it exactly. Classical control shines.'},
+    {q:'Sort mixed recycling by material on a moving belt',a:'teach',why:'Endless variety + you must recognize materials from images → learning.'},
+  ];
+  const box=document.getElementById('sorter');let score=0,done=0;
+  document.getElementById('scoreTot').textContent=tasks.length;
+  tasks.forEach(t=>{
+    const el=document.createElement('div');el.className='task';
+    el.innerHTML=`<div class="q">${t.q}</div><div class="opts"><button class="opt" data-v="program">📝 Program it</button><button class="opt" data-v="teach">🧠 Teach it</button></div><div class="fb"></div>`;
+    el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      if(el.classList.contains('done'))return;
+      const right=b.dataset.v===t.a;el.classList.add('done');
+      b.classList.add(right?'right':'wrong');
+      if(!right)el.querySelector(`.opt[data-v="${t.a}"]`).classList.add('right');
+      el.querySelector('.fb').innerHTML=(right?'✅ ':'💡 ')+t.why;
+      if(right)score++;done++;
+      document.getElementById('score').textContent=score;
+      if(done===tasks.length)document.getElementById('sorterMsg').innerHTML=`Done! <b>${score}/${tasks.length}</b>. Feel the rule: <b>exact & repeatable → program</b>; <b>messy & varied → teach</b>.`;
+    });
+    box.appendChild(el);
+  });
 })();
 
 /* quiz */

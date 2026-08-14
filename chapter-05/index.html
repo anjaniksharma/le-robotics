@@ -3,88 +3,78 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Chapter 5 · From Words to Motion — Text Generation to the Robot's Brain</title>
+<title>Chapter 5 · How Machines Learn — Neural Networks from Scratch</title>
 <style>
   :root{
-    --bg:#0b1020;--bg2:#16101f;--card:#1e1730;--card2:#281a34;--ink:#eaf0ff;--muted:#c3aecf;--line:#3a2b4a;
-    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;--rose:#fb7185;
+    --bg:#0b1020;--bg2:#141026;--card:#1c1836;--card2:#241a44;--ink:#eaf0ff;--muted:#b6aede;--line:#352a5e;
+    --lime:#a3e635;--cyan:#38bdf8;--pink:#f472b6;--amber:#fbbf24;--violet:#a78bfa;--red:#fb7185;--green:#34d399;--gold:#f59e0b;
     --shadow:0 18px 50px rgba(0,0,0,.45);--r:20px;
   }
   *{box-sizing:border-box}
   html{scroll-behavior:smooth}
   body{margin:0;font-family:"Segoe UI",Roboto,-apple-system,system-ui,sans-serif;color:var(--ink);line-height:1.6;
-    background:radial-gradient(1200px 700px at 82% -10%,rgba(244,114,182,.15),transparent 60%),
-      radial-gradient(1000px 700px at -10% 110%,rgba(56,189,248,.14),transparent 55%),
+    background:radial-gradient(1200px 700px at 82% -10%,rgba(251,191,36,.14),transparent 60%),
+      radial-gradient(1000px 700px at -10% 110%,rgba(244,114,182,.14),transparent 55%),
       linear-gradient(180deg,var(--bg),var(--bg2));background-attachment:fixed}
   .rail{position:fixed;top:50%;right:18px;transform:translateY(-50%);z-index:50;display:flex;flex-direction:column;gap:12px}
-  .rail a{width:12px;height:12px;border-radius:50%;background:#40314f;transition:.25s;display:block}
-  .rail a:hover{transform:scale(1.25)} .rail a.active{background:var(--pink);box-shadow:0 0 14px var(--pink)}
+  .rail a{width:12px;height:12px;border-radius:50%;background:#3a316b;transition:.25s;display:block}
+  .rail a:hover{transform:scale(1.25)} .rail a.active{background:var(--amber);box-shadow:0 0 14px var(--amber)}
   .topbar{position:fixed;top:0;left:0;right:0;height:5px;z-index:60;background:rgba(255,255,255,.06)}
-  .topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--pink),var(--cyan));transition:width .15s}
+  .topbar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--amber),var(--pink));transition:width .15s}
   section{max-width:1080px;margin:0 auto;padding:78px 26px 46px}
-  .slide-num{font-size:13px;letter-spacing:.22em;color:var(--pink);font-weight:700;text-transform:uppercase}
+  .slide-num{font-size:13px;letter-spacing:.22em;color:var(--amber);font-weight:700;text-transform:uppercase}
   h1{font-size:clamp(30px,5vw,54px);line-height:1.1;margin:.25em 0 .3em;letter-spacing:-.02em}
   h2{font-size:clamp(24px,3.4vw,36px);margin:.1em 0 .5em;letter-spacing:-.01em}
   h3{font-size:20px;margin:.2em 0 .4em;color:#fff}
   p{color:var(--muted);font-size:clamp(15px,1.7vw,18px)}
-  .lead{font-size:clamp(17px,2vw,21px);color:#eee0f2}
-  .pink{color:var(--pink)} .cyan{color:var(--cyan)} .amber{color:var(--amber)} .lime{color:var(--lime)} .violet{color:var(--violet)} .green{color:var(--green)}
+  .lead{font-size:clamp(17px,2vw,21px);color:#e6e0ff}
+  .gold{color:var(--gold)} .amber{color:var(--amber)} .cyan{color:var(--cyan)} .pink{color:var(--pink)} .lime{color:var(--lime)} .violet{color:var(--violet)} .green{color:var(--green)}
   b,strong{color:#fff}
   .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;box-shadow:var(--shadow)}
   .grid{display:grid;gap:18px}.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}
   @media(max-width:860px){.g2,.g3{grid-template-columns:1fr}}
-  .pill{display:inline-block;background:rgba(244,114,182,.14);color:var(--pink);border:1px solid rgba(244,114,182,.4);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:3px 4px 3px 0}
-  .kbd{font-family:ui-monospace,Menlo,monospace;background:#170f22;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 9px;font-size:13px;color:#f5e9fb}
+  .pill{display:inline-block;background:rgba(251,191,36,.14);color:var(--amber);border:1px solid rgba(251,191,36,.4);padding:4px 12px;border-radius:999px;font-size:13px;font-weight:600;margin:3px 4px 3px 0}
+  .kbd{font-family:ui-monospace,Menlo,monospace;background:#140f2b;border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:2px 9px;font-size:13px;color:#f0e9ff}
   .divider{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);margin:34px 0}
-  .callout{border-left:4px solid var(--pink);background:rgba(244,114,182,.07);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
+  .callout{border-left:4px solid var(--amber);background:rgba(251,191,36,.07);padding:14px 18px;border-radius:0 12px 12px 0;margin:16px 0}
   .callout.q{border-color:var(--cyan);background:rgba(56,189,248,.08)}
-  .callout.robot{border-color:var(--lime);background:rgba(163,230,53,.07)}
-  .crumbs{color:#9784a5;font-size:13px;margin-bottom:6px}.crumbs a{color:#c3aecf;text-decoration:none}
+  .callout.math{border-color:var(--pink);background:rgba(244,114,182,.07)}
+  .crumbs{color:#8a80b8;font-size:13px;margin-bottom:6px}.crumbs a{color:#b6aede;text-decoration:none}
   .hero{min-height:88vh;display:flex;flex-direction:column;justify-content:center}
-  .hero .big{background:linear-gradient(90deg,#fff 10%,var(--pink) 50%,var(--cyan) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero .big{background:linear-gradient(90deg,#fff 10%,var(--amber) 50%,var(--pink) 95%);-webkit-background-clip:text;background-clip:text;color:transparent}
   .scroll-hint{margin-top:38px;color:var(--muted);font-size:14px;display:flex;align-items:center;gap:10px}
   .mouse{width:24px;height:38px;border:2px solid var(--muted);border-radius:14px;position:relative}
-  .mouse::before{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--pink);transform:translateX(-50%);animation:wheel 1.4s infinite}
+  .mouse::before{content:"";position:absolute;left:50%;top:7px;width:4px;height:7px;border-radius:2px;background:var(--amber);transform:translateX(-50%);animation:wheel 1.4s infinite}
   @keyframes wheel{0%{opacity:0;transform:translate(-50%,0)}40%{opacity:1}100%{opacity:0;transform:translate(-50%,12px)}}
-  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#170f22;outline:none;margin:12px 0}
-  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--pink);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--pink);cursor:pointer}
-  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--pink);border:3px solid #0b1020;cursor:pointer}
-  .ctl-label{display:flex;justify-content:space-between;font-size:14px;color:#e4d5ec;font-weight:600}
-  .val{font-family:ui-monospace,Menlo,monospace;color:var(--pink)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;background:#140f2b;outline:none;margin:12px 0}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--amber);border:3px solid #0b1020;box-shadow:0 0 0 2px var(--amber);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--amber);border:3px solid #0b1020;cursor:pointer}
+  .ctl-label{display:flex;justify-content:space-between;font-size:14px;color:#d9d2ff;font-weight:600}
+  .val{font-family:ui-monospace,Menlo,monospace;color:var(--amber)}
   button{cursor:pointer;font-family:inherit}
-  .btn{background:var(--pink);color:#2a0a1c;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
+  .btn{background:var(--amber);color:#241400;border:none;border-radius:10px;padding:10px 16px;font-weight:800;font-size:14px}
   .btn:disabled{opacity:.4;cursor:not-allowed}
-  .btn.ghost{background:transparent;color:var(--pink);border:1px solid var(--pink)}
+  .btn.ghost{background:transparent;color:var(--amber);border:1px solid var(--amber)}
   .btn.sm{padding:7px 12px;font-size:13px}
-  .btn.lime{background:var(--lime);color:#16240a}
   .stat{display:flex;flex-direction:column;gap:1px}.stat .n{font-size:24px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#fff}.stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-  code.inl{font-family:ui-monospace,Menlo,monospace;background:#170f22;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#f5e9fb;font-size:.92em}
-  .mathbox{font-family:ui-monospace,Menlo,monospace;font-size:clamp(15px,2vw,18px);color:#fff;background:#170f22;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;text-align:center}
+  code.inl{font-family:ui-monospace,Menlo,monospace;background:#140f2b;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:#f0e9ff;font-size:.92em}
+  .mathbox{font-family:ui-monospace,Menlo,monospace;font-size:clamp(15px,2vw,19px);color:#fff;background:#140f2b;border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin:10px 0;text-align:center}
   .mathbox small{display:block;font-family:"Segoe UI",sans-serif;color:var(--muted);font-size:13px;margin-top:6px}
-  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#170f22;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#f5e9fb}
-  table{width:100%;border-collapse:collapse;font-size:14.5px}
-  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--line)}
-  th{color:var(--pink);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
-  .tok{display:inline-block;font-family:ui-monospace,Menlo,monospace;background:#241436;border:1px solid var(--line);border-radius:7px;padding:3px 9px;margin:2px;font-size:14px}
-  .genbox{font-size:18px;line-height:1.9;min-height:70px;background:#120b1c;border:1px solid var(--line);border-radius:12px;padding:14px 16px}
-  .genbox .w{opacity:0;animation:pop .25s forwards}
-  @keyframes pop{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-  .barrow{display:flex;align-items:center;gap:8px;margin:4px 0;font-family:ui-monospace,Menlo,monospace;font-size:13px}
-  .barrow .lab{width:74px;text-align:right;color:#e4d5ec}
-  .barrow .track{flex:1;height:16px;background:#170f22;border-radius:6px;overflow:hidden}
-  .barrow .fillb{height:100%;background:linear-gradient(90deg,var(--pink),var(--cyan))}
-  .barrow .pct{width:44px;color:var(--muted)}
   canvas{display:block;border-radius:12px;background:#0d0a1e;width:100%;height:auto}
-  .chunkgrid{display:flex;gap:3px;overflow-x:auto;padding:6px;background:#120b1c;border:1px solid var(--line);border-radius:10px}
-  .chunkcol{display:flex;flex-direction:column;gap:3px;flex:0 0 auto}
-  .chunkcol .cell{width:34px;height:20px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-family:ui-monospace,Menlo,monospace;font-size:10px;color:#0b1020;font-weight:700}
-  .chunkcol.now{outline:2px solid #fff;border-radius:6px}
-  .chunkcol .hd{font-size:9px;color:var(--muted);text-align:center;height:12px}
-  details{background:#170f22;border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
-  summary{cursor:pointer;padding:12px 0;font-weight:700;color:#fff}details[open] summary{color:var(--pink)}
-  .quizopt{display:block;width:100%;text-align:left;background:#170f22;border:1px solid var(--line);color:var(--ink);padding:12px 16px;border-radius:10px;margin:8px 0;font-size:15px;transition:.15s}
-  .quizopt:hover{border-color:var(--pink)} .quizopt.right{background:rgba(52,211,153,.18);border-color:var(--green)} .quizopt.wrong{background:rgba(251,113,133,.16);border-color:var(--red)}
-  .foot{text-align:center;color:#9784a5;font-size:13px;padding:40px 20px 60px}.foot a{color:var(--cyan)}
+  .chip{font-family:ui-monospace,Menlo,monospace;font-size:12px;background:#140f2b;border:1px solid var(--line);border-radius:6px;padding:2px 8px;color:#f0e9ff}
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--amber);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+  details{background:#140f2b;border:1px solid var(--line);border-radius:12px;padding:2px 16px;margin:10px 0}
+  summary{cursor:pointer;padding:12px 0;font-weight:700;color:#fff}details[open] summary{color:var(--amber)}
+  .quizopt{display:block;width:100%;text-align:left;background:#140f2b;border:1px solid var(--line);color:var(--ink);padding:12px 16px;border-radius:10px;margin:8px 0;font-size:15px;transition:.15s}
+  .quizopt:hover{border-color:var(--amber)} .quizopt.right{background:rgba(52,211,153,.18);border-color:var(--green)} .quizopt.wrong{background:rgba(251,113,133,.16);border-color:var(--red)}
+  .foot{text-align:center;color:#8a80b8;font-size:13px;padding:40px 20px 60px}.foot a{color:var(--cyan)}
+  .loop{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+  .loop .n{flex:1;min-width:130px;background:#140f2b;border:1px solid var(--line);border-radius:12px;padding:12px;text-align:center}
+  .loop .n b{color:#fff;display:block;font-size:15px}
+  .loop .n span{font-size:12.5px;color:var(--muted)}
+  .arrow{align-self:center;color:var(--amber);font-size:20px}
 </style>
 </head>
 <body>
@@ -93,202 +83,216 @@
 
 <!-- 0 HERO -->
 <section id="s0" class="hero">
-  <div class="crumbs"><a href="../chapter-04/index.html">← Chapter 4: How Machines Learn</a></div>
+  <div class="crumbs"><a href="../chapter-04/index.html">← Chapter 4: Program it or Teach it?</a></div>
   <div class="slide-num">LeRobot · SO-101 · Chapter 5</div>
-  <h1 class="big">From Words to Motion</h1>
-  <p class="lead" style="max-width:780px">In Chapter 4 we trained a network to sort dots. That <em>same</em> loop — guess, measure error, nudge the weights — is exactly what powers a model that <b class="pink">writes sentences</b> and the one that <b class="lime">drives our robot arm</b>. In this chapter we'll generate text one word at a time, then discover that the robot's brain, <b>ACT</b>, works the very same way — it just predicts <b>motions</b> instead of words.</p>
+  <h1 class="big">How Machines Learn</h1>
+  <p class="lead" style="max-width:770px">So far we've told the robot <em>exactly</em> what to do. But how does it learn to do things <b>on its own</b>? The answer behind image recognizers, ChatGPT, <em>and</em> our robot's brain is one surprisingly simple idea: a <b class="amber">network of tiny knobs</b> that gets tuned, automatically, until its guesses match reality. In this chapter you'll build that intuition — and <b>train a real neural network right here in your browser</b>.</p>
   <div style="margin-top:22px">
-    <span class="pill">👁️ Seeing (ResNet)</span>
-    <span class="pill">💬 Next-token text generation</span>
-    <span class="pill">🌡️ Temperature</span>
-    <span class="pill">🤖 ACT: motions as output</span>
+    <span class="pill">🧠 Neurons & weights</span>
+    <span class="pill">📉 Error & gradient descent</span>
+    <span class="pill">🔁 Backpropagation</span>
+    <span class="pill">🎯 Train a live model</span>
   </div>
   <div class="scroll-hint"><div class="mouse"></div> Scroll or use <span class="kbd">↓</span>/<span class="kbd">↑</span> to move through the lesson</div>
 </section>
 
-<!-- 1 SAME LOOP -->
+<!-- 1 BIG IDEA -->
 <section id="s1">
-  <div class="slide-num">Part 1 · The Bridge</div>
-  <h2>Same loop, three different jobs</h2>
-  <p class="lead">Everything in this chapter is the Chapter-4 loop again — only the <b>input and output</b> change. Here's the whole map; we'll fill it in as we go:</p>
+  <div class="slide-num">Part 1 · The Big Idea</div>
+  <h2>A network is a <span class="amber">function with knobs</span></h2>
+  <p class="lead">A neural network is just a machine that takes numbers in and puts numbers out. Inside are thousands of little dials called <b>weights</b>. <b class="amber">Training</b> means turning those dials — automatically — until the machine's output matches examples we already know the answer to.</p>
   <div class="card" style="margin-top:8px">
-    <table>
-      <tr><th>Model</th><th>Input</th><th>Output</th><th>Loss</th></tr>
-      <tr><td>🖼️ <b>Image classifier</b></td><td>a picture (grid of numbers)</td><td>which category (softmax)</td><td>cross-entropy</td></tr>
-      <tr><td>💬 <b>Text model (GPT)</b></td><td>the words so far</td><td>the <b>next word</b> (softmax)</td><td>cross-entropy</td></tr>
-      <tr class="robot"><td>🤖 <b>Robot brain (ACT)</b></td><td>camera + joint numbers</td><td>the <b class="lime">next motions</b> (numbers)</td><td><b class="lime">L1</b> (distance)</td></tr>
-    </table>
+    <h3 style="text-align:center">The training loop — the same 5 steps for <em>every</em> model</h3>
+    <div class="loop">
+      <div class="n"><b>1 · Data</b><span>examples of input → correct answer</span></div>
+      <div class="arrow">→</div>
+      <div class="n"><b>2 · Guess</b><span>run it forward, get a prediction</span></div>
+      <div class="arrow">→</div>
+      <div class="n"><b>3 · Error</b><span>how wrong was the guess?</span></div>
+      <div class="arrow">→</div>
+      <div class="n"><b>4 · Blame</b><span>which knob to turn, which way?</span></div>
+      <div class="arrow">→</div>
+      <div class="n"><b>5 · Nudge</b><span>turn each knob a little</span></div>
+    </div>
+    <p style="text-align:center;margin:6px 0 0">…then repeat, thousands of times. That's it. That's all of deep learning. 🔁</p>
   </div>
-  <div class="callout">Notice the first two <b>classify</b> (pick one option → cross-entropy). The robot <b>predicts numbers</b> (regression → L1, the loss we highlighted last chapter). Same recipe, different flavour of output. Keep that split in mind — it's the punchline. 🎯</div>
+  <div class="callout">Whether the model recognizes a cat, writes a sentence, or moves a robot arm, <b>only steps 1's data changes</b> — the loop is identical. We'll meet all three by the end of Chapter 6.</div>
 </section>
 
-<!-- 2 SEEING -->
+<!-- 2 NEURON -->
 <section id="s2">
-  <div class="slide-num">Part 2 · Seeing</div>
-  <h2>How a network <span class="pink">sees</span> (ResNet, briefly)</h2>
-  <div class="grid g2" style="align-items:center">
-    <div>
-      <p>A photo is just a <b>grid of numbers</b> — each pixel's brightness. Early layers of a vision network learn to spot tiny <b>edges</b>; later layers combine edges into <b>shapes</b>, then whole <b>objects</b>. Stack enough layers and it can recognize a mug, a cube, a hand.</p>
-      <p><b class="pink">ResNet</b> is a famous, very deep vision network. Its trick was adding <b>“shortcut” connections</b> that let information skip ahead — which made training very deep networks actually work. We don't need its guts; just remember: <b>ResNet turns an image into a compact list of “what's in it” numbers.</b> The robot will use exactly this to look through its camera. 📷</p>
-      <div class="callout q"><b>Try it →</b> Slide the “edge detector” across the picture. Where brightness changes sharply, it lights up — that's the very first thing a vision network learns to do.</div>
-    </div>
-    <div class="card">
-      <canvas id="edgeCv" width="360" height="200"></canvas>
-      <div class="ctl-label" style="margin-top:8px"><span>Slide the edge-detector window</span><span class="val" id="edgePos">50%</span></div>
-      <input id="edgeSlider" type="range" min="0" max="100" value="50">
-      <div class="stat" style="margin-top:6px"><span class="n pink" id="edgeResp">0.00</span><span class="l">Edge strength under the window</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- 3 TOKENS -->
-<section id="s3">
-  <div class="slide-num">Part 3 · Words as Numbers</div>
-  <h2>Predicting the <span class="pink">next token</span></h2>
+  <div class="slide-num">Part 2 · The Building Block</div>
+  <h2>One <span class="amber">neuron</span> = a weighted vote</h2>
   <div class="grid g2" style="align-items:start">
     <div>
-      <p>To a language model, text is a sequence of <b>tokens</b> — little chunks (a word or word-piece). The model reads the tokens so far and outputs a <b>probability for every possible next token</b>. That's it — that's just <b>classification</b>, like Chapter 4, but with a <em>huge</em> number of categories (the whole vocabulary).</p>
-      <div class="mathbox">P(next token | the tokens so far)
-        <small>a probability for every word in the vocabulary — they sum to 1</small></div>
-      <p>The magical part: the training data <b>labels itself</b>. Take any sentence; at each position the “correct answer” is literally <b>the word that actually came next</b>. Feed the model billions of sentences and it learns which words tend to follow which. Loss = the same <b>“surprise”</b> (cross-entropy) from Chapter 4.</p>
+      <p>A neuron looks at its inputs, decides <b>how much each one matters</b> (that's the weight), adds them up with a <b>bias</b>, and squishes the result into a decision.</p>
+      <div class="mathbox">y = f( w₁·x₁ + w₂·x₂ + b )
+        <small>weighted sum of inputs, then an activation f</small></div>
+      <p>Think of a judge scoring a science fair: creativity counts <span class="chip">×3</span>, neatness <span class="chip">×1</span>. The judge weights each, adds them, and gives a thumbs up or down. The activation <b>f</b> is that final squish — e.g. <b>ReLU</b> (“negatives become 0”) or <b>sigmoid</b> (“squish to a 0–1 probability”).</p>
+      <div class="callout q"><b>Try it →</b> You are the neuron! Turn the weight knobs so the line cleanly separates the <span style="color:#38bdf8">blue</span> from the <span style="color:#f472b6">pink</span> dots. The weights literally <em>are</em> the line.</div>
     </div>
     <div class="card">
-      <h3 style="margin-top:0">Self-supervised: the answer is in the text</h3>
-      <p style="font-size:14px;margin-top:0">The model sees the words up to a point and must guess the next one:</p>
-      <div style="margin:10px 0"><span class="tok">the</span><span class="tok">robot</span><span class="tok">picks</span><span class="tok">up</span><span class="tok">the</span><span class="tok" style="border-color:var(--pink);border-style:dashed">?</span></div>
-      <p style="font-size:14px">Correct next token here → <span class="chip" style="color:var(--green)">cube</span>. If the model gave “cube” a high probability, tiny loss. If it was sure it'd be “banana,” big loss — and backprop nudges the weights.</p>
-      <p style="font-size:13px;color:var(--muted)">No human labelled anything — the text is its own answer key. That's why it's called <b>self-supervised</b>.</p>
+      <canvas id="perceptron" width="360" height="300"></canvas>
+      <div class="ctl-label" style="margin-top:8px"><span>w₁ (weight on x)</span><span class="val" id="pw1">1.0</span></div>
+      <input id="pw1s" type="range" min="-3" max="3" step="0.05" value="1">
+      <div class="ctl-label"><span>w₂ (weight on y)</span><span class="val" id="pw2">1.0</span></div>
+      <input id="pw2s" type="range" min="-3" max="3" step="0.05" value="1">
+      <div class="ctl-label"><span>b (bias)</span><span class="val" id="pb">0.0</span></div>
+      <input id="pbs" type="range" min="-3" max="3" step="0.05" value="0">
+      <div class="stat" style="margin-top:8px"><span class="n"><span id="pacc">?</span>%</span><span class="l">Dots classified correctly</span></div>
     </div>
   </div>
 </section>
 
-<!-- 4 TEXT GEN -->
+<!-- 3 LOSS -->
+<section id="s3">
+  <div class="slide-num">Part 3 · Measuring Wrongness</div>
+  <h2>Error, a.k.a. the <span class="amber">loss</span></h2>
+  <p class="lead">To improve, the network needs a single number that says how wrong it is: the <b>loss</b>. There are two great flavors — and we'll see <em>both</em> again later (one for text, one for the robot).</p>
+  <div class="grid g2">
+    <div class="card"><h3 class="cyan">Predicting a number → “distance” loss</h3>
+      <p>If the network should output <b>3.0</b> but says <b>2.4</b>, it's off by 0.6. Two common measures:</p>
+      <div class="mathbox" style="font-size:16px">|ŷ − y|  <span style="color:var(--muted)">(L1)</span> &nbsp; or &nbsp; ½(ŷ − y)²  <span style="color:var(--muted)">(squared)</span></div>
+      <p style="font-size:14px">This <b>regression</b> loss is exactly what our robot's brain will use. Keep <span class="chip">|ŷ − y|</span> in mind. 🤖</p>
+    </div>
+    <div class="card"><h3 class="pink">Picking a category → “surprise” loss</h3>
+      <p>If the network must choose <em>cat vs dog</em>, it outputs a <b>probability</b>. The loss is how <b>surprised</b> it was by the right answer: confident-and-right = tiny loss; confident-and-wrong = huge loss.</p>
+      <div class="mathbox" style="font-size:16px">loss = −log( probability of the correct class )</div>
+      <p style="font-size:14px">This <b>cross-entropy</b> is what text models use to pick the next word. 💬</p>
+    </div>
+  </div>
+  <div class="card" style="margin-top:8px">
+    <div class="ctl-label"><span>Drag the prediction toward the target (★ = 3.0)</span><span class="val"><span id="lpred">2.0</span></span></div>
+    <input id="lslider" type="range" min="0" max="6" step="0.05" value="2">
+    <canvas id="lcanvas" width="720" height="90" style="margin-top:6px"></canvas>
+    <div class="grid g3" style="margin-top:10px">
+      <div class="stat"><span class="n cyan" id="lL1">1.00</span><span class="l">L1 loss |ŷ−y|</span></div>
+      <div class="stat"><span class="n cyan" id="lSq">0.50</span><span class="l">Squared loss</span></div>
+      <div class="stat"><span class="n" id="lmsg" style="font-size:16px">off target</span><span class="l">Status</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 GRADIENT DESCENT -->
 <section id="s4">
-  <div class="slide-num">Part 4 · The Fun Part</div>
-  <h2>🖊️ Generate text, one word at a time</h2>
-  <p class="lead">To <b>write</b>, the model does this on a loop: predict next-token probabilities → <b>pick one</b> → stick it on the end → feed it all back in → repeat. Eating its own output is called <b>autoregression</b>.</p>
-  <div class="grid g2" style="align-items:start;margin-top:8px">
+  <div class="slide-num">Part 4 · The Math That Learns</div>
+  <h2><span class="amber">Gradient descent</span>: walk downhill</h2>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <p>Picture the loss as a <b>valley</b>. Each weight is a position on the hillside. We want the bottom (lowest loss). How do we know which way is down? The <b>slope</b>.</p>
+      <p>The slope (mathematicians call it the <b>derivative</b> or <b>gradient</b>) tells us two things: which direction is downhill, and how steep. Then we take one small step that way:</p>
+      <div class="mathbox">new weight = old weight − <span class="amber">learning rate</span> × slope
+        <small>“slope” = how much the loss changes when you wiggle this weight</small></div>
+      <p>The <b>learning rate</b> is the step size. Too small → learning crawls. Too big → you overshoot and bounce out of the valley. <b>Try both →</b></p>
+      <div class="callout q"><b>Roll the ball →</b> Press <b>Step</b> to take gradient-descent steps. Crank the learning rate up until it overshoots and flies out. 🎢</div>
+    </div>
     <div class="card">
-      <div class="ctl-label"><span>Start the sentence with</span><span></span></div>
-      <div class="row" id="seedRow" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px"></div>
-      <div class="genbox" id="genOut"><span style="color:var(--muted)">Press “Write” to generate…</span></div>
-      <div class="row" style="display:flex;gap:10px;margin-top:12px">
-        <button class="btn" id="genBtn">🖊️ Write</button>
-        <button class="btn ghost sm" id="genStep">One word</button>
-        <button class="btn ghost sm" id="genReset">↺</button>
+      <canvas id="gd" width="360" height="240"></canvas>
+      <div class="ctl-label" style="margin-top:8px"><span>Learning rate</span><span class="val" id="gdlr">0.15</span></div>
+      <input id="gdlrs" type="range" min="0.01" max="1.05" step="0.01" value="0.15">
+      <div class="row" style="display:flex;gap:10px;margin-top:10px">
+        <button class="btn" id="gdStep">▶ Step downhill</button>
+        <button class="btn" id="gdRun">⏩ Auto</button>
+        <button class="btn ghost sm" id="gdReset">↺ New start</button>
+      </div>
+      <div class="grid g2" style="margin-top:10px">
+        <div class="stat"><span class="n amber" id="gdw">—</span><span class="l">weight</span></div>
+        <div class="stat"><span class="n" id="gdloss">—</span><span class="l">loss</span></div>
       </div>
     </div>
-    <div class="card">
-      <h3 style="margin-top:0">Next-token probabilities</h3>
-      <p style="font-size:13.5px;margin-top:0">After the current words, here's what the model thinks could come next (top candidates):</p>
-      <div id="probBars" style="margin:8px 0;min-height:150px"></div>
-      <div class="ctl-label"><span>🌡️ Temperature</span><span class="val" id="tempV">0.8</span></div>
-      <input id="tempS" type="range" min="0.1" max="1.6" step="0.05" value="0.8">
-      <p style="font-size:13px;margin-top:4px" id="tempMsg"></p>
-    </div>
   </div>
-  <div class="callout"><b>Temperature</b> reshapes the choices before picking: <b>low</b> (≈0.2) = always grab the top word → safe but repetitive; <b>high</b> (≈1.4) = flatten the odds → surprising, sometimes nonsense. It's the model's “creativity dial.” This little demo is a real (tiny) word-prediction model built from a robot-themed corpus. 🤖</div>
 </section>
 
-<!-- 5 TRANSFORMER 1-LINER -->
+<!-- 5 BACKPROP -->
 <section id="s5">
-  <div class="slide-num">Part 5 · One Line on Architecture</div>
-  <h2>What's a <span class="pink">Transformer</span>?</h2>
+  <div class="slide-num">Part 5 · Sharing the Blame</div>
+  <h2><span class="amber">Backpropagation</span></h2>
   <div class="grid g2" style="align-items:center">
     <div>
-      <p>We promised to keep architecture short, so here it is in one idea: a Transformer uses <b>attention</b> — a way for each word to <b>look back at the other words</b> and decide which ones matter for predicting what's next.</p>
-      <p>In “the robot picks up the ___”, attention lets “picks up” and “robot” shout loudest, steering the guess toward something grippable. That's the whole superpower: <b>every token can weigh every other token</b>. Everything else is plumbing.</p>
-      <div class="callout q">The same Transformer idea — attention over a sequence — is what the robot's <b>ACT</b> brain uses too. Onward to the robot. 🤖</div>
+      <p>A big network has thousands of weights. When the final answer is wrong, <b>which</b> ones caused it, and how much? Backprop answers this by letting the error <b>flow backwards</b> through the network — from the output back to every weight.</p>
+      <p>The trick is the <b>chain rule</b>, which sounds fancy but just means: to see how a weight deep inside affects the final loss, <b>multiply the slopes along the path</b> from that weight to the output.</p>
+      <div class="mathbox">how weight affects loss = slope × slope × … along the path
+        <small>a chain of gears: a tiny turn at the end traces back through each gear</small></div>
+      <p>Then every weight gets its own nudge (step 4). Do this for all of them at once, and the whole network inches toward better answers.</p>
+      <div class="callout q"><b>Watch it →</b> Press <b>Train step</b>: green shows the forward guess flowing right, the error appears, then <span class="pink">pink</span> blame flows back and every weight gets nudged. The loss drops each time.</div>
     </div>
     <div class="card">
-      <h3 style="margin-top:0">Attention, sketched</h3>
-      <p style="font-size:13.5px;margin-top:0">Hover the target word — thicker lines = tokens it “pays attention” to.</p>
-      <canvas id="attnCv" width="360" height="180"></canvas>
-    </div>
-  </div>
-</section>
-
-<!-- 6 ACT -->
-<section id="s6">
-  <div class="slide-num">Part 6 · The Robot's Brain</div>
-  <h2><span class="lime">ACT</span> — predicting motions instead of words</h2>
-  <p class="lead">Meet <b>ACT</b> (Action Chunking Transformer), the policy you train in LeRobot to make the SO-101 act on its own. It's the same machine we've been building — with a camera for eyes and motors for a mouth.</p>
-  <div class="grid g2" style="align-items:start;margin-top:8px">
-    <div>
-      <h3>How ACT is wired (lightly)</h3>
-      <ul style="color:var(--muted)">
-        <li><b>Input — sees & feels:</b> the camera image goes through a <b class="pink">ResNet</b> (Part 2), and it also reads the <b>6 joint numbers</b> (the calibrated encoders from Chapter 3).</li>
-        <li><b>Brain:</b> a <b>Transformer</b> (Part 5) mixes those together.</li>
-        <li><b>Output — acts:</b> instead of the next word, it predicts the <b class="lime">next motions</b> — a whole <b>chunk</b> of future actions, each action = the 6 target motor positions.</li>
-      </ul>
-      <div class="mathbox">loss = | predicted motion − your actual motion |
-        <small>L1 — the exact regression loss from Chapter 4</small></div>
-      <p><b>Where does the training data come from?</b> From <b>you</b>. Every time you teleoperated and recorded (Chapters 2–3, <code class="inl">lerobot-record</code>), you saved thousands of moments of <span class="chip">camera + joints → the move you made</span>. ACT learns to <b>imitate</b> you.</p>
-      <div class="callout robot"><b>Text vs robot, side by side:</b> GPT <b>classifies</b> the next token (pick one word → cross-entropy). ACT <b>regresses</b> the next motions (predict continuous numbers → L1). Same loop, different output — that's the whole connection. 🎯</div>
-    </div>
-    <div class="card">
-      <h3 style="margin-top:0">🤖 Mock-ACT: watch it predict a motion chunk</h3>
-      <p style="font-size:13px;margin-top:0">A simplified stand-in for ACT: it “sees” a cube and predicts a chunk of motor numbers to reach it, then executes them — just like the real policy loop.</p>
-      <canvas id="actCv" width="360" height="200"></canvas>
-      <div class="ctl-label" style="margin-top:8px"><span>Predicted action chunk (each column = 6 motor targets over time)</span></div>
-      <div class="chunkgrid" id="chunkGrid" style="margin-top:6px"></div>
-      <div class="row" style="display:flex;gap:10px;margin-top:12px">
-        <button class="btn lime" id="actPredict">🧠 See → predict → act</button>
-        <button class="btn ghost sm" id="actNew">🎲 New scene</button>
+      <canvas id="bp" width="360" height="260"></canvas>
+      <div class="row" style="display:flex;gap:10px;margin-top:10px">
+        <button class="btn" id="bpStep">▶ Train step</button>
+        <button class="btn" id="bpRun">⏩ Train 50×</button>
+        <button class="btn ghost sm" id="bpReset">↺</button>
       </div>
-      <p style="font-size:13px;margin-top:8px" id="actMsg">Press to let the mock policy look at the cube and predict its next moves.</p>
+      <div class="stat" style="margin-top:10px"><span class="n" id="bploss">—</span><span class="l">loss (want → 0)</span></div>
     </div>
   </div>
 </section>
 
-<!-- 7 FULL LOOP + RECAP -->
-<section id="s7">
-  <div class="slide-num">Wrap-up · The Whole Course</div>
-  <h2>You've built the entire loop 🏁</h2>
-  <p class="lead">Look how far the pieces connect — from a single motor to a robot that teaches itself:</p>
-  <div class="card" style="margin-top:8px">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:14px">
-      <span class="chip" style="color:var(--lime)">Ch1 · motors & torque</span><span class="pink">→</span>
-      <span class="chip" style="color:var(--violet)">Ch2 · wiring & Python</span><span class="pink">→</span>
-      <span class="chip" style="color:var(--cyan)">Ch3 · calibrate both arms</span><span class="pink">→</span>
-      <span class="chip">teleoperate & record</span><span class="pink">→</span>
-      <span class="chip" style="color:var(--amber)">Ch4 · how learning works</span><span class="pink">→</span>
-      <span class="chip" style="color:var(--lime)">Ch5 · ACT learns to act</span>
+<!-- 6 LIVE TRAIN -->
+<section id="s6">
+  <div class="slide-num">Part 6 · Put It All Together</div>
+  <h2>🎯 Train a real neural network — live</h2>
+  <p class="lead">No pretend animation this time: below is an actual neural network running real gradient descent and backprop in your browser. Its job is to separate two interlocking “moons” of dots — a curvy pattern a single straight line <b>cannot</b> split. Press <b>Train</b> and watch it learn.</p>
+  <div class="grid g2" style="align-items:start;margin-top:8px">
+    <div class="card">
+      <canvas id="nn" width="360" height="320"></canvas>
+      <p style="font-size:12.5px;color:var(--muted);text-align:center;margin:8px 0 0">Background colour = the network's current guess for each spot (<span style="color:#38bdf8">blue</span> vs <span style="color:#f472b6">pink</span>). Watch the boundary bend to fit.</p>
+    </div>
+    <div class="card">
+      <div class="row" style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn" id="nnTrain">▶ Train</button>
+        <button class="btn ghost sm" id="nnStep">Step ×20</button>
+        <button class="btn ghost sm" id="nnReset">↺ Reset weights</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;margin:14px 0 4px;font-size:14px;color:#d9d2ff"><input type="checkbox" id="nnHidden" checked> Use a hidden layer (uncheck = one straight line only)</label>
+      <div class="ctl-label" style="margin-top:8px"><span>Learning rate</span><span class="val" id="nnlr">0.5</span></div>
+      <input id="nnlrs" type="range" min="0.02" max="2" step="0.02" value="0.5">
+      <div class="grid g2" style="margin-top:12px">
+        <div class="stat"><span class="n amber" id="nnEpoch">0</span><span class="l">Training steps</span></div>
+        <div class="stat"><span class="n green" id="nnAcc">50%</span><span class="l">Accuracy</span></div>
+      </div>
+      <div class="ctl-label" style="margin-top:12px"><span>Loss over time</span><span class="val" id="nnLoss">—</span></div>
+      <canvas id="nnLossC" width="330" height="90" style="margin-top:4px"></canvas>
+      <p style="font-size:13px;margin-top:8px" id="nnMsg">Press Train. With the hidden layer on, accuracy should climb past 95%. Turn it off and watch a single line get stuck near 85% — proof that depth lets networks bend.</p>
     </div>
   </div>
-  <p style="margin-top:14px">Your calibrated encoders (Ch3) become ACT's input numbers. Your teleop recordings become its training data. The gradient descent from Ch4 tunes its weights. And the motor targets it outputs are the very same 0–4095 counts you sent by hand in the Digital Twin. It all connects. 🔗</p>
+</section>
 
+<!-- 7 RECAP -->
+<section id="s7">
+  <div class="slide-num">Wrap-up</div>
+  <h2>Recap &amp; quiz 🎓</h2>
+  <div class="grid g3">
+    <div class="card"><h3 class="amber">Weights</h3><p>The tunable knobs. A neuron = weighted sum + a squish (activation).</p></div>
+    <div class="card"><h3 class="cyan">Loss</h3><p>One number for “how wrong.” Distance for numbers, surprise for categories.</p></div>
+    <div class="card"><h3 class="pink">Descent + backprop</h3><p>Slope says which way is downhill; backprop nudges every weight a little.</p></div>
+  </div>
   <div class="divider"></div>
-  <h2>Quiz 🧠</h2>
-  <div class="card"><p><b>Q1.</b> A language model generates text by…</p>
-    <div data-q="0" data-a="2"><button class="quizopt">Copying a saved essay</button><button class="quizopt">Drawing pixels</button><button class="quizopt">Predicting the next token, adding it, and repeating</button><button class="quizopt">Asking a human each word</button></div></div>
-  <div class="card" style="margin-top:14px"><p><b>Q2.</b> Turning the temperature <em>up</em> makes the text…</p>
-    <div data-q="1" data-a="1"><button class="quizopt">More repetitive and safe</button><button class="quizopt">More random and creative</button><button class="quizopt">Longer only</button><button class="quizopt">Perfectly correct</button></div></div>
-  <div class="card" style="margin-top:14px"><p><b>Q3.</b> The key difference between GPT and ACT is…</p>
-    <div data-q="2" data-a="0"><button class="quizopt">GPT classifies a next token; ACT regresses continuous motions</button><button class="quizopt">ACT has no training</button><button class="quizopt">GPT uses motors</button><button class="quizopt">They are identical</button></div></div>
-  <div class="card" style="margin-top:14px"><p><b>Q4.</b> Where does ACT's training data come from?</p>
-    <div data-q="3" data-a="3"><button class="quizopt">The internet</button><button class="quizopt">Random numbers</button><button class="quizopt">The motor datasheet</button><button class="quizopt">Your own recorded teleoperation demos</button></div></div>
-
+  <div class="card"><p><b>Q1.</b> What does “training” actually adjust inside a network?</p>
+    <div data-q="0" data-a="1"><button class="quizopt">The screen brightness</button><button class="quizopt">The weights (the knobs)</button><button class="quizopt">The input images</button><button class="quizopt">Nothing — it's fixed</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q2.</b> The <em>loss</em> is…</p>
+    <div data-q="1" data-a="2"><button class="quizopt">How fast the model runs</button><button class="quizopt">The number of neurons</button><button class="quizopt">A single number for how wrong the guess is</button><button class="quizopt">The learning rate</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q3.</b> If the learning rate is far too big, training will…</p>
+    <div data-q="2" data-a="0"><button class="quizopt">Overshoot and bounce around instead of settling</button><button class="quizopt">Always be perfect</button><button class="quizopt">Run out of battery</button><button class="quizopt">Turn off the loss</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q4.</b> Backpropagation's job is to…</p>
+    <div data-q="3" data-a="3"><button class="quizopt">Draw the graphics</button><button class="quizopt">Take the photo</button><button class="quizopt">Charge the robot</button><button class="quizopt">Figure out how to nudge every weight</button></div></div>
   <div class="divider"></div>
-  <details><summary>🔎 Why predict a whole “chunk” of actions at once?</summary><p>Predicting one tiny step at a time can get jittery and can drift off course. ACT predicts a short <b>chunk</b> — roughly the next second of motion — so the movement is smoother and more committed. It executes a few, looks again, and predicts the next chunk. (The "Chunking" in Action Chunking Transformer.)</p></details>
-  <details><summary>🧪 Homework / going further</summary><p>1) In one sentence each, describe the input, output, and loss for: an image classifier, GPT, and ACT.<br>
-    2) Why is L1 (a “distance” loss) the right choice for motor targets, while cross-entropy fits picking a word?<br>
-    3) Open the <a href="../live-demo/arm.html" style="color:var(--cyan)">Digital Twin</a>: the 6 numbers you send with the dials are the same kind of numbers ACT outputs. Record yourself doing a motion — what would each saved moment look like as (input → output)?</p></details>
-  <p style="margin-top:20px"><a class="btn ghost" href="../chapter-04/index.html">← Chapter 4</a> &nbsp; <a class="btn ghost" href="../chapter-01/index.html">Back to Chapter 1</a> &nbsp; <a class="btn lime" style="text-decoration:none" href="../live-demo/arm.html">🦾 Open the Digital Twin</a></p>
+  <details><summary>🔎 Bonus: why do we need a hidden layer at all?</summary><p>One neuron can only draw a <b>straight</b> boundary. Many real patterns (like the two moons above) can't be split by any single line. Stacking a <b>hidden layer</b> of neurons lets the network combine several bent pieces into a curvy boundary — the more neurons, the more flexible the shape. That flexibility is exactly why deep networks are so powerful.</p></details>
+  <p style="margin-top:20px"><a class="btn ghost" href="../chapter-04/index.html">← Chapter 4</a> &nbsp; <a class="btn" style="background:var(--pink);color:#2a0a1c;text-decoration:none;padding:10px 16px;border-radius:10px;font-weight:800" href="../chapter-06/index.html">Chapter 6: From Words to Motion →</a></p>
+  <p style="color:var(--muted);font-size:14px;margin-top:6px">Next: how this exact loop powers <b>text generation</b> — and then the robot's own brain, <b>ACT</b>. 🧠🤖</p>
 </section>
 
 <nav style="max-width:1080px;margin:12px auto 0;padding:0 26px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
   <a class="btn ghost" href="../chapter-04/index.html" style="text-decoration:none">← Chapter 4</a>
   <a class="btn ghost" href="../index.html" style="text-decoration:none">⌂ Course home</a>
-  <a class="btn" href="../chapter-06/index.html" style="text-decoration:none">Chapter 6: Collecting Good Data →</a>
+  <a class="btn" href="../chapter-06/index.html" style="text-decoration:none">Chapter 6: From Words to Motion →</a>
 </nav>
-<div class="foot">Chapter 5 of the LeRobot SO-101 course · ACT = Action Chunking Transformer (ResNet vision + Transformer, L1 action loss), as implemented in
-  <a href="https://github.com/huggingface/lerobot">lerobot</a>'s <code class="inl">policies/act</code>. The text demo is a small next-token model running live in your browser.</div>
+<div class="foot">Chapter 5 of the LeRobot SO-101 course · The neural network in Part 6 is real: it runs gradient descent &amp; backpropagation live in your browser, no libraries.</div>
 
 <script>
 /* rail + progress */
 const secs=[...document.querySelectorAll('section')],rail=document.getElementById('rail');
-const labels=['Intro','Same loop','Seeing','Tokens','Text gen','Transformer','ACT','Recap'];
+const labels=['Intro','Big idea','Neuron','Loss','Gradient descent','Backprop','Train it','Recap'];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
 const dots=[...rail.children],bar=document.getElementById('topbar');
 function onScroll(){const y=window.scrollY,h=document.body.scrollHeight-window.innerHeight;bar.style.width=(100*y/h)+'%';
@@ -299,215 +303,218 @@ window.addEventListener('keydown',e=>{let cur=0;secs.forEach((s,i)=>{if(s.getBou
   if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();secs[Math.min(cur+1,secs.length-1)].scrollIntoView({behavior:'smooth'});}
   if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();secs[Math.max(cur-1,0)].scrollIntoView({behavior:'smooth'});}});
 
-/* ============ Part 2: edge detector ============ */
+/* ============ Part 2: perceptron playground ============ */
 (function(){
-  const cv=document.getElementById('edgeCv'),ctx=cv.getContext('2d');
-  // a simple scene: dark left, bright bar, gradient — brightness profile
-  function bright(x){ // x in 0..1 -> 0..1 brightness
-    if(x<0.30)return 0.15; if(x<0.34)return 0.15+(x-0.30)/0.04*0.7; // rising edge
-    if(x<0.6)return 0.85; if(x<0.66)return 0.85-(x-0.6)/0.06*0.6; // falling edge
-    return 0.25+0.2*Math.sin(x*30);
+  const cv=document.getElementById('perceptron'),ctx=cv.getContext('2d');
+  const dom={xmin:-3,xmax:3,ymin:-3,ymax:3};
+  function toPx(x,y){return [(x-dom.xmin)/(dom.xmax-dom.xmin)*cv.width,cv.height-(y-dom.ymin)/(dom.ymax-dom.ymin)*cv.height];}
+  // two linearly-separable clusters
+  const pts=[];
+  function seed(){pts.length=0;
+    for(let i=0;i<30;i++){pts.push({x:-1+rn()*0.9,y:1+rn()*0.9,c:0});pts.push({x:1+rn()*0.9,y:-1+rn()*0.9,c:1});}
   }
-  const sl=document.getElementById('edgeSlider');
+  function rn(){return (Math.random()*2-1);}
+  seed();
+  const w1=document.getElementById('pw1s'),w2=document.getElementById('pw2s'),b=document.getElementById('pbs');
   function draw(){
+    const W1=+w1.value,W2=+w2.value,B=+b.value;
+    document.getElementById('pw1').textContent=W1.toFixed(2);document.getElementById('pw2').textContent=W2.toFixed(2);document.getElementById('pb').textContent=B.toFixed(2);
     ctx.clearRect(0,0,cv.width,cv.height);
-    for(let px=0;px<cv.width;px++){const b=bright(px/cv.width);const v=Math.round(b*230)+10;
-      ctx.fillStyle=`rgb(${v},${v},${Math.min(255,v+20)})`;ctx.fillRect(px,0,1,cv.height-30);}
-    const pos=+sl.value/100;const cx=pos*cv.width;
-    // edge response = |bright(right)-bright(left)|
-    const resp=Math.abs(bright(pos+0.02)-bright(pos-0.02));
-    document.getElementById('edgePos').textContent=Math.round(pos*100)+'%';
-    document.getElementById('edgeResp').textContent=resp.toFixed(2);
-    // window
-    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;ctx.strokeRect(cx-16,4,32,cv.height-38);
-    // response bar
-    ctx.fillStyle='#170f22';ctx.fillRect(0,cv.height-26,cv.width,26);
-    ctx.fillStyle='#f472b6';ctx.fillRect(cx-40,cv.height-24,80*resp+2,20);
-    ctx.fillStyle='#c3aecf';ctx.font='11px ui-monospace';ctx.textAlign='center';ctx.fillText('edge strength',cx,cv.height-9);
+    // shade half planes
+    const img=ctx.getImageData(0,0,cv.width,cv.height);
+    for(let py=0;py<cv.height;py+=4)for(let px=0;px<cv.width;px+=4){
+      const x=dom.xmin+px/cv.width*(dom.xmax-dom.xmin), y=dom.ymin+(1-py/cv.height)*(dom.ymax-dom.ymin);
+      const s=W1*x+W2*y+B; const on=s>0;
+      for(let dy=0;dy<4;dy++)for(let dx=0;dx<4;dx++){const idx=((py+dy)*cv.width+(px+dx))*4;
+        img.data[idx]=on?56:244;img.data[idx+1]=on?110:120;img.data[idx+2]=on?170:150;img.data[idx+3]=38;}
+    }
+    ctx.putImageData(img,0,0);
+    // boundary line W1*x+W2*y+B=0
+    ctx.strokeStyle='#fbbf24';ctx.lineWidth=3;ctx.beginPath();
+    if(Math.abs(W2)>1e-6){const y0=-(W1*dom.xmin+B)/W2,y1=-(W1*dom.xmax+B)/W2;let a=toPx(dom.xmin,y0),c=toPx(dom.xmax,y1);ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);}
+    else if(Math.abs(W1)>1e-6){const x0=-B/W1,a=toPx(x0,dom.ymin),c=toPx(x0,dom.ymax);ctx.moveTo(a[0],a[1]);ctx.lineTo(c[0],c[1]);}
+    ctx.stroke();
+    // points + accuracy
+    let ok=0;
+    for(const p of pts){const s=W1*p.x+W2*p.y+B;const pred=s>0?1:0;if(pred===p.c)ok++;
+      const q=toPx(p.x,p.y);ctx.beginPath();ctx.arc(q[0],q[1],5,0,7);ctx.fillStyle=p.c?'#f472b6':'#38bdf8';ctx.fill();ctx.strokeStyle='#0d0a1e';ctx.lineWidth=1.5;ctx.stroke();}
+    document.getElementById('pacc').textContent=Math.round(100*ok/pts.length);
+  }
+  [w1,w2,b].forEach(s=>s.oninput=draw);draw();
+})();
+
+/* ============ Part 3: loss meter ============ */
+(function(){
+  const sl=document.getElementById('lslider'),cv=document.getElementById('lcanvas'),ctx=cv.getContext('2d');
+  const target=3.0,MIN=0,MAX=6;
+  function toX(v){return 30+(v-MIN)/(MAX-MIN)*(cv.width-60);}
+  function draw(){
+    const pred=+sl.value;const l1=Math.abs(pred-target),sq=0.5*(pred-target)**2;
+    document.getElementById('lpred').textContent=pred.toFixed(2);
+    document.getElementById('lL1').textContent=l1.toFixed(2);
+    document.getElementById('lSq').textContent=sq.toFixed(2);
+    const m=document.getElementById('lmsg');
+    m.textContent=l1<0.1?'bullseye! 🎯':l1<0.8?'close':'off target';m.style.color=l1<0.1?'#34d399':l1<0.8?'#fbbf24':'#fb7185';
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.strokeStyle='#352a5e';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(30,55);ctx.lineTo(cv.width-30,55);ctx.stroke();
+    for(let v=0;v<=6;v++){const x=toX(v);ctx.strokeStyle='#2a2350';ctx.beginPath();ctx.moveTo(x,50);ctx.lineTo(x,60);ctx.stroke();
+      ctx.fillStyle='#8a80b8';ctx.font='11px ui-monospace';ctx.textAlign='center';ctx.fillText(v,x,78);}
+    // target star
+    const tx=toX(target);ctx.fillStyle='#fbbf24';ctx.font='20px sans-serif';ctx.fillText('★',tx,42);
+    // error bar
+    const px=toX(pred);ctx.strokeStyle='#fb7185';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(tx,30);ctx.lineTo(px,30);ctx.stroke();
+    // prediction marker
+    ctx.fillStyle='#38bdf8';ctx.beginPath();ctx.arc(px,55,8,0,7);ctx.fill();
   }
   sl.oninput=draw;draw();
 })();
 
-/* ============ Part 4: real tiny next-token model ============ */
+/* ============ Part 4: gradient descent ball ============ */
 (function(){
-  const corpus=`the robot arm moves toward the cube .
-the robot arm picks up the cube .
-the robot arm places the cube in the box .
-the robot arm reaches for the cube slowly .
-the robot arm grasps the cube and lifts it up .
-the robot arm moves the cube to the box .
-the robot picks up the cube and places it down .
-the robot picks up the cube gently .
-the robot learns to grasp the cube .
-the robot moves the cube to the table .
-the arm moves toward the cube .
-the arm picks up the cube .
-the arm reaches for the cube .
-the arm grasps the cube gently .
-the gripper closes around the cube .
-the gripper opens and releases the cube .
-the camera sees the cube on the table .
-the camera sees the cube clearly .
-the neural network predicts the next action .
-the network predicts the motor commands .
-the network learns from the demonstrations .
-the policy outputs the motor commands .
-the follower copies the leader arm .
-the follower arm copies the motion .
-the leader arm guides the follower .
-the model learns from the recorded demonstrations .
-the robot places the cube in the box .
-the robot repeats the task until it succeeds .`;
-  const sents=corpus.split('\n').map(s=>s.trim().split(/\s+/));
-  const tri={},bi={},uni={};
-  function add(map,key,w){(map[key]=map[key]||{})[w]=(map[key][w]||0)+1;}
-  for(const s of sents){for(let i=0;i<s.length;i++){uni[s[i]]=(uni[s[i]]||0)+1;
-    if(i>=1)add(bi,s[i-1],s[i]); if(i>=2)add(tri,s[i-2]+' '+s[i-1],s[i]);}}
-  const seeds=[['the','robot'],['the','arm'],['the','neural'],['the','camera'],['the','gripper']];
-  let words=[];let temp=0.8;
-  function dist(){
-    // blend trigram (coherent, weight 3) with bigram (varied, weight 1) so there
-    // are always several candidates and temperature visibly reshapes them.
-    const scores={};
-    const tKey = words.length>=2 ? words[words.length-2]+' '+words[words.length-1] : null;
-    const bKey = words.length>=1 ? words[words.length-1] : null;
-    const t = (tKey && tri[tKey]) || {};
-    const b = (bKey && bi[bKey]) || {};
-    for(const [w,c] of Object.entries(t)) scores[w]=(scores[w]||0)+c*3;
-    for(const [w,c] of Object.entries(b)) scores[w]=(scores[w]||0)+c*1;
-    let entries=Object.entries(scores);
-    if(entries.length===0) entries=Object.entries(uni);
-    // apply temperature: p^(1/T)
-    const items=entries.map(([w,c])=>[w,Math.pow(c,1/temp)]);
-    const Z=items.reduce((a,x)=>a+x[1],0);
-    return items.map(([w,v])=>[w,v/Z]).sort((a,b)=>b[1]-a[1]);
-  }
-  function renderBars(){
-    const d=dist().slice(0,6);const box=document.getElementById('probBars');box.innerHTML='';
-    for(const [w,p] of d){const row=document.createElement('div');row.className='barrow';
-      row.innerHTML=`<div class="lab">${w}</div><div class="track"><div class="fillb" style="width:${Math.round(p*100)}%"></div></div><div class="pct">${Math.round(p*100)}%</div>`;
-      box.appendChild(row);}
-  }
-  function sample(){const d=dist();let r=Math.random(),acc=0;for(const [w,p] of d){acc+=p;if(r<=acc)return w;}return d[0][0];}
-  function renderText(animateLast){
-    const box=document.getElementById('genOut');box.innerHTML='';
-    words.forEach((w,i)=>{const sp=document.createElement('span');sp.textContent=w+' ';
-      sp.className='w';if(animateLast&&i===words.length-1)sp.style.animationDelay='0s';else sp.style.animation='none';sp.style.opacity=1;box.appendChild(sp);});
-  }
-  function stepWord(){ if(words.length===0||words[words.length-1]==='.'){return false;}
-    const w=sample();words.push(w);renderText(true);renderBars();return w!=='.';}
-  function seedFrom(pair){words=pair.slice();renderText(false);renderBars();}
-  function buildSeeds(){const row=document.getElementById('seedRow');row.innerHTML='';
-    seeds.forEach((pr,idx)=>{const b=document.createElement('button');b.className='btn ghost sm';b.textContent='"'+pr.join(' ')+'…"';
-      b.onclick=()=>{seedFrom(pr);};row.appendChild(b);});}
-  buildSeeds();seedFrom(seeds[0]);
-  const tempS=document.getElementById('tempS');
-  tempS.oninput=()=>{temp=+tempS.value;document.getElementById('tempV').textContent=temp.toFixed(2);
-    document.getElementById('tempMsg').textContent = temp<0.5?'❄️ Low: always the safest word — predictable.':temp>1.15?'🔥 High: wild card — creative, risks nonsense.':'Balanced: mostly sensible with some variety.';
-    renderBars();};
-  tempS.dispatchEvent(new Event('input'));
-  document.getElementById('genStep').onclick=()=>stepWord();
-  document.getElementById('genReset').onclick=()=>seedFrom(words.slice(0,2).length===2?words.slice(0,2):seeds[0]);
-  document.getElementById('genBtn').onclick=async()=>{
-    if(words.length>2||words[words.length-1]==='.')seedFrom(seeds[Math.floor(Math.random()*seeds.length)]);
-    let n=0;while(n++<16){ if(!stepWord())break; await new Promise(r=>setTimeout(r,220)); }
-  };
-})();
-
-/* ============ Part 5: attention sketch ============ */
-(function(){
-  const cv=document.getElementById('attnCv'),ctx=cv.getContext('2d');
-  const toks=['the','robot','picks','up','the','___'];
-  // attention weights of the target (last) token onto the others
-  const w=[0.15,0.30,0.28,0.12,0.10,0.05];
-  const xs=toks.map((_,i)=>30+i*60);const y=60,ty=140;
-  function draw(hoverAll){
+  const cv=document.getElementById('gd'),ctx=cv.getContext('2d');
+  // loss(w) = 0.5*(w-1.3)^2*... use a nice bowl with slight asymmetry
+  const wmin=-3,wmax=3;
+  function loss(w){return 0.6*Math.pow(w-1.1,2)+0.15*Math.pow(w-1.1,4)*0.2+0.4;}
+  function grad(w){return 1.2*(w-1.1)+0.15*0.8*Math.pow(w-1.1,3);}
+  let w=-2.4;let raf=null;
+  const lrs=document.getElementById('gdlrs');
+  function toPx(x,y){const px=20+(x-wmin)/(wmax-wmin)*(cv.width-40);
+    const ymax=6,py=cv.height-16-(y/ymax)*(cv.height-40);return [px,py];}
+  function draw(){
     ctx.clearRect(0,0,cv.width,cv.height);
-    // lines from target to each
-    for(let i=0;i<toks.length-1;i++){ctx.strokeStyle=`rgba(244,114,182,${0.15+w[i]})`;ctx.lineWidth=1+w[i]*10;
-      ctx.beginPath();ctx.moveTo(xs[toks.length-1],ty-14);ctx.lineTo(xs[i],y+14);ctx.stroke();}
-    toks.forEach((t,i)=>{const isT=i===toks.length-1;const yy=isT?ty:y;
-      ctx.fillStyle=isT?'#f472b6':'#241436';ctx.strokeStyle='#3a2b4a';ctx.lineWidth=1.5;
-      ctx.beginPath();ctx.roundRect(xs[i]-26,yy-14,52,28,7);ctx.fill();ctx.stroke();
-      ctx.fillStyle=isT?'#2a0a1c':'#eaf0ff';ctx.font='13px ui-monospace';ctx.textAlign='center';ctx.fillText(t,xs[i],yy+4);});
-    ctx.fillStyle='#9784a5';ctx.font='11px sans-serif';ctx.textAlign='center';
-    ctx.fillText('“picks up” and “robot” get the most attention →',cv.width/2,ty+34);
+    ctx.strokeStyle='#f472b6';ctx.lineWidth=3;ctx.beginPath();
+    for(let i=0;i<=120;i++){const x=wmin+i/120*(wmax-wmin);const p=toPx(x,loss(x));i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]);}
+    ctx.stroke();
+    // ball
+    const bp=toPx(w,loss(w));ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(bp[0],bp[1]-8,9,0,7);ctx.fill();
+    // slope arrow
+    const g=grad(w);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(bp[0],bp[1]-8);
+    ctx.lineTo(bp[0]-Math.sign(g)*26,bp[1]-8);ctx.stroke();
+    ctx.fillStyle='#8a80b8';ctx.font='12px ui-monospace';ctx.textAlign='center';ctx.fillText('loss',cv.width/2,14);
+    document.getElementById('gdw').textContent=w.toFixed(2);
+    document.getElementById('gdloss').textContent=loss(w).toFixed(2);
   }
-  if(!ctx.roundRect){ctx.roundRect=function(x,y,w,h,r){this.moveTo(x+r,y);this.arcTo(x+w,y,x+w,y+h,r);this.arcTo(x+w,y+h,x,y+h,r);this.arcTo(x,y+h,x,y,r);this.arcTo(x,y,x+w,y,r);};}
+  function step(){const lr=+lrs.value;w=w-lr*grad(w);w=Math.max(wmin,Math.min(wmax,w));draw();}
+  lrs.oninput=()=>{document.getElementById('gdlr').textContent=(+lrs.value).toFixed(2);};
+  document.getElementById('gdStep').onclick=step;
+  document.getElementById('gdReset').onclick=()=>{w=wmin+Math.random()*0.5+0.1;if(Math.random()<.5)w=wmax-Math.random()*0.6;draw();};
+  document.getElementById('gdRun').onclick=()=>{if(raf){cancelAnimationFrame(raf);raf=null;return;}
+    (function loop(){step();raf=requestAnimationFrame(loop);})();};
   draw();
 })();
 
-/* ============ Part 6: mock ACT ============ */
+/* ============ Part 5: backprop visual (real tiny net 1-2-1) ============ */
 (function(){
-  const cv=document.getElementById('actCv'),ctx=cv.getContext('2d');
-  const bx=60,by=170,L1=64,L2=54;            // arm base + link lengths (side view)
-  let cube={x:250,y:158};
-  let cur={sh:-1.2,el:1.1};                    // current shoulder/elbow (rad)
-  let chunk=[];                                // array of {sh,el,grip}
-  const cols=['#f472b6','#38bdf8','#a3e635','#fbbf24','#a78bfa','#fb7185'];
-  const CPD=4096/360;
-  function ik(tx,ty){
-    let dx=tx-bx,dy=ty-by,d=Math.hypot(dx,dy);d=Math.min(L1+L2-2,Math.max(Math.abs(L1-L2)+2,d));
-    const ce=(d*d-L1*L1-L2*L2)/(2*L1*L2);const el=Math.acos(Math.max(-1,Math.min(1,ce)));
-    const sh=Math.atan2(dy,dx)-Math.atan2(L2*Math.sin(el),L1+L2*Math.cos(el));
-    return {sh,el};
+  const cv=document.getElementById('bp'),ctx=cv.getContext('2d');
+  // net: input x=1 (fixed), 2 hidden (tanh), 1 output (linear); target=1
+  let W1=[0.8,-0.6],b1=[0.1,0.1],W2=[0.7,0.5],b2=0.0;const X=1,T=1;
+  let fwd=null;
+  function forward(){const h=[],hp=[];for(let i=0;i<2;i++){hp[i]=W1[i]*X+b1[i];h[i]=Math.tanh(hp[i]);}
+    let y=b2;for(let i=0;i<2;i++)y+=W2[i]*h[i];return {h,hp,y};}
+  function lossVal(y){return 0.5*(y-T)**2;}
+  function trainStep(){const f=forward();const dy=(f.y-T);
+    const dW2=[0,0];for(let i=0;i<2;i++)dW2[i]=dy*f.h[i];const db2=dy;
+    const dW1=[0,0],db1=[0,0];for(let i=0;i<2;i++){const dh=dy*W2[i];const dz=dh*(1-f.h[i]**2);dW1[i]=dz*X;db1[i]=dz;}
+    const lr=0.15;for(let i=0;i<2;i++){W2[i]-=lr*dW2[i];W1[i]-=lr*dW1[i];b1[i]-=lr*db1[i];}b2-=lr*db2;
+    fwd=forward();draw();}
+  function node(x,y,r,col,txt){ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.fillStyle='#140f2b';ctx.fill();ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle='#fff';ctx.font='12px ui-monospace';ctx.textAlign='center';ctx.fillText(txt,x,y+4);}
+  function edge(x1,y1,x2,y2,w,col){ctx.strokeStyle=col;ctx.lineWidth=Math.min(6,1+Math.abs(w)*3);ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();}
+  function draw(){
+    const f=fwd||forward();ctx.clearRect(0,0,cv.width,cv.height);
+    const ix=55,hx=180,ox=305,iy=130,hy=[80,180],oy=130;
+    for(let i=0;i<2;i++)edge(ix,iy,hx,hy[i],W1[i],'#38bdf8');
+    for(let i=0;i<2;i++)edge(hx,hy[i],ox,oy,W2[i],'#38bdf8');
+    node(ix,iy,22,'#a78bfa','x=1');
+    for(let i=0;i<2;i++)node(hx,hy[i],22,'#fbbf24',f.h[i].toFixed(2));
+    node(ox,oy,24,f.y>0.6?'#34d399':'#f472b6','ŷ='+f.y.toFixed(2));
+    ctx.fillStyle='#8a80b8';ctx.font='12px ui-monospace';ctx.textAlign='center';
+    ctx.fillText('input',ix,iy+40);ctx.fillText('hidden (tanh)',hx,225);ctx.fillText('target = 1.0',ox,oy+42);
+    document.getElementById('bploss').textContent=lossVal(f.y).toFixed(4);
   }
-  function drawArm(sh,el,grip){
-    ctx.clearRect(0,0,cv.width,cv.height);
-    // table
-    ctx.fillStyle='#170f22';ctx.fillRect(0,175,cv.width,25);
-    ctx.strokeStyle='#3a2b4a';ctx.beginPath();ctx.moveTo(0,175);ctx.lineTo(cv.width,175);ctx.stroke();
-    // cube
-    ctx.fillStyle='#fb7185';ctx.fillRect(cube.x-11,cube.y-11,22,22);ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.strokeRect(cube.x-11,cube.y-11,22,22);
-    // camera icon
-    ctx.fillStyle='#9784a5';ctx.font='16px sans-serif';ctx.textAlign='left';ctx.fillText('📷',8,24);
-    ctx.fillStyle='#9784a5';ctx.font='10px ui-monospace';ctx.fillText('camera view',30,22);
-    // arm
-    const j1={x:bx+Math.cos(sh)*L1,y:by+Math.sin(sh)*L1};
-    const j2={x:j1.x+Math.cos(sh+el)*L2,y:j1.y+Math.sin(sh+el)*L2};
-    ctx.strokeStyle='#a78bfa';ctx.lineWidth=11;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(bx,by);ctx.lineTo(j1.x,j1.y);ctx.stroke();
-    ctx.strokeStyle='#38bdf8';ctx.lineWidth=9;ctx.beginPath();ctx.moveTo(j1.x,j1.y);ctx.lineTo(j2.x,j2.y);ctx.stroke();
-    ctx.fillStyle='#241436';ctx.strokeStyle='#a78bfa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(bx,by,9,0,7);ctx.fill();ctx.stroke();
-    // gripper fingers
-    const gp=6+grip*8;const perp=sh+el+Math.PI/2;
-    ctx.strokeStyle='#fb7185';ctx.lineWidth=4;
-    [1,-1].forEach(s=>{ctx.beginPath();ctx.moveTo(j2.x,j2.y);ctx.lineTo(j2.x+Math.cos(sh+el)*12+Math.cos(perp)*gp*s,j2.y+Math.sin(sh+el)*12+Math.sin(perp)*gp*s);ctx.stroke();});
+  document.getElementById('bpStep').onclick=trainStep;
+  document.getElementById('bpRun').onclick=()=>{let n=0;const t=setInterval(()=>{trainStep();if(++n>=50)clearInterval(t);},40);};
+  document.getElementById('bpReset').onclick=()=>{W1=[0.8,-0.6];b1=[0.1,0.1];W2=[0.7,0.5];b2=0;fwd=forward();draw();};
+  draw();
+})();
+
+/* ============ Part 6: REAL trainable neural net (2-H-1, two moons) ============ */
+(function(){
+  const cv=document.getElementById('nn'),ctx=cv.getContext('2d');
+  const lossC=document.getElementById('nnLossC'),lctx=lossC.getContext('2d');
+  const dom={xmin:-1.9,xmax:3.3,ymin:-1.7,ymax:1.9};
+  function toPx(x,y){return [(x-dom.xmin)/(dom.xmax-dom.xmin)*cv.width,cv.height-(y-dom.ymin)/(dom.ymax-dom.ymin)*cv.height];}
+  const H=8;let W1,b1,W2,b2,useHidden=true;
+  let data=[],lossHist=[],steps=0,raf=null;
+  function randn(){return (Math.random()+Math.random()+Math.random()+Math.random()-2)/1.2;}
+  function makeMoons(){data=[];const N=90,S=1.25;
+    // canonical interlocking two-moons — NOT separable by a single straight line
+    for(let i=0;i<N;i++){const t=Math.PI*i/N;data.push({x:[S*Math.cos(t)+randn()*0.10, S*Math.sin(t)+randn()*0.10],c:0});}
+    for(let i=0;i<N;i++){const t=Math.PI*i/N;data.push({x:[S*(1-Math.cos(t))+randn()*0.10, S*(0.5-Math.sin(t))+randn()*0.10],c:1});}
   }
-  function angToNum(rad){ // map rad to a 0-4095-ish motor number for display
-    return Math.round(2048 + (rad*180/Math.PI)*CPD)%4096;
+  function init(){W1=[];b1=[];W2=[];b2=0;
+    for(let i=0;i<H;i++){W1.push([(Math.random()*2-1),(Math.random()*2-1)]);b1.push(0);W2.push((Math.random()*2-1));}
+    steps=0;lossHist=[];updateUI();}
+  function forward(x){
+    if(!useHidden){const z=W2[0]*x[0]+W2[1]*x[1]+b2;return {y:1/(1+Math.exp(-z))};}
+    const h=[];for(let i=0;i<H;i++){let z=b1[i]+W1[i][0]*x[0]+W1[i][1]*x[1];h[i]=Math.tanh(z);}
+    let z2=b2;for(let i=0;i<H;i++)z2+=W2[i]*h[i];return {h,y:1/(1+Math.exp(-z2))};}
+  function trainEpoch(lr){
+    let L=0;
+    // accumulate grads
+    let gW1=W1.map(()=>[0,0]),gb1=b1.map(()=>0),gW2=W2.map(()=>0),gb2=0;
+    for(const d of data){const f=forward(d.x);const y=Math.min(1-1e-7,Math.max(1e-7,f.y));const t=d.c;
+      L+= -(t*Math.log(y)+(1-t)*Math.log(1-y));
+      const dz2=y-t; // dL/dz2 for sigmoid+BCE
+      if(!useHidden){gW2[0]+=dz2*d.x[0];gW2[1]+=dz2*d.x[1];gb2+=dz2;continue;}
+      for(let i=0;i<H;i++){gW2[i]+=dz2*f.h[i];}gb2+=dz2;
+      for(let i=0;i<H;i++){const dh=dz2*W2[i];const dz=dh*(1-f.h[i]**2);gW1[i][0]+=dz*d.x[0];gW1[i][1]+=dz*d.x[1];gb1[i]+=dz;}
+    }
+    const n=data.length;
+    if(!useHidden){W2[0]-=lr*gW2[0]/n;W2[1]-=lr*gW2[1]/n;b2-=lr*gb2/n;}
+    else{for(let i=0;i<H;i++){W2[i]-=lr*gW2[i]/n;W1[i][0]-=lr*gW1[i][0]/n;W1[i][1]-=lr*gW1[i][1]/n;b1[i]-=lr*gb1[i]/n;}b2-=lr*gb2/n;}
+    steps++;lossHist.push(L/n);if(lossHist.length>240)lossHist.shift();
+    return L/n;
   }
-  function buildChunk(){
-    const tgt=ik(cube.x, cube.y-14);const K=8;chunk=[];
-    for(let i=1;i<=K;i++){const a=i/K;
-      chunk.push({sh:cur.sh+(tgt.sh-cur.sh)*a, el:cur.el+(tgt.el-cur.el)*a, grip: a>0.7?(1-(a-0.7)/0.3):1});
+  function accuracy(){let ok=0;for(const d of data){const f=forward(d.x);if((f.y>0.5?1:0)===d.c)ok++;}return ok/data.length;}
+  function drawBoundary(){
+    const step=6;
+    for(let py=0;py<cv.height;py+=step)for(let px=0;px<cv.width;px+=step){
+      const x=dom.xmin+px/cv.width*(dom.xmax-dom.xmin),y=dom.ymin+(1-py/cv.height)*(dom.ymax-dom.ymin);
+      const p=forward([x,y]).y; // 0..1
+      const r=Math.round(56+(244-56)*p),g=Math.round(110+(120-110)*p),b=Math.round(170+(150-170)*p);
+      ctx.fillStyle=`rgba(${r},${g},${b},0.5)`;ctx.fillRect(px,py,step,step);
     }
   }
-  function renderChunk(nowIdx){
-    const g=document.getElementById('chunkGrid');g.innerHTML='';
-    chunk.forEach((c,ci)=>{
-      const col=document.createElement('div');col.className='chunkcol'+(ci===nowIdx?' now':'');
-      const hd=document.createElement('div');hd.className='hd';hd.textContent='t+'+(ci+1);col.appendChild(hd);
-      const nums=[angToNum(c.sh*0.6),angToNum(c.sh),angToNum(c.el),2048,2048,Math.round(c.grip*4095)];
-      nums.forEach((v,k)=>{const cell=document.createElement('div');cell.className='cell';
-        cell.style.background=cols[k];cell.textContent=v;col.appendChild(cell);});
-      g.appendChild(col);
-    });
+  function draw(){
+    ctx.clearRect(0,0,cv.width,cv.height);drawBoundary();
+    for(const d of data){const q=toPx(d.x[0],d.x[1]);ctx.beginPath();ctx.arc(q[0],q[1],4.5,0,7);
+      ctx.fillStyle=d.c?'#f472b6':'#38bdf8';ctx.fill();ctx.strokeStyle='#0d0a1e';ctx.lineWidth=1.3;ctx.stroke();}
+    // loss curve
+    lctx.clearRect(0,0,lossC.width,lossC.height);
+    if(lossHist.length>1){const mx=Math.max(...lossHist),mn=Math.min(...lossHist);
+      lctx.strokeStyle='#fbbf24';lctx.lineWidth=2;lctx.beginPath();
+      lossHist.forEach((v,i)=>{const x=i/(lossHist.length-1)*lossC.width;const y=lossC.height-4-(mx>mn?(v-mn)/(mx-mn):0)*(lossC.height-8);i?lctx.lineTo(x,y):lctx.moveTo(x,y);});
+      lctx.stroke();}
   }
-  function newScene(){cube.x=150+Math.random()*160;cube.y=150+Math.random()*14;cur={sh:-1.2,el:1.1};chunk=[];
-    drawArm(cur.sh,cur.el,1);document.getElementById('chunkGrid').innerHTML='';
-    document.getElementById('actMsg').textContent='New cube position. Press to predict the motion chunk.';}
-  async function predictAndAct(){
-    document.getElementById('actMsg').innerHTML='👁️ ResNet encodes the camera + reads joint numbers → 🧠 predicts a chunk of 8 future motor targets…';
-    buildChunk();renderChunk(-1);
-    await new Promise(r=>setTimeout(r,500));
-    document.getElementById('actMsg').innerHTML='▶️ Executing the predicted chunk — each column is 6 motor numbers for one future step.';
-    for(let i=0;i<chunk.length;i++){cur.sh=chunk[i].sh;cur.el=chunk[i].el;drawArm(cur.sh,cur.el,chunk[i].grip);renderChunk(i);
-      await new Promise(r=>setTimeout(r,150));}
-    document.getElementById('actMsg').innerHTML='✅ Reached &amp; gripped. In real ACT this repeats: look → predict chunk → act. Output = <b class="lime">numbers</b>, trained with L1.';
-  }
-  document.getElementById('actPredict').onclick=predictAndAct;
-  document.getElementById('actNew').onclick=newScene;
-  drawArm(cur.sh,cur.el,1);
+  function updateUI(){document.getElementById('nnEpoch').textContent=steps;
+    const a=accuracy();document.getElementById('nnAcc').textContent=Math.round(a*100)+'%';
+    document.getElementById('nnLoss').textContent=lossHist.length?lossHist[lossHist.length-1].toFixed(3):'—';
+    draw();}
+  const lrs=document.getElementById('nnlrs');
+  lrs.oninput=()=>document.getElementById('nnlr').textContent=(+lrs.value).toFixed(2);
+  function stepN(n){const lr=+lrs.value;for(let i=0;i<n;i++)trainEpoch(lr);updateUI();
+    const a=accuracy();const msg=document.getElementById('nnMsg');
+    if(!useHidden)msg.innerHTML='A single straight line can\'t bend around the moons — it stalls around <b>~85%</b>. Turn the hidden layer back on!';
+    else if(a>0.95)msg.innerHTML='🎉 It learned the curvy boundary! The hidden layer bent the line to fit both moons.';
+    else msg.innerHTML='Learning… keep training; the boundary is bending to fit.';}
+  document.getElementById('nnStep').onclick=()=>stepN(20);
+  document.getElementById('nnTrain').onclick=(e)=>{
+    if(raf){cancelAnimationFrame(raf);raf=null;e.target.textContent='▶ Train';return;}
+    e.target.textContent='⏸ Pause';(function loop(){stepN(3);raf=requestAnimationFrame(loop);})();};
+  document.getElementById('nnReset').onclick=()=>{init();draw();document.getElementById('nnMsg').textContent='Weights reset. Press Train.';};
+  document.getElementById('nnHidden').onchange=(e)=>{useHidden=e.target.checked;init();draw();};
+  makeMoons();init();draw();
 })();
 
 /* quiz */

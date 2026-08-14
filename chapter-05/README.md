@@ -1,45 +1,44 @@
-# Chapter 5 — From Words to Motion 💬🤖
+# Chapter 5 — How Machines Learn 🧠
 
-An interactive HTML lesson connecting the training fundamentals from Chapter 4 to
-**text generation** and then to the SO-101's own brain, **ACT**.
+An interactive HTML lesson introducing deep-learning **training** from scratch for a
+9th-grade student: neurons, weights, error/loss, gradient descent, and
+backpropagation — building to a **real neural network you train live in the browser**.
 
 ## How to use it
 Open **`index.html`** in any browser. Self-contained, no internet needed.
 Scroll or use **↓ / ↑**; the dots on the right jump between sections.
 
 ## What it teaches
-1. **Same loop, three jobs** — a comparison table (image classifier / GPT / ACT):
-   only the input, output, and loss change.
-2. **Seeing (ResNet, briefly)** — images are grids of numbers; layers find edges →
-   objects. Interactive edge-detector you slide across a scene.
-3. **Next-token prediction** — text is tokens; the model outputs a probability for
-   every next token (classification over a vocabulary); training is
-   self-supervised (the answer is the next word in the text).
-4. **★ Text generation** — a **real tiny next-token model** (trigram+bigram blend
-   built live from a robot-themed corpus) with a **temperature** slider. Watch the
-   probability bars reshape and a sentence build word by word (autoregression).
-5. **Transformer in one line** — attention lets each token look back at the others;
-   an attention sketch. (Deliberately minimal, per the brief.)
-6. **★ ACT — the robot's brain** — ResNet vision + joint numbers → a **Transformer**
-   → a **chunk of future motor targets**. The key contrast: GPT **classifies** the
-   next token (cross-entropy); ACT **regresses** the next motions (L1). Training
-   data = your own teleop recordings. A **Mock-ACT** demo "sees" a cube, predicts a
-   chunk of 6-motor action vectors (shown as a live grid), and executes them.
-7. **The whole course, connected** — Ch1 motors → Ch2 wiring → Ch3 calibration →
-   record → Ch4 learning → Ch5 ACT — plus a quiz and homework.
+1. **The big idea** — a network is a *function with knobs*; training is the same
+   5-step loop (data → guess → error → blame → nudge) for *every* model.
+2. **The neuron** — weighted sum + activation: `y = f(w₁x₁ + w₂x₂ + b)`.
+3. **Loss** — two flavors, both revisited in Chapter 6:
+   distance/L1 `|ŷ−y|` (regression — what the robot uses) and
+   surprise/cross-entropy `−log(p)` (classification — what text uses).
+4. **Gradient descent** — slope points downhill; `w ← w − lr·slope`; the
+   learning-rate trade-off (too big overshoots).
+5. **Backpropagation** — the chain rule as "multiply the slopes along the path."
+6. **Train a real network — live.**
 
-## Accuracy notes
-- **ACT = Action Chunking Transformer** (ResNet image encoder + Transformer,
-  predicts a chunk of continuous actions), matching lerobot's `policies/act`
-  (`modeling_act.py`): the training loss is **L1** (`F.l1_loss`), and the output is
-  `(batch, chunk_size, action_dim)` continuous actions — **not** discrete tokens.
-- The lesson honours the "motor digits" idea but makes the one correction that
-  matters: ACT outputs **continuous numbers**, so it uses regression (L1), whereas
-  text models classify a token (cross-entropy).
-- The **Mock-ACT** demo is a clearly-labelled simplified stand-in (a scripted
-  reach), not a trained network — used to visualize the input → action-chunk →
-  motion loop. The **text generator is real** (a genuine small next-token model).
+## The interactive pieces (all real math, no libraries)
+- **Perceptron playground** — turn the weight knobs to separate two clusters; the
+  weights *are* the boundary line.
+- **Loss meter** — drag a prediction toward a target; watch L1 & squared loss.
+- **Gradient-descent ball** — press Step to roll downhill; crank the learning rate
+  until it overshoots and flies out of the valley.
+- **Backprop visual** — a real 1-2-1 net; each Train step nudges the weights and
+  the loss drops toward 0.
+- **★ Live-trained classifier** — a genuine 2-8-1 network running real
+  gradient descent + backprop on **interlocking two-moons** data. With the hidden
+  layer on it reaches **100%** (the boundary bends to fit); turn the hidden layer
+  off and a single straight line **stalls near ~85–88%** — a hands-on proof of why
+  depth matters.
 
-Verified in-browser: text generation works and temperature visibly sharpens
-(top word 100% at low T) / flattens (37% at high T) the distribution; Mock-ACT
-predicts and executes an 8-step chunk; no console errors.
+## Notes on accuracy
+The math shown (weighted sum, L1/squared/cross-entropy loss, the update rule, the
+chain rule) is real and drives the demos. The L1 loss is highlighted deliberately
+because it's exactly what the robot's **ACT** policy uses — the thread we pick up in
+Chapter 6.
+
+Verified in-browser: the live network converges (loss → ~0.006, accuracy → 100%
+with a hidden layer; ~88% without), no console errors.

@@ -1,49 +1,64 @@
-# Chapter 8 — From One Task to Many: Language-Conditioned Robots (SmolVLA) 💬
+# Chapter 8 — Training & Running the Policy 📉🤖
 
-An interactive HTML lesson introducing **VLAs** (Vision-Language-Action models) and
-**SmolVLA** — robots you can give instructions to — building on Chapters 5–7.
+An interactive HTML lesson that closes the **record → train → run** loop: turn the
+demonstrations from Chapter 7 into a trained ACT policy, then deploy it on the arm.
 
 ## How to use it
 Open **`index.html`** in any browser. Self-contained, no internet needed.
 Scroll or use **↓ / ↑**; the dots on the right jump between sections.
 
 ## What it teaches
-1. **The limit of one-task ACT** — a specialist that can't take words; a comparison
-   with what a VLA adds.
-2. **What a VLA is** — Vision + Language + Action: camera + joint state + a text
-   **instruction** → an action chunk. **★ Instruction → action demo**: two cubes
-   (red/blue) and two targets (box/shelf); pick or type an instruction and the mock
-   arm picks the right cube and places it at the right target. Changing only the
-   *words* changes the behavior.
-3. **Foundation model: pretrain → fine-tune** — like GPT (Ch5), SmolVLA is
-   pretrained (450M, `lerobot/smolvla_base`) then fine-tuned on ~50 of your
-   episodes. Interactive: competence vs. episodes for ACT-from-scratch vs.
-   SmolVLA-fine-tuned (SmolVLA is useful with far less data).
-4. **How SmolVLA is wired (one light diagram)** — a vision-language model
-   (SmolVLM) + an action expert; one line on flow matching.
-5. **One brain, many tasks** — a multi-task switcher (same scene, change the
-   instruction → different behavior) + the paper's data tip.
-6. **Fine-tuning for real** — `pip install -e ".[smolvla]"`; `lerobot-train
-   --policy.path=lerobot/smolvla_base --dataset.repo_id=... --batch_size=64
-   --steps=20000`; ~4h on an A100 (cloud, Ch7); deploy with `lerobot-rollout
-   --task="..."` where the instruction now matters.
-7. **ACT vs SmolVLA** — a when-to-use-which comparison table.
-8. **Recap, quiz, homework.**
+1. **Training = the Chapter-5 loop at scale** — batch of frames → ACT predicts an
+   action chunk → **L1 loss** vs your real actions → backprop → repeat ~100k times.
+2. **Steps, batches & epochs** — `batch_size=8`, `steps=100_000` defaults; an
+   interactive calculator (frames × steps → epochs / frames seen).
+3. **★ The loss curve** — a live simulated training run: loss falls and flattens; a
+   **learning-rate** slider (tiny → crawls, huge → diverges); an **overfit toggle**
+   that shows training loss dropping while real-world performance *falls* (ties to
+   Chapter 7's "object always in the same spot").
+4. **Checkpoints** — saved every `save_freq=20_000` steps to
+   `output_dir/checkpoints/`; resume, pick the best, deploy any. Interactive
+   save-point timeline.
+5. **Where to train + ☁️ cloud sub-section** — local Mac (MPS, slow) vs cloud GPU;
+   the **HF Hub as the bridge** (record locally → push dataset → train on a cloud
+   GPU → pull the policy back → run locally). Tabs for **Google Colab** (free GPU
+   notebook) and **Hugging Face Jobs** (`--job.target=<gpu>`), with real commands.
+6. **★ Deployment** — `lerobot-rollout` runs the trained policy on the arm
+   (observe → predict chunk → move → repeat). Interactive "watch it run" with a
+   **scene-mismatch toggle** (move the camera → it misses, closing the loop with Ch7).
+7. **Reading failures** — a debugging table mapping symptoms → causes → fixes, each
+   pointing back to data quality (Ch7) or training.
+8. **The improvement flywheel** — record → train → run → spot failures → record more.
+
+## The real commands it teaches
+```bash
+# Train (locally or in a Colab GPU notebook)
+lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
+  --output_dir=outputs/train/act_grab_cube --policy.device=cuda \
+  --policy.repo_id=$HF_USER/act_grab_cube --wandb.enable=true
+
+# Or dispatch to a Hugging Face Jobs GPU with one flag
+lerobot-train ... --job.target=h200 --job.timeout=8h
+
+# Deploy the trained policy on the real arm
+lerobot-rollout --policy.path=$HF_USER/act_grab_cube \
+  --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX \
+  --robot.cameras="{front:{type:opencv,index_or_path:0,width:640,height:480,fps:30}}" \
+  --task="Grab the cube" --duration=60
+```
 
 ## Accuracy notes
-From lerobot's SmolVLA (`policies/smolvla`) and `smolvla.mdx` / the SmolVLA paper:
-450M VLA = pretrained **SmolVLM** (SigLIP vision + a small language model) + an
-**action expert**, actions via **flow matching**; fine-tune from
-`lerobot/smolvla_base` with `.[smolvla]`, `--batch_size=64 --steps=20000`
-(~4h/A100); data tip ~50 episodes with repeats per variation (paper: 5 positions ×
-10; 25 was too few). Deployment via `lerobot-rollout` with a meaningful `--task`.
+Defaults and commands are from lerobot: `lerobot-train` (`steps=100_000`,
+`batch_size=8`, `save_freq=20_000`, `--policy.type=act`, `--policy.device`,
+`--policy.repo_id`, `--resume`), HF Jobs (`--job.target`, `hf jobs hardware`), the
+Colab ACT training notebook, and `lerobot-rollout` for deployment (the record CLI
+itself says "use lerobot-rollout for policy deployment"). The **loss curve and the
+deployment run are simulated illustrations** (no GPU/dataset/hardware here); the
+device times are rough and illustrative.
 
-**The instruction → action demos are simplified, clearly-labeled mocks** (keyword
-matching, not a real neural net) — a real 450M VLA can't run in a browser. Ch4's
-net and Ch5's text model *are* real; this one is illustrative. Every command, size,
-and default shown is real.
+Verified in-browser: loss curve converges (~0.13) and diverges on huge LR; overfit
+shows train-loss-down / real-perf-down; deployment grasps normally and misses under
+scene mismatch; cloud tabs and checkpoints work; no console errors.
 
-Verified in-browser: instruction demos parse and animate correctly (red→box,
-blue→shelf, pick-only, and an "unknown" fallback); pretrain-vs-finetune shows the
-data-efficiency gap (e.g., 20 episodes → ACT 8% vs SmolVLA 70%); no console errors.
-Not the course finale.
+This chapter is **not** the course finale — more chapters are planned (e.g.,
+language-conditioned / multi-task policies).
