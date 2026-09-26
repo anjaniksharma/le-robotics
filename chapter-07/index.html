@@ -90,6 +90,21 @@
   .copy:hover{border-color:var(--orange);color:var(--orange)}.copy.done{color:var(--green);border-color:var(--green)}
   .filetree{font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#c9bcc4;line-height:1.7}
   .filetree .d{color:var(--orange)}.filetree .f{color:var(--cyan)}.filetree .c{color:#7c7080}
+  #s7b .grid>*{min-width:0}
+  .cfg{table-layout:fixed}
+  .cfg th:first-child,.cfg td:first-child{width:34%}.cfg th:nth-child(2),.cfg td:nth-child(2){width:13%}
+  .cfg td:first-child{font-family:ui-monospace,Menlo,monospace;color:#f5e9ef;font-size:12.5px;word-break:break-word}
+  .cfg td:nth-child(2){font-family:ui-monospace,Menlo,monospace;color:var(--amber);font-size:12.5px}
+  .cfg td{font-size:13.5px;vertical-align:top;padding:8px 8px;overflow-wrap:anywhere}
+  .cfg code.inl{word-break:break-all}
+  .logbox,.keys{min-width:0}.keys td{overflow-wrap:anywhere}
+  .keys td:first-child{white-space:nowrap}
+  .phasebar{height:12px;border-radius:8px;background:#170f1c;overflow:hidden;border:1px solid var(--line)}
+  .phasebar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--orange),var(--amber));transition:width .1s}
+  .rslog{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--line);color:#c9bcc4}
+  .rslog.ok{color:var(--green)}.rslog.bad{color:var(--red)}.rslog.rec{color:var(--pink)}.rslog.reset{color:var(--amber)}.rslog.key{color:var(--cyan)}.rslog.end{color:#fff;font-weight:700}
+  .logbox{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.75;color:#c9bcc4;background:#12091a;border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word}
+  .logbox .i{color:#7c7080}.logbox .hl{color:var(--orange)}.logbox .n{color:#9784a0;font-style:italic}
 </style>
 </head>
 <body>
@@ -157,17 +172,32 @@
   <h2>Cameras: <span class="orange">position & resolution</span></h2>
   <div class="grid g2" style="align-items:start">
     <div>
-      <p>The robot only knows what its cameras show. Two rules matter most:</p>
+      <p><b>Your kit ships with exactly two USB cameras</b> — and they're not interchangeable, they play different roles:</p>
       <ul style="color:var(--muted)">
-        <li><b>Placement.</b> A <b>front/top</b> camera sees the whole workspace; a <b>wrist</b> camera (on the arm) gives a close-up that follows the gripper. Two views beat one — when the arm blocks the front view, the wrist camera still sees the object.</li>
-        <li><b>Keep it still & consistent.</b> The camera must not move between episodes, and must be in the <b>same place when the robot runs on its own</b>. Bump it, and every learned landmark shifts.</li>
+        <li><b>🤳 Wrist cam — mounted on the gripper.</b> It rides with the arm and gives a close-up that always follows the fingers. Clip it into the bracket on the wrist so it looks out just past the gripper; route its cable along the arm with a little slack so it doesn't tug as joints move.</li>
+        <li><b>📷 Scene cam — the fixed overview.</b> This is the one that "shows the cross-section" of the whole workspace during an episode. Stand it on the tripod/clamp <b>in front of or above</b> the table so it sees the full work area — the object's start zone, the arm, and the drop zone — all in frame.</li>
+      </ul>
+      <p>Then three rules matter most:</p>
+      <ul style="color:var(--muted)">
+        <li><b>Why two views (occlusion).</b> When the arm reaches across and <b>blocks the scene cam's view</b> of the object, the wrist cam is still looking right at it. Two complementary angles beat one — that's why the kit gives you both.</li>
+        <li><b>Keep them still & consistent.</b> Neither camera may move between episodes, and both must be in the <b>same place when the robot runs on its own</b>. Bump one, and every landmark the policy learned shifts. Clamp them down; don't hand-hold.</li>
         <li><b>Resolution.</b> LeRobot's default is <span class="chip">640×480</span>. Higher = more detail but slower & bigger; lower = tiny and blurry. Whatever you pick, use the <b>same</b> at record and deploy time.</li>
       </ul>
-      <div class="callout q"><b>Try it →</b> Switch cameras and drop the resolution. Watch the wrist cam stay locked on the cube while the front cam loses it behind the arm — and see detail vanish as pixels shrink.</div>
+      <div class="callout q"><b>Try it →</b> Switch cameras and drop the resolution. Watch the wrist cam stay locked on the cube while the scene cam loses it behind the arm — and see detail vanish as pixels shrink.</div>
+
+      <h3 style="margin-top:18px">Which camera is which? Find the indices</h3>
+      <p style="color:var(--muted)">The computer sees each USB camera by a <b>number</b> (its index), and the numbers depend on plug order — not on which is wrist vs. scene. Run this to list every camera and grab a preview so you can tell them apart:</p>
+      <div class="cmdrow"><code>lerobot-find-cameras opencv</code><button class="copy">Copy</button></div>
+      <p style="color:var(--muted)">Cover the wrist cam with a finger to see which index goes dark — that's how you learn, e.g., <b>scene = index 1</b>, <b>wrist = index 0</b> (yours may differ).</p>
+
+      <h3 style="margin-top:18px">Name both cameras when you record</h3>
+      <p style="color:var(--muted)">You hand both to <code class="inl">lerobot-record</code> in one <code class="inl">--robot.cameras</code> dictionary. The <b>names</b> you pick (<code class="inl">front</code>, <code class="inl">wrist</code>) become the dataset keys <code class="inl">observation.images.&lt;name&gt;</code> — keep them identical at deploy time:</p>
+      <div class="cmdrow"><code>--robot.cameras="{front: {type: opencv, index_or_path: 1, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}"</code><button class="copy">Copy</button></div>
+      <p style="color:var(--muted);font-size:13px">Swap the <code class="inl">index_or_path</code> numbers to match what <code class="inl">lerobot-find-cameras</code> reported. On macOS you can also pass a device path instead of a number. <b>Keep a space after every colon</b> (<code class="inl">type: opencv</code>) — the value is parsed as YAML, and <code class="inl">type:opencv</code> without the space is read as one meaningless word and the command refuses to start.</p>
     </div>
     <div class="card">
       <div class="seg" id="camSel" style="margin-bottom:8px">
-        <button class="on" data-cam="front">📷 Front cam</button>
+        <button class="on" data-cam="front">📷 Scene cam</button>
         <button data-cam="wrist">🤳 Wrist cam</button>
       </div>
       <canvas id="camCv" width="360" height="200"></canvas>
@@ -273,21 +303,151 @@
   </div>
 </section>
 
+<!-- 7b RECORDING SESSION -->
+<section id="s7b">
+  <div class="slide-num">Part 8 · The Recording Session</div>
+  <h2>Running <span class="orange">lerobot-record</span>: the command, the loop, the keys</h2>
+  <p class="lead">One command runs the whole session. It connects both arms and both cameras, then cycles <b>record → reset → record → reset …</b> until it has the number of episodes you asked for. Here is exactly what it does — and which keys <span class="green">save</span> or <span class="red">lose</span> an episode.</p>
+
+  <h3>1 · Anatomy of the command</h3>
+  <p>Every flag belongs to one of three groups. <code class="inl">--robot.*</code> describes the <b>follower</b> (the arm that moves and gets recorded), <code class="inl">--teleop.*</code> the <b>leader</b> you hold, and <code class="inl">--dataset.*</code> what to save and for how long. Anything you leave out keeps its default.</p>
+  <div class="cmdrow"><code>lerobot-record \
+  --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX --robot.id=my_follower_arm \
+  --robot.cameras="{front: {type: opencv, index_or_path: 1, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
+  --teleop.type=so101_leader --teleop.port=/dev/tty.usbmodemYYYY --teleop.id=my_leader_arm \
+  --dataset.repo_id=me/grab_cube --dataset.single_task="Grab the cube" \
+  --dataset.num_episodes=5 --dataset.fps=30 --dataset.episode_time_s=20 --dataset.reset_time_s=15 \
+  --dataset.push_to_hub=false</code><button class="copy">Copy</button></div>
+  <div class="callout bad"><b>Two easy mistakes inside the camera dictionary.</b> Write <code class="inl">type: opencv</code> <i>with a space</i> after the colon — the value is parsed as YAML, so <code class="inl">type:opencv</code> is read as one meaningless word and the command stops with <i>“Expected a dict with a 'type' key”</i>. And the device number is called <code class="inl">index_or_path</code>, not <code class="inl">index</code>.</div>
+
+  <div class="grid g2" style="align-items:start;margin-top:14px">
+    <div class="grid" style="gap:14px">
+    <div class="card" style="padding:16px 18px">
+      <h3 class="cyan" style="margin-top:0">--robot.* &nbsp;<span style="font-size:13px;color:var(--muted);font-weight:400">the follower</span></h3>
+      <table class="cfg">
+        <tr><th>flag</th><th>default</th><th>meaning</th></tr>
+        <tr><td>type</td><td>—</td><td><code class="inl">so101_follower</code>: which driver to load</td></tr>
+        <tr><td>port</td><td>—</td><td>its USB serial device (<code class="inl">lerobot-find-port</code>, Ch. 2)</td></tr>
+        <tr><td>id</td><td>—</td><td>a nickname; picks the calibration file <code class="inl">calibration/robots/so_follower/&lt;id&gt;.json</code> from Ch. 3</td></tr>
+        <tr><td>cameras</td><td>{}</td><td><code class="inl">{name: settings}</code>; each name becomes <code class="inl">observation.images.&lt;name&gt;</code></td></tr>
+        <tr><td>max_relative_target</td><td>None</td><td>optional safety cap on how far a joint may jump per step</td></tr>
+        <tr><td>disable_torque_on_disconnect</td><td>true</td><td>arm goes limp when the program exits</td></tr>
+      </table>
+    </div>
+    <div class="card" style="padding:16px 18px">
+      <h3 class="pink" style="margin-top:0">--teleop.* &nbsp;<span style="font-size:13px;color:var(--muted);font-weight:400">the leader</span></h3>
+      <table class="cfg">
+        <tr><th>flag</th><th>default</th><th>meaning</th></tr>
+        <tr><td>type</td><td>—</td><td><code class="inl">so101_leader</code>: the arm you hold. Its joint positions are what gets stored as the <span class="lime">action</span></td></tr>
+        <tr><td>port</td><td>—</td><td>its own serial device</td></tr>
+        <tr><td>id</td><td>—</td><td>picks <code class="inl">calibration/teleoperators/so_leader/&lt;id&gt;.json</code></td></tr>
+      </table>
+      <p style="font-size:13px;margin:12px 0 0">Because both arms use their own calibration, the leader's 0° and the follower's 0° must mean the same pose — that is why Chapter 3 mattered.</p>
+    </div>
+    </div>
+    <div class="card" style="padding:16px 18px">
+      <h3 class="amber" style="margin-top:0">--dataset.* &nbsp;<span style="font-size:13px;color:var(--muted);font-weight:400">what to save</span></h3>
+      <table class="cfg">
+        <tr><th>flag</th><th>default</th><th>meaning</th></tr>
+        <tr><td>repo_id</td><td>—</td><td>dataset name, e.g. <code class="inl">me/grab_cube</code>. A date-time stamp is appended per session (<code class="inl">grab_cube_20260926_121936</code>) unless <code class="inl">no_stamp=true</code></td></tr>
+        <tr><td>single_task</td><td>—</td><td>the sentence stored with every frame — the policy's task label</td></tr>
+        <tr><td>fps</td><td>30</td><td>frames recorded per second (Part 4)</td></tr>
+        <tr><td>episode_time_s</td><td>60</td><td>maximum length of one episode</td></tr>
+        <tr><td>reset_time_s</td><td>60</td><td>pause between episodes to reset the scene</td></tr>
+        <tr><td>num_episodes</td><td>50</td><td>how many episodes to record before stopping</td></tr>
+        <tr><td>push_to_hub</td><td>true</td><td>upload to Hugging Face at the end; set <code class="inl">false</code> to keep it local</td></tr>
+        <tr><td>root</td><td>None</td><td>where to save; default <code class="inl">~/.cache/huggingface/lerobot/&lt;repo_id&gt;</code></td></tr>
+      </table>
+      <p style="font-size:13px;margin:12px 0 0">Two top-level extras: <code class="inl">--display_data=true</code> opens a live Rerun window while recording; <code class="inl">--resume=true</code> adds episodes to an existing (stamped) dataset.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h3>2 · What the session looks like in the terminal</h3>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <div class="logbox"><span class="i">INFO</span> my_leader_arm SOLeader connected.
+<span class="i">INFO</span> OpenCVCamera(1) connected.
+<span class="i">INFO</span> OpenCVCamera(0) connected.
+<span class="i">INFO</span> my_follower_arm SOFollower connected.
+<span class="i">WARN</span> pynput keyboard listener is not trusted … falling back to terminal keyboard input.
+<span class="i">INFO</span> Using terminal keyboard input — keep this terminal focused (Right/Left/Esc, or n=next, r=re-record, q=quit).
+<span class="hl">INFO  Recording episode 0</span>   <span class="n">← drive the leader; ends after episode_time_s or when you press n</span>
+<span class="hl">INFO  Reset the environment</span>  <span class="n">← put the cube somewhere new, bring the arm home; press n when ready</span>
+<span class="hl">INFO  Recording episode 1</span>
+<span class="hl">INFO  Reset the environment</span>
+<span class="n">… repeats until num_episodes …</span>
+<span class="hl">INFO  Stop recording</span>
+<span class="i">INFO</span> Exiting</div>
+      <p style="font-size:14px">On a Mac you will usually see that <b>“not trusted”</b> warning. It only means LeRobot cannot listen for keys system-wide, so it reads them from the terminal instead — <b>click the terminal window</b> before pressing a key, or nothing happens.</p>
+      <div class="callout"><b>When is an episode actually saved?</b> Only <i>after</i> its reset phase ends (or when you skip the reset with <span class="kbd">n</span> or <span class="kbd">q</span>). The very last episode has no reset phase and is saved at once. Until that moment the episode lives only in memory.</div>
+    </div>
+    <div>
+      <table class="keys">
+        <tr><th>key</th><th>during an episode</th><th>during reset</th></tr>
+        <tr><td><span class="kbd">n</span> / <span class="kbd">→</span></td><td>ends the episode now and starts the reset phase</td><td><b class="green">saves</b> the episode and starts the next one immediately</td></tr>
+        <tr><td><span class="kbd">r</span> / <span class="kbd">←</span></td><td>marks the episode as bad: after a reset it is <b class="red">thrown away</b> and re-recorded with the same number</td><td>throws away the episode you just did and re-records it</td></tr>
+        <tr><td><span class="kbd">q</span> / <span class="kbd">Esc</span></td><td><b class="green">saves</b> this episode (skipping the reset) and ends the session</td><td><b class="green">saves</b> the episode and ends the session</td></tr>
+        <tr><td><span class="kbd">Ctrl</span>+<span class="kbd">C</span></td><td colspan="2">aborts. The episode not yet written is <b class="red">lost</b>, its temporary frames are deleted, and if it was episode 0 you end up with an empty dataset (“No episodes saved”). Earlier saved episodes stay.</td></tr>
+      </table>
+      <div class="callout good" style="margin-top:14px"><b>The habit to build:</b> record → press <span class="kbd">n</span> → reset the scene → press <span class="kbd">n</span> → … → press <span class="kbd">q</span> when you want to stop early. Never <span class="kbd">Ctrl</span>+<span class="kbd">C</span> a session you care about.</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h3>3 · Try the session loop</h3>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <p>This is a faithful model of the loop inside <code class="inl">lerobot-record</code> (sped up 10×). Start a session, then press the same keys you would in the terminal and watch which episodes make it to disk.</p>
+      <div class="ctl-label"><span>episode_time_s</span><span class="val"><span id="rsEpV">20</span> s</span></div>
+      <input id="rsEp" type="range" min="5" max="60" step="1" value="20">
+      <div class="ctl-label"><span>reset_time_s</span><span class="val"><span id="rsResetV">15</span> s</span></div>
+      <input id="rsReset" type="range" min="5" max="60" step="1" value="15">
+      <div class="ctl-label"><span>num_episodes</span><span class="val" id="rsNumV">3</span></div>
+      <input id="rsNum" type="range" min="1" max="10" step="1" value="3">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn sm" id="rsStart">▶ Start session</button>
+        <button class="btn ghost sm" data-rskey="n">n · next</button>
+        <button class="btn ghost sm" data-rskey="r">r · re-record</button>
+        <button class="btn ghost sm" data-rskey="q">q · quit</button>
+        <button class="btn ghost sm" data-rskey="c" style="color:var(--red);border-color:var(--red)">Ctrl+C</button>
+      </div>
+      <p style="font-size:13px;margin-top:10px" id="rsHint">Press ▶ Start session to begin. While it runs you can also type <span class="kbd">n</span>, <span class="kbd">r</span>, <span class="kbd">q</span> on your keyboard.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <div id="rsPhase" style="font-weight:800;font-size:17px">idle</div>
+        <div class="val" id="rsTime">—</div>
+      </div>
+      <div class="phasebar" style="margin:10px 0 12px"><i id="rsBar"></i></div>
+      <div class="grid g2" style="margin-bottom:10px">
+        <div class="stat"><span class="n green" id="rsSaved">0</span><span class="l">episodes on disk</span></div>
+        <div class="stat"><span class="n red" id="rsLost">0</span><span class="l">episodes lost</span></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">terminal</div>
+      <div id="rsLog" style="min-height:150px"></div>
+    </div>
+  </div>
+</section>
+
 <!-- 8 DATASET FORMAT -->
 <section id="s8">
-  <div class="slide-num">Part 8 · The Result</div>
+  <div class="slide-num">Part 9 · The Result</div>
   <h2>How the collected data <span class="orange">looks on disk</span></h2>
   <div class="grid g2" style="align-items:start">
     <div>
-      <p>Recording produces a <b>LeRobotDataset</b> — plain, tool-free files anyone can open:</p>
-      <div class="card" style="padding:14px 16px"><div class="filetree">my_dataset/<br>
-        ├─ <span class="d">data/</span>            <span class="c"># joint states & actions</span><br>
-        │  └─ <span class="f">*.parquet</span><br>
-        ├─ <span class="d">videos/</span>          <span class="c"># one MP4 per camera</span><br>
-        │  ├─ observation.images.<span class="f">front/*.mp4</span><br>
-        │  └─ observation.images.<span class="f">wrist/*.mp4</span><br>
-        └─ <span class="d">meta/</span>            <span class="c"># info.json, tasks, stats</span></div></div>
-      <p style="font-size:14px">The <code class="inl">.parquet</code> tables hold the exact numbers (states, actions, indices, timestamps); the <code class="inl">.mp4</code> files hold the synchronized camera frames. That's the whole dataset. 🎉</p>
+      <p>Recording produces a <b>LeRobotDataset</b> — plain, tool-free files anyone can open. It lands in LeRobot's cache folder under your <code class="inl">repo_id</code> plus the session's time stamp:</p>
+      <div class="card" style="padding:14px 16px"><div class="filetree">~/.cache/huggingface/lerobot/me/<span class="d">grab_cube_20260926_121936/</span><br>
+        ├─ <span class="d">meta/</span><br>
+        │  ├─ <span class="f">info.json</span>      <span class="c"># fps, feature names, total_episodes, total_frames</span><br>
+        │  ├─ <span class="f">stats.json</span>     <span class="c"># mean/std per feature, used to normalize</span><br>
+        │  ├─ <span class="f">tasks.parquet</span>  <span class="c"># "Grab the cube"</span><br>
+        │  └─ episodes/chunk-000/<span class="f">file-000.parquet</span>  <span class="c"># where each episode starts & ends</span><br>
+        ├─ <span class="d">data/</span>chunk-000/<span class="f">file-000.parquet</span>      <span class="c"># joint states & actions, every frame</span><br>
+        └─ <span class="d">videos/</span><br>
+        &nbsp;&nbsp; ├─ observation.images.front/chunk-000/<span class="f">file-000.mp4</span><br>
+        &nbsp;&nbsp; └─ observation.images.wrist/chunk-000/<span class="f">file-000.mp4</span></div></div>
+      <p style="font-size:14px">The <code class="inl">.parquet</code> tables hold the exact numbers (states, actions, indices, timestamps); the <code class="inl">.mp4</code> files hold the synchronized camera frames. Episodes are <b>not</b> one file each — several are packed into the same parquet and video files, and the <code class="inl">meta/episodes</code> table says which rows and seconds belong to which episode. An <code class="inl">images/</code> folder appears only <i>while</i> recording: raw frames wait there until the episode is saved and encoded to MP4. That's the whole dataset. 🎉</p>
       <div class="callout q"><b>Scrub the episode →</b> Drag through the frames and watch the camera view, the joint <span class="cyan">state</span>, and the <span class="lime">action</span> change together — this is literally what one row of the dataset is.</div>
     </div>
     <div class="card">
@@ -304,9 +464,55 @@
   </div>
 </section>
 
+<!-- 8b VIEWING -->
+<section id="s8b">
+  <div class="slide-num">Part 10 · Look At What You Got</div>
+  <h2>Viewing the <span class="orange">recorded episodes</span></h2>
+  <p class="lead">Never train on data you have not looked at. Three quick checks — the last one is the fun one.</p>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <h3 class="cyan">A · Find the session folder</h3>
+      <div class="cmdrow"><code>ls ~/.cache/huggingface/lerobot/me/</code><button class="copy">Copy</button></div>
+      <p style="font-size:14px">Each run makes a new time-stamped folder, e.g. <code class="inl">grab_cube_20260926_121936</code>. That full name is the <b>repo id</b> you pass to every tool below. A folder that contains only <code class="inl">meta/info.json</code> is a session where nothing was saved.</p>
+
+      <h3 class="cyan" style="margin-top:18px">B · Count what was kept</h3>
+      <div class="cmdrow"><code>python -c "import json,os; d=json.load(open(os.path.expanduser('~/.cache/huggingface/lerobot/me/grab_cube_20260926_121936/meta/info.json'))); print(d['total_episodes'],'episodes,',d['total_frames'],'frames at',d['fps'],'fps')"</code><button class="copy">Copy</button></div>
+      <p style="font-size:14px">Sanity check the numbers with Part 7's calculator: 5 episodes × 20 s × 30 fps ≈ 3 000 frames.</p>
+
+      <h3 class="orange" style="margin-top:18px">C · Open an episode in the viewer ★</h3>
+      <div class="cmdrow"><code>lerobot-dataset-viz --repo-id me/grab_cube_20260926_121936 --episode-index 0</code><button class="copy">Copy</button></div>
+      <p style="font-size:14px">A <b>Rerun</b> window opens with everything that episode contains, lined up on one timeline:</p>
+      <ul style="color:var(--muted);font-size:14.5px">
+        <li>One <b>image panel per camera</b> — <code class="inl">observation.images.front</code> and <code class="inl">observation.images.wrist</code> — exactly the pixels the policy will see.</li>
+        <li><b>Six line plots for <span class="cyan">observation.state</span></b> (where the follower's joints were) and <b>six for <span class="lime">action</span></b> (where the leader told it to go). Action should lead state by a fraction of a second — that lag is the follower catching up.</li>
+        <li>A <b>timeline</b> at the bottom: press <span class="kbd">space</span> to play/pause, drag to scrub. Every frame of the video lines up with one row of the plots — the “one frame” from Part 2, made visible.</li>
+      </ul>
+      <p style="font-size:14px">Change <code class="inl">--episode-index</code> to look at the others. Add <code class="inl">--save 1 --output-dir ./viz</code> to write an <code class="inl">.rrd</code> file instead of opening a window (open it later with <code class="inl">rerun file.rrd</code>).</p>
+    </div>
+    <div>
+      <div class="card">
+        <h3 style="margin-top:0">What to look for</h3>
+        <ul class="check">
+          <li>Both cameras show the scene; the cube is visible in at least one at every moment</li>
+          <li>The whole attempt is inside the episode — no cut-off grasp at the time limit</li>
+          <li>Motion curves are smooth; no jumps in <code class="inl">action</code> (a jump = a jerky demo or a dropped frame)</li>
+          <li><code class="inl">observation.state</code> follows <code class="inl">action</code> closely; a big gap means the follower could not keep up or is miscalibrated</li>
+          <li>The task text in the panel is right (<code class="inl">Grab the cube</code>)</li>
+        </ul>
+        <p style="font-size:13px;margin-bottom:0">Anything wrong? Re-record that episode: the auditor in Part 11 tells you what each flaw would teach the robot.</p>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <h3 class="pink" style="margin-top:0">D · Replay it on the real arm</h3>
+        <div class="cmdrow"><code>lerobot-replay --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX --robot.id=my_follower_arm --dataset.repo_id=me/grab_cube_20260926_121936 --dataset.episode=0</code><button class="copy">Copy</button></div>
+        <p style="font-size:14px;margin-bottom:0">The follower re-performs the recorded <code class="inl">action</code>s, no leader needed. This is playback from Chapter 4 — useful to prove the data is good before training. <b>Clear the workspace first</b>: the arm moves for real and will not stop for your hand.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- 9 AUDITOR (STAR) -->
 <section id="s9">
-  <div class="slide-num">Part 9 · Put It To The Test</div>
+  <div class="slide-num">Part 11 · Put It To The Test</div>
   <h2>🔍 The data-quality auditor</h2>
   <p class="lead">Flip each choice between the <span class="red">careless</span> and <span class="green">careful</span> way of recording, and watch the predicted result. This is illustrative — but every effect here is a real failure mode roboticists hit.</p>
   <div class="grid g2" style="align-items:start;margin-top:8px">
@@ -337,9 +543,11 @@
   <div class="card" style="margin-top:14px">
     <p style="margin-top:0">The command that records it all (from Chapter 2's port, Chapter 3's calibration):</p>
     <div class="cmdrow"><code>lerobot-record --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX --robot.id=my_follower_arm \
-  --robot.cameras="{front:{type:opencv,index_or_path:0,width:640,height:480,fps:30}, wrist:{type:opencv,index_or_path:1,width:640,height:480,fps:30}}" \
+  --robot.cameras="{front: {type: opencv, index_or_path: 1, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
   --teleop.type=so101_leader --teleop.port=/dev/tty.usbmodemYYYY --teleop.id=my_leader_arm \
-  --dataset.repo_id=me/grab_cube --dataset.single_task="Grab the cube" --dataset.num_episodes=40 --dataset.fps=30 --dataset.episode_time_s=20</code><button class="copy">Copy</button></div>
+  --dataset.repo_id=me/grab_cube --dataset.single_task="Grab the cube" \
+  --dataset.num_episodes=40 --dataset.fps=30 --dataset.episode_time_s=20 --dataset.reset_time_s=15 --dataset.push_to_hub=false</code><button class="copy">Copy</button></div>
+    <p style="font-size:14px;margin-bottom:0">Then look at what you recorded: <code class="inl">lerobot-dataset-viz --repo-id me/grab_cube_&lt;timestamp&gt; --episode-index 0</code> (Part 10).</p>
   </div>
 
   <div class="divider"></div>
@@ -352,11 +560,14 @@
     <div data-q="2" data-a="0"><button class="quizopt">Frames get dropped, leaving gaps in the motion</button><button class="quizopt">The robot gets faster</button><button class="quizopt">Nothing, fps is cosmetic</button><button class="quizopt">The cube disappears</button></div></div>
   <div class="card" style="margin-top:14px"><p><b>Q4.</b> Camera frames in a LeRobotDataset are stored as…</p>
     <div data-q="3" data-a="3"><button class="quizopt">Millions of raw images</button><button class="quizopt">Text files</button><button class="quizopt">Inside the parquet table</button><button class="quizopt">Compressed MP4 video</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q5.</b> You finish a great episode, the terminal says “Reset the environment”, and you press <span class="kbd">Ctrl</span>+<span class="kbd">C</span>. What happened to that episode?</p>
+    <div data-q="4" data-a="2"><button class="quizopt">Saved — recording had already finished</button><button class="quizopt">Saved, but without video</button><button class="quizopt">Lost — an episode is only written after its reset phase; q would have saved it</button><button class="quizopt">Saved twice</button></div></div>
 
   <div class="divider"></div>
   <details><summary>🧪 Homework</summary><p>1) You recorded 60 great episodes but always put the cube in the exact same spot. What will the robot probably do at test time, and why?<br>
     2) List three things to hold constant and three things to vary while recording, and say why for each.<br>
-    3) A dataset has <code class="inl">observation.state</code>, <code class="inl">action</code>, and <code class="inl">observation.images.front</code>. Map each to ACT's input or output from Chapter 6.</p></details>
+    3) A dataset has <code class="inl">observation.state</code>, <code class="inl">action</code>, and <code class="inl">observation.images.front</code>. Map each to ACT's input or output from Chapter 6.<br>
+    4) Record 3 short episodes, open episode 0 with <code class="inl">lerobot-dataset-viz</code>, and describe in one sentence each what the <code class="inl">action</code> curve and the <code class="inl">observation.state</code> curve of <code class="inl">gripper.pos</code> do at the moment you grab the cube.</p></details>
 </section>
 
 <nav style="max-width:1080px;margin:12px auto 0;padding:0 26px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
@@ -369,7 +580,7 @@
 <script>
 /* rail + progress */
 const secs=[...document.querySelectorAll('section')],rail=document.getElementById('rail');
-const labels=['Intro','Garbage in','One frame','Cameras','FPS','Encoding','Scene','Episodes','Dataset','Auditor','Recap'];
+const labels=['Intro','Garbage in','One frame','Cameras','FPS','Encoding','Scene','Episodes','Record session','Dataset','View it','Auditor','Recap'];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
 const dots=[...rail.children],bar=document.getElementById('topbar');
 function onScroll(){const y=window.scrollY,h=document.body.scrollHeight-window.innerHeight;bar.style.width=(100*y/h)+'%';
@@ -453,10 +664,10 @@ function pixelated(ctx,W,H,pxW,drawCb){
     // label
     ctx.fillStyle='rgba(251,146,60,.85)';ctx.font='11px ui-monospace';ctx.textAlign='left';ctx.fillText((cam==='front'?'observation.images.front':'observation.images.wrist')+'  '+rw+'×'+rh,8,16);
     const m=document.getElementById('camMsg');
-    if(cam==='front'&&occ) m.innerHTML='⚠️ The arm <b class="red">hides the cube</b> from the front camera — the robot is momentarily blind to the object.';
-    else if(cam==='wrist') m.innerHTML='✅ The wrist camera <b class="green">stays locked on the cube</b>, even when the front view is blocked. That\'s why two views help.';
+    if(cam==='front'&&occ) m.innerHTML='⚠️ The arm <b class="red">hides the cube</b> from the scene camera — the robot is momentarily blind to the object.';
+    else if(cam==='wrist') m.innerHTML='✅ The wrist camera <b class="green">stays locked on the cube</b>, even when the scene view is blocked. That\'s why two views help.';
     else if(resIdx<=1) m.innerHTML='🔍 At low resolution the cube is just a few blurry pixels — hard to locate precisely.';
-    else m.innerHTML='A clean front view of the whole workspace.';
+    else m.innerHTML='A clean scene view of the whole workspace.';
   }
   document.querySelectorAll('#camSel button').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('#camSel button').forEach(x=>x.classList.remove('on'));b.classList.add('on');cam=b.dataset.cam;render();});
@@ -532,7 +743,49 @@ function pixelated(ctx,W,H,pxW,drawCb){
   [len,num].forEach(s=>s.oninput=upd);drawTimeline();upd();
 })();
 
-/* ---- Part 8: dataset scrubber ---- */
+/* ---- Part 8: recording-session simulator (mirrors the loop in lerobot_record.py) ---- */
+(function(){
+  const $=id=>document.getElementById(id);
+  const epS=$('rsEp'),rsS=$('rsReset'),nS=$('rsNum');
+  const phaseEl=$('rsPhase'),barEl=$('rsBar'),timeEl=$('rsTime'),savedEl=$('rsSaved'),lostEl=$('rsLost'),logEl=$('rsLog'),hint=$('rsHint');
+  const TICK_MS=100; // 1 simulated second per tick → 10× speed
+  let st=null,timer=null;
+  const cfg=()=>({ep:+epS.value,reset:+rsS.value,num:+nS.value});
+  function lbl(){$('rsEpV').textContent=epS.value;$('rsResetV').textContent=rsS.value;$('rsNumV').textContent=nS.value;}
+  [epS,rsS,nS].forEach(s=>s.oninput=lbl);lbl();
+  function log(msg,cls){const d=document.createElement('div');d.className='rslog '+(cls||'');d.textContent=msg;logEl.prepend(d);while(logEl.children.length>9)logEl.lastChild.remove();}
+  function halt(){clearInterval(timer);timer=null;}
+  function startEpisode(){st.phase='rec';st.t=0;log('Recording episode '+st.idx,'rec');}
+  function startReset(){st.phase='reset';st.t=0;log('Reset the environment','reset');}
+  function finish(){st.phase='done';halt();log('Stop recording · '+st.saved+' episode(s) on disk','end');render();}
+  // called when the current phase ends (timer ran out, or a key cut it short)
+  function phaseEnded(){const c=cfg();
+    if(st.phase==='rec' && !st.stop && (st.saved<c.num-1 || st.rerecord)){startReset();return;}
+    if(st.rerecord){st.rerecord=false;st.lost++;log('✗ episode '+st.idx+' discarded — re-recording it','bad');}
+    else{st.saved++;log('✓ episode '+st.idx+' written to disk','ok');st.idx++;}
+    if(st.stop||st.saved>=c.num){finish();return;}
+    startEpisode();}
+  function tick(){if(!st||st.phase==='done')return;const c=cfg();st.t++;const lim=st.phase==='rec'?c.ep:c.reset;if(st.t>=lim)phaseEnded();render();}
+  function render(){if(!st)return;const c=cfg();savedEl.textContent=st.saved+' / '+c.num;lostEl.textContent=st.lost;
+    if(st.phase==='done'){phaseEl.textContent='■ Stopped';phaseEl.style.color='var(--muted)';barEl.style.width='0%';timeEl.textContent='—';hint.textContent='Session over. Change the sliders and start again.';return;}
+    const lim=st.phase==='rec'?c.ep:c.reset;
+    if(st.phase==='rec'){phaseEl.textContent='● Recording episode '+st.idx;phaseEl.style.color='var(--red)';hint.textContent='Drive the leader… press n to finish early, r to mark it bad, q to save & stop.';}
+    else{phaseEl.textContent='↺ Reset the environment';phaseEl.style.color='var(--amber)';hint.textContent='Episode '+st.idx+' is NOT on disk yet. n = save & next · r = discard · q = save & stop · Ctrl+C = lose it.';}
+    barEl.style.width=(100*st.t/lim)+'%';timeEl.textContent=st.t+' / '+lim+' s';}
+  function key(k){if(!st||st.phase==='done')return;
+    if(k==='n'){log('key n → finish this phase now','key');phaseEnded();}
+    else if(k==='r'){st.rerecord=true;log('key r → mark episode '+st.idx+' for re-record','key');phaseEnded();}
+    else if(k==='q'){st.stop=true;log('key q → save, then stop','key');phaseEnded();}
+    else if(k==='c'){st.lost++;log('Ctrl+C → aborted. Episode '+st.idx+' was never written — gone.','bad');finish();}
+    render();}
+  $('rsStart').onclick=()=>{halt();st={idx:0,saved:0,lost:0,stop:false,rerecord:false,phase:'rec',t:0};logEl.innerHTML='';
+    log('my_leader_arm SOLeader connected. my_follower_arm SOFollower connected.');startEpisode();render();timer=setInterval(tick,TICK_MS);};
+  document.querySelectorAll('[data-rskey]').forEach(b=>b.onclick=()=>key(b.dataset.rskey));
+  window.addEventListener('keydown',e=>{if(!st||st.phase==='done')return;if(/INPUT|TEXTAREA|BUTTON/.test(e.target.tagName))return;
+    const k=e.key.toLowerCase();if(k==='n'||k==='r'||k==='q'){e.preventDefault();key(k);}});
+})();
+
+/* ---- Part 9: dataset scrubber ---- */
 (function(){
   const cv=document.getElementById('dsCv'),ctx=cv.getContext('2d');const N=40;
   const sl=document.getElementById('dsS');
@@ -552,7 +805,7 @@ function pixelated(ctx,W,H,pxW,drawCb){
   sl.oninput=upd;upd();
 })();
 
-/* ---- Part 9: data-quality auditor (STAR) ---- */
+/* ---- Part 11: data-quality auditor (STAR) ---- */
 (function(){
   const factors=[
     {key:'cam',   good:'Camera fixed &amp; identical at deploy', bad:'Camera bumped between episodes', pen:22, fail:'the learned landmarks shifted — it reaches to the wrong place'},
