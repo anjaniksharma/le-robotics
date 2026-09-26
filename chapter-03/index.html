@@ -293,6 +293,16 @@ elbow_flex      |   2130 |   2130 |   2130</div></div>
       <p style="font-size:13px;margin-top:6px">The follower mirrors it instantly — that's the whole game. 🎯</p>
     </div>
     <div>
+      <h3 style="margin-top:0">First — how do you connect them? 🔌</h3>
+      <p style="font-size:14px">Here's the surprise: <b>you don't wire the two arms to each other at all.</b> The only link between leader and follower is this <b>software</b> command — it reads the leader's joints and writes them to the follower. Physically, each arm is its own independent stack:</p>
+      <ul style="font-size:14px;line-height:1.5">
+        <li><b>Motor chain (per arm):</b> the 3-pin cables run base → gripper through all 6 STS3215 servos — one continuous daisy-chain, no gaps.</li>
+        <li><b>Controller board (per arm):</b> that chain plugs into <em>its own</em> Feetech driver board.</li>
+        <li><b>USB (per arm):</b> each board gets <em>its own</em> USB cable to the computer → two ports (that's why Chapter 2 found a <b>separate port</b> for each arm: <code class="inl">…FOLLOWER</code> and <code class="inl">…LEADER</code>).</li>
+        <li><b>Power (per arm):</b> each board needs <em>its own</em> PSU, matched to that arm's voltage variant.</li>
+      </ul>
+      <div class="callout warn" style="font-size:13.5px"><b>No cable bridges the arms.</b> Two arm → board → USB → PSU stacks plug into the <b>same computer</b>. The leader is left <b>un-torqued</b> so you can move it by hand; the follower mirrors because <b>both were calibrated to the same reference</b> in the steps above. Poses only match thanks to that calibration — if the follower drifts or mirrors wrong, re-run calibration on <b>both</b> arms first.</div>
+      <p style="font-size:14px;margin-top:14px">Then a <b>single command</b> pairs them up:</p>
       <div class="cmdrow"><code>lerobot-teleoperate --robot.type=so101_follower --robot.port=/dev/tty.usbmodemFOLLOWER --robot.id=my_follower_arm --teleop.type=so101_leader --teleop.port=/dev/tty.usbmodemLEADER --teleop.id=my_leader_arm</code><button class="copy">Copy</button></div>
       <p style="font-size:14px">One command names <b>both</b> calibrated arms by their ids. LeRobot loads each calibration, reads the leader's joints, and writes them to the follower — many times a second.</p>
       <div class="callout q"><b>Play it live!</b> The <a href="../live-demo/arm.html" style="color:var(--cyan);font-weight:700">SO-101 Digital Twin</a> from Chapter 2 already does a mini-calibration: its <b>“Set current pose as 0°”</b> button is exactly the homing step you just learned. 🦾</div>
