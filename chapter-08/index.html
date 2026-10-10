@@ -87,6 +87,24 @@
   .flow{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;align-items:center;font-size:14px}
   .flow .b{background:#0d1428;border:1px solid var(--line);border-radius:10px;padding:9px 13px;font-weight:700}
   .flow .ar{color:var(--sky);font-size:18px}
+  .logbox{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;line-height:1.75;color:#c9d4ea;background:#0a1024;border:1px solid var(--line);border-radius:10px;padding:12px 14px;white-space:pre-wrap;word-break:break-word;min-width:0}
+  .logbox .i{color:#6f7a95}.logbox .hl{color:var(--sky)}.logbox .n{color:#8b96b3;font-style:italic}.logbox .y{color:var(--amber)}.logbox .g{color:var(--green)}
+  .cfg{table-layout:fixed}.cfg th:first-child,.cfg td:first-child{width:36%}.cfg th:nth-child(2),.cfg td:nth-child(2){width:15%}
+  .cfg td:first-child{font-family:ui-monospace,Menlo,monospace;color:#eaf0ff;font-size:12.5px;word-break:break-word}
+  .cfg td:nth-child(2){font-family:ui-monospace,Menlo,monospace;color:var(--amber);font-size:12.5px}
+  .cfg td{font-size:13.5px;vertical-align:top;padding:8px 8px;overflow-wrap:anywhere}.cfg code.inl{word-break:break-all}
+  .steps{counter-reset:st;list-style:none;padding:0;margin:0}.steps li{position:relative;padding:6px 0 6px 38px;color:#dbe4f5;font-size:15px}
+  .steps li::before{counter-increment:st;content:counter(st);position:absolute;left:0;top:6px;width:26px;height:26px;border-radius:50%;background:var(--sky);color:#08172e;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .jlog{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;padding:3px 0;border-bottom:1px solid var(--line);color:#c9d4ea}
+  .jlog.k{color:var(--cyan)}.jlog.g{color:var(--green)}.jlog.y{color:var(--amber)}.jlog.r{color:var(--red)}.jlog.w{color:#fff;font-weight:700}
+  .phasebar{height:12px;border-radius:8px;background:#0d1428;overflow:hidden;border:1px solid var(--line)}
+  .phasebar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--sky),var(--green));transition:width .1s}
+  .panels{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.panel{background:#0a1024;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .panel .t{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between}.panel .t b{color:#fff;font-weight:700}
+  .panel canvas{height:auto;background:transparent}
+  #s5b .grid>*,#s5c .grid>*,#s5d .grid>*{min-width:0}
+  .urlrow{font-family:ui-monospace,Menlo,monospace;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap}.urlrow span:first-child{color:var(--muted);min-width:110px}.urlrow span:last-child{color:var(--sky);word-break:break-all}
+  .urlrow.bad span:last-child{color:var(--red)}
 </style>
 </head>
 <body>
@@ -273,14 +291,220 @@ lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
 lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
   --policy.repo_id=$HF_USER/act_grab_cube \
   --job.target=h200 --job.timeout=8h</code><button class="copy">Copy</button></div>
-    <p style="font-size:13px">The pod trains on the Hub dataset and pushes the policy to your account. <code class="inl">--job.detach</code> submits and exits; <code class="inl">hf jobs hardware</code> shows the flavors &amp; pricing.</p>
+    <p style="font-size:13px">The pod trains on the Hub dataset and pushes the policy to your account. <code class="inl">--job.detach</code> submits and exits; <code class="inl">hf jobs hardware</code> shows the flavors &amp; pricing. <b>Parts 6–8 below walk through this end to end</b>: push your recorded episodes, launch the job, and watch the loss live.</p>
   </div>
   <div class="callout cloud"><b>Why the Hub matters:</b> it decouples <em>where you record</em> (your Mac + arm) from <em>where you train</em> (a big GPU). Record here, train anywhere, run here. That's the whole cloud workflow. 🌉</div>
 </section>
 
+<!-- 5b PUSH DATASET -->
+<section id="s5b">
+  <div class="slide-num">Part 6 · Ship The Data</div>
+  <h2>Push your recorded episodes to the <span class="sky">Hugging Face Hub</span></h2>
+  <p class="lead">A cloud GPU cannot see your Mac's disk. Before anything can train, the folder that <code class="inl">lerobot-record</code> wrote (Chapter 7, Part 9) has to live on the Hub under <b>your</b> username, as a <b>dataset repo</b>.</p>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <h3 class="cyan">Step 0 · Sign in once</h3>
+      <div class="cmdrow"><code>hf auth login        # paste a token from huggingface.co/settings/tokens (write access)
+hf auth whoami       # prints your username, e.g. anjaniksharma</code><button class="copy">Copy</button></div>
+      <p style="font-size:14px">Everything below uses that username as the <b>namespace</b> in front of the slash: <code class="inl">anjaniksharma/grab_cube</code>. A repo id whose namespace is not you (or a team you belong to) cannot be created — the push fails with a 403.</p>
+
+      <h3 class="cyan" style="margin-top:18px">Path A · Upload the folder you already have</h3>
+      <p style="font-size:14px">Your first sessions were recorded as <code class="inl">me/grab_cube_…</code>. “me” is not your username, so LeRobot's automatic upload could never work for them. The fix is one command — the dataset is just files, so you upload the folder and give it a proper name:</p>
+      <div class="cmdrow"><code>hf upload anjaniksharma/grab_cube \
+  ~/.cache/huggingface/lerobot/me/grab_cube_20260926_121936 \
+  --repo-type dataset
+
+# then the one thing a plain upload forgets: the version tag (value of codebase_version in meta/info.json)
+hf repo tag create anjaniksharma/grab_cube v3.0 --repo-type dataset</code><button class="copy">Copy</button></div>
+      <div class="callout bad" style="font-size:14px"><b>Don't skip the tag.</b> LeRobot's own <code class="inl">push_to_hub()</code> does three things: uploads the folder, writes a dataset card, and creates a git tag named after the format version (<code class="inl">v3.0</code>). <code class="inl">hf upload</code> only does the first. Without the tag the training pod fails at start-up with <i>“Your dataset must be tagged with a codebase version”</i> — after you've already paid for the pod to boot.</div>
+      <p style="font-size:14px">Add <code class="inl">--private</code> to the upload if you don't want it public. Uploading the same folder again to the same repo id only sends changed files (re-create the tag afterwards so it points at the new commit: delete it with <code class="inl">hf repo tag delete</code>, then create it again). The dataset then lives at <code class="inl">huggingface.co/datasets/anjaniksharma/grab_cube</code>, and the Hub's dataset viewer can even play the episodes in the browser.</p>
+
+      <h3 class="cyan" style="margin-top:18px">Path B · Let recording upload for you (next time)</h3>
+      <p style="font-size:14px">Record with <b>your</b> namespace and leave <code class="inl">push_to_hub</code> at its default of <code class="inl">true</code>. When you press <span class="kbd">q</span> at the end of the session the dataset is pushed automatically, with the time stamp in its name:</p>
+      <div class="cmdrow"><code>lerobot-record … --dataset.repo_id=anjaniksharma/grab_cube --dataset.num_episodes=30
+# → huggingface.co/datasets/anjaniksharma/grab_cube_20260926_153012</code><button class="copy">Copy</button></div>
+      <div class="callout cloud"><b>Path C, the lazy one:</b> if you skip both and run <code class="inl">lerobot-train … --job.target=…</code> with a dataset that exists only locally <i>under your namespace</i>, LeRobot pushes it for you to a <b>private</b> repo before the job starts. It still can't rescue a <code class="inl">me/…</code> name — that's why Path A exists.</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Name → address</h3>
+      <p style="font-size:13.5px;margin-top:0">Every id you type becomes a URL. Type yours and see where each thing will live — and whether the push can work at all.</p>
+      <div class="ctl-label"><span>Your HF username</span></div>
+      <input id="nbUser" aria-label="Your Hugging Face username" type="text" value="anjaniksharma" style="width:100%;box-sizing:border-box;background:#0d1428;border:1px solid var(--line);border-radius:8px;color:#fff;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px">
+      <div class="ctl-label" style="margin-top:8px"><span>--dataset.repo_id</span></div>
+      <input id="nbDs" aria-label="dataset repo id" type="text" value="me/grab_cube_20260926_121936" style="width:100%;box-sizing:border-box;background:#0d1428;border:1px solid var(--line);border-radius:8px;color:#fff;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px">
+      <div class="ctl-label" style="margin-top:8px"><span>--policy.repo_id</span></div>
+      <input id="nbPol" aria-label="policy repo id" type="text" value="anjaniksharma/act_grab_cube" style="width:100%;box-sizing:border-box;background:#0d1428;border:1px solid var(--line);border-radius:8px;color:#fff;padding:8px 10px;font-family:ui-monospace,Menlo,monospace;font-size:13px">
+      <div style="margin-top:12px" id="nbOut"></div>
+      <p id="nbMsg" style="font-size:13px;margin:10px 0 0"></p>
+    </div>
+  </div>
+</section>
+
+<!-- 5c HF JOBS -->
+<section id="s5c">
+  <div class="slide-num">Part 7 · Launch</div>
+  <h2>Train on a Hugging Face GPU with <span class="sky">one extra flag</span></h2>
+  <p class="lead"><code class="inl">lerobot-train</code> normally runs on the machine you type it on. Add <code class="inl">--job.target=&lt;gpu&gt;</code> and the <em>same</em> command is packaged up and sent to <b>Hugging Face Jobs</b>: a GPU pod pulls your dataset, trains, and pushes the policy back to the Hub. Pay-as-you-go, per minute.</p>
+
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <h3 class="cyan">The command for our cube task</h3>
+      <div class="cmdrow"><code>hf jobs hardware      # list GPU flavors &amp; prices (a10g-small is the cheap starter)
+
+lerobot-train \
+  --dataset.repo_id=anjaniksharma/grab_cube \
+  --policy.type=act --policy.device=cuda \
+  --policy.repo_id=anjaniksharma/act_grab_cube \
+  --output_dir=outputs/train/act_grab_cube \
+  --steps=50000 --batch_size=8 --save_freq=10000 \
+  --wandb.enable=true --wandb.project=so101 \
+  --job.target=a10g-small --job.timeout=6h</code><button class="copy">Copy</button></div>
+      <p style="font-size:14px">Everything above <code class="inl">--job.*</code> is ordinary training config (Parts 2–4). Only the last line changes <em>where</em> it runs.</p>
+      <table class="cfg" style="margin-top:6px">
+        <tr><th>--job. flag</th><th>default</th><th>meaning</th></tr>
+        <tr><td>target</td><td>None</td><td>GPU flavor from <code class="inl">hf jobs hardware</code> (<code class="inl">a10g-small</code>, <code class="inl">a100-large</code>, <code class="inl">h200</code>…). Omitted = run locally.</td></tr>
+        <tr><td>image</td><td>huggingface/lerobot-gpu:latest</td><td>the container the pod boots — LeRobot + CUDA pre-installed</td></tr>
+        <tr><td>timeout</td><td>2d</td><td>wall-clock cap; the job is killed after this, so size it to your step count</td></tr>
+        <tr><td>detach</td><td>false</td><td>submit and return immediately instead of streaming logs</td></tr>
+        <tr><td>tags</td><td>[]</td><td>extra labels on the job and any repo it creates (<code class="inl">lerobot</code> is always added)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3 class="cyan">What happens when you press Enter</h3>
+      <ol class="steps">
+        <li><b>Login check.</b> No token → <i>“Not logged in to Hugging Face. Run hf auth login first.”</i></li>
+        <li><b>Model repo is created up front</b> at <code class="inl">anjaniksharma/act_grab_cube</code> (private) holding the training config the pod will run from.</li>
+        <li><b>Dataset check.</b> Must be reachable by <code class="inl">repo_id</code>; a local-only one under your namespace is pushed private first (Part 6).</li>
+        <li><b>Secrets are forwarded</b>: your HF token, and your W&amp;B key if <code class="inl">--wandb.enable=true</code> (Part 8). Missing key → the submit refuses.</li>
+        <li><b>Submit.</b> You get a job id plus four lines: <i>Job page</i>, <i>Model repo</i>, <i>Monitor</i>, <i>Cancel</i>.</li>
+        <li><b>Logs stream</b> into your terminal — the same loss lines you would see locally.</li>
+        <li><b>Done:</b> the trained policy (and checkpoints, if <code class="inl">--save_checkpoint_to_hub=true</code>) sit in the model repo, ready for <code class="inl">lerobot-rollout</code> (Part 9).</li>
+      </ol>
+      <div class="callout"><b>Ctrl+C here does the opposite of Chapter 7.</b> It only <b>detaches</b> your terminal — the job keeps training in the cloud. Re-attach with <code class="inl">hf jobs logs &lt;id&gt;</code>, list with <code class="inl">hf jobs ps</code>, and stop it for real with <code class="inl">hf jobs cancel &lt;id&gt;</code> (you pay until you do).</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h3>Try it: a job console</h3>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <p>A faithful mock of the terminal (much faster than real life). Submit, watch the log lines LeRobot actually prints, then try detaching, re-attaching and cancelling to feel the difference.</p>
+      <div class="ctl-label"><span>--steps</span><span class="val" id="jbStepsV">50 000</span></div>
+      <input id="jbSteps" type="range" min="10000" max="100000" step="10000" value="50000">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn sm" id="jbSubmit">▶ lerobot-train … --job.target=a10g-small</button>
+        <button class="btn ghost sm" data-jb="detach">Ctrl+C (detach)</button>
+        <button class="btn ghost sm" data-jb="logs">hf jobs logs</button>
+        <button class="btn ghost sm" data-jb="cancel" style="color:var(--red);border-color:var(--red)">hf jobs cancel</button>
+      </div>
+      <p style="font-size:13px;margin-top:10px" id="jbHint">Press submit to start.</p>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap">
+        <div id="jbState" style="font-weight:800;font-size:16px">no job</div>
+        <div class="val" id="jbCost">$0.00</div>
+      </div>
+      <div class="phasebar" style="margin:10px 0 12px"><i id="jbBar"></i></div>
+      <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">your terminal</div>
+      <div id="jbLog" style="min-height:190px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5d OBSERVABILITY -->
+<section id="s5d">
+  <div class="slide-num">Part 8 · Observability</div>
+  <h2>Watch the loss live with <span class="sky">Weights &amp; Biases</span></h2>
+  <p class="lead">The pod is a computer you cannot see. <b>Observability</b> means it reports on itself while it works — so you can tell from your phone whether six hours of GPU time are going well or should be cancelled after ten minutes.</p>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <h3 class="cyan">How the numbers get out</h3>
+      <p style="font-size:14px">Every <code class="inl">log_freq</code> steps (default <span class="chip">200</span>) the trainer averages its metrics over that window and, when <code class="inl">--wandb.enable=true</code>, sends them to <b>Weights &amp; Biases</b> — a hosted dashboard that plots them the moment they arrive. Each training run becomes a <b>run</b> inside a <b>project</b>; its whole config is attached, so you can compare runs later.</p>
+
+      <h3 class="cyan" style="margin-top:18px">Connect it (once)</h3>
+      <div class="cmdrow"><code>wandb login          # paste the API key from wandb.ai/authorize → saved in ~/.netrc</code><button class="copy">Copy</button></div>
+      <p style="font-size:14px">That is all the wiring. When you submit a job, LeRobot reads the key from <code class="inl">~/.netrc</code> (or <code class="inl">$WANDB_API_KEY</code>) and forwards it to the pod as a secret. If it can't find one it stops before spending money: <i>“wandb is enabled but no WANDB_API_KEY found.”</i></p>
+      <table class="cfg" style="margin-top:6px">
+        <tr><th>--wandb. flag</th><th>default</th><th>meaning</th></tr>
+        <tr><td>enable</td><td>false</td><td>turn logging on</td></tr>
+        <tr><td>project</td><td>lerobot</td><td>the dashboard folder your runs land in, e.g. <code class="inl">so101</code></td></tr>
+        <tr><td>entity</td><td>None</td><td>your W&amp;B username or team; None = your default</td></tr>
+        <tr><td>notes</td><td>None</td><td>free text shown on the run (“30 eps, cube moved every time”)</td></tr>
+        <tr><td>mode</td><td>online</td><td><code class="inl">offline</code> logs to disk only, <code class="inl">disabled</code> turns it off</td></tr>
+        <tr><td>disable_artifact</td><td>false</td><td>true = don't also upload each checkpoint to W&amp;B</td></tr>
+      </table>
+      <p style="font-size:14px">At start-up the log prints your link: <span class="chip">Track this run --&gt; https://wandb.ai/&lt;entity&gt;/so101/runs/&lt;id&gt;</span>. Open it and leave it open.</p>
+
+      <h3 class="cyan" style="margin-top:18px">What the panels mean</h3>
+      <table class="cfg">
+        <tr><th>panel</th><th>watch for</th><th>meaning</th></tr>
+        <tr><td>train/loss</td><td>↓ then flat</td><td>ACT's prediction error on your actions — <b>the</b> number (Part 3)</td></tr>
+        <tr><td>train/grad_norm</td><td>steady</td><td>size of each weight nudge; spikes or growth = instability</td></tr>
+        <tr><td>train/lr</td><td>schedule</td><td>learning rate over time (warm-up, decay); confirms your config took effect</td></tr>
+        <tr><td>train/samples_per_s</td><td>high, flat</td><td>throughput; how fast the GPU is being fed</td></tr>
+        <tr><td>train/dataloading_s vs update_s</td><td>data ≪ update</td><td>if loading frames takes longer than the GPU step, the GPU is starving — raise <code class="inl">--num_workers</code></td></tr>
+        <tr><td>eval/eval_loss</td><td>tracks train</td><td>only if you hold out episodes: <code class="inl">--dataset.eval_split=0.1 --eval_steps=1000</code>. Rising while train falls = overfitting</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <h3 style="margin:0">Live dashboard: <span id="obTitle" class="sky">so101 / act_grab_cube</span></h3>
+          <span class="chip" id="obStep">step 0</span>
+        </div>
+        <div class="seg" id="obSel" style="margin-bottom:10px">
+          <button class="on" data-s="healthy">✅ Healthy</button>
+          <button data-s="lr">🔥 LR too high</button>
+          <button data-s="starve">🐢 GPU starving</button>
+          <button data-s="overfit">🎯 Overfitting</button>
+        </div>
+        <div class="panels">
+          <div class="panel"><div class="t"><span>train/loss</span><b id="obLossV">—</b></div><canvas id="obLoss" width="300" height="110"></canvas></div>
+          <div class="panel"><div class="t"><span>train/grad_norm</span><b id="obGnV">—</b></div><canvas id="obGn" width="300" height="110"></canvas></div>
+          <div class="panel"><div class="t"><span>train/lr</span><b id="obLrV">—</b></div><canvas id="obLr" width="300" height="110"></canvas></div>
+          <div class="panel"><div class="t"><span>dataloading_s · update_s</span><b id="obTV">—</b></div><canvas id="obT" width="300" height="110"></canvas></div>
+        </div>
+        <div class="callout" id="obMsg" style="margin:12px 0 0;font-size:14px"></div>
+        <div style="display:flex;gap:8px;margin-top:10px"><button class="btn ghost sm" id="obRestart">↺ Restart run</button></div>
+      </div>
+      <p style="font-size:13.5px">Points arrive every 200 steps, like the real thing. The <b>eval/eval_loss</b> line appears only in the overfitting scenario because that's the run where episodes were held out — without a held-out split, overfitting is invisible on the dashboard and only shows up on the table (Part 10).</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <h3>The three <span class="sky">loss</span> panels, decoded</h3>
+  <p>Type <b>loss</b> into the dashboard's search box and three panels appear: <code class="inl">train/loss</code>, <code class="inl">train/l1_loss</code> and <code class="inl">train/kld_loss</code>. They are not three different problems — they are one formula, split open.</p>
+  <div class="grid g2" style="align-items:start">
+    <div>
+      <div class="mathbox">train/loss = train/l1_loss + 10 × train/kld_loss<small>ACT's objective; the 10 is <code class="inl">--policy.kl_weight</code> (default 10.0)</small></div>
+      <table class="cfg">
+        <tr><th>panel</th><th>healthy shape</th><th>what it measures</th></tr>
+        <tr><td>train/l1_loss</td><td>↓ then flat</td><td><b>The one that matters for the arm.</b> Average absolute error, in normalized joint units, between the 100 actions ACT predicted and the 100 you actually performed with the leader. Smaller = its motions are closer to yours. Well-trained SO-101 tasks settle around 0.05–0.15.</td></tr>
+        <tr><td>train/kld_loss</td><td>drops fast, levels off, never 0</td><td>A regularizer on ACT's hidden “style” vector (a 32-number summary of each demonstration). It measures how far that vector's distribution has drifted from a plain bell curve. Keeping it small means the vector carries little information — so at run time, when it's set to zero because there is no demonstration to summarize, the policy still behaves.</td></tr>
+        <tr><td>train/loss</td><td>mirrors l1 once kld flattens</td><td>Just the weighted sum the optimizer minimizes. Because kld is multiplied by 10 it dominates early, which is why the total starts far higher than l1 ever was.</td></tr>
+      </table>
+      <div class="callout" style="font-size:14px"><b>A real run (11 episodes of grab_cube, step 1 400 of 50 000):</b> l1 0.70 → 0.33, kld 0.60 → 0.14, total 6.7 → 1.7. Check: 0.33 + 10 × 0.14 ≈ 1.7 ✓. Nothing to change — let it run. Red flags would be: l1 plateauing above ~0.3 (inconsistent or too little data), spikes or climbing in either curve (instability), or a suspiciously tiny l1 on a handful of episodes (memorizing — only the rollout on the arm can tell).</div>
+    </div>
+    <div class="card">
+      <h3 style="margin-top:0">Assemble the total yourself</h3>
+      <p style="font-size:13.5px;margin-top:0">Drag the two parts and watch which one the optimizer is really chasing.</p>
+      <div class="ctl-label"><span>train/l1_loss</span><span class="val" id="ldL1V">0.33</span></div>
+      <input id="ldL1" type="range" min="0.02" max="0.80" step="0.01" value="0.33">
+      <div class="ctl-label"><span>train/kld_loss</span><span class="val" id="ldKlV">0.14</span></div>
+      <input id="ldKl" type="range" min="0.00" max="0.60" step="0.01" value="0.14">
+      <div class="ctl-label"><span>kl_weight</span><span class="val" id="ldWV">10</span></div>
+      <input id="ldW" type="range" min="0" max="20" step="1" value="10">
+      <div class="mathbox" id="ldOut" style="margin-top:14px">—</div>
+      <div style="height:14px;border-radius:8px;background:#0d1428;overflow:hidden;display:flex;border:1px solid var(--line)"><div id="ldBarL1" style="height:100%;background:var(--sky);width:50%"></div><div id="ldBarKl" style="height:100%;background:var(--amber);width:50%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:4px"><span><span style="color:var(--sky)">■</span> l1 share</span><span><span style="color:var(--amber)">■</span> 10×kld share</span></div>
+      <p id="ldMsg" style="font-size:13px;margin:10px 0 0"></p>
+    </div>
+  </div>
+</section>
+
 <!-- 6 DEPLOY (STAR) -->
 <section id="s6">
-  <div class="slide-num">Part 6 · Exam Day</div>
+  <div class="slide-num">Part 9 · Exam Day</div>
   <h2>🤖 Run the policy on the arm</h2>
   <p class="lead">Training done, policy in hand — now the robot performs <b>alone</b>. Deployment runs a tight loop: look → predict a chunk → move → look again. The command for this is <b><code class="inl">lerobot-rollout</code></b> (record was for data <em>only</em>).</p>
   <div class="grid g2" style="align-items:start;margin-top:8px">
@@ -300,8 +524,8 @@ lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
       </div>
       <p style="margin-top:12px">It executes a few actions from the chunk, looks again, predicts the next chunk, and repeats — the same autoregression that writes text (Chapter 6), but for motion.</p>
       <div class="cmdrow"><code>lerobot-rollout --policy.path=$HF_USER/act_grab_cube \
-  --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX \
-  --robot.cameras="{front:{type:opencv,index_or_path:0,width:640,height:480,fps:30}}" \
+  --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX --robot.id=my_follower_arm \
+  --robot.cameras="{front: {type: opencv, index_or_path: 1, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
   --task="Grab the cube" --duration=60</code><button class="copy">Copy</button></div>
       <div class="callout"><b>Flip the mismatch switch:</b> if the camera or lighting at deploy time differs from training, the policy misses — the exact lesson from Chapter 7. Your data setup <em>is</em> your deploy setup.</div>
     </div>
@@ -310,7 +534,7 @@ lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
 
 <!-- 7 DEBUG -->
 <section id="s7">
-  <div class="slide-num">Part 7 · When It Misbehaves</div>
+  <div class="slide-num">Part 10 · When It Misbehaves</div>
   <h2>Reading the failures</h2>
   <p class="lead">A misbehaving policy is usually a <b>data</b> or <b>training</b> problem, not bad luck. The fix almost always points back to earlier chapters:</p>
   <div class="card">
@@ -350,10 +574,15 @@ lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
     <div data-q="2" data-a="0"><button class="quizopt">To borrow a powerful GPU your laptop doesn't have</button><button class="quizopt">Because it's required by law</button><button class="quizopt">To make the arm move faster</button><button class="quizopt">It's the only way to record data</button></div></div>
   <div class="card" style="margin-top:14px"><p><b>Q4.</b> Which command runs a <em>trained</em> policy on the real arm?</p>
     <div data-q="3" data-a="3"><button class="quizopt">lerobot-record</button><button class="quizopt">lerobot-calibrate</button><button class="quizopt">lerobot-find-port</button><button class="quizopt">lerobot-rollout</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q5.</b> Your job is streaming logs and you press <span class="kbd">Ctrl</span>+<span class="kbd">C</span>. What happens?</p>
+    <div data-q="4" data-a="1"><button class="quizopt">The job is cancelled and the GPU is released</button><button class="quizopt">Only your terminal detaches — the job keeps training (and billing) until hf jobs cancel</button><button class="quizopt">The dataset is deleted from the Hub</button><button class="quizopt">Training restarts from step 0</button></div></div>
+  <div class="card" style="margin-top:14px"><p><b>Q6.</b> On the W&amp;B dashboard, <code class="inl">dataloading_s</code> is bigger than <code class="inl">update_s</code>. What does that tell you?</p>
+    <div data-q="5" data-a="2"><button class="quizopt">The loss is too high</button><button class="quizopt">The model is overfitting</button><button class="quizopt">The GPU is waiting for frames — the input pipeline is the bottleneck</button><button class="quizopt">The learning rate is too small</button></div></div>
   <div class="divider"></div>
   <details><summary>🧪 Homework</summary><p>1) Your training loss looks great but the arm fails on the real table. Name two likely causes and the chapter that fixes each.<br>
     2) Explain why the Hugging Face Hub lets you record on a Mac but train on a cloud GPU.<br>
-    3) You have checkpoints at 20k, 40k, …, 100k steps. Why might the 100k one <em>not</em> be the best to deploy?</p></details>
+    3) You have checkpoints at 20k, 40k, …, 100k steps. Why might the 100k one <em>not</em> be the best to deploy?<br>
+    4) Push your <code class="inl">grab_cube</code> folder to the Hub (Part 6), launch a 10 000-step job on <code class="inl">a10g-small</code> with W&amp;B on (Parts 7–8), and paste the <code class="inl">train/loss</code> value at steps 200, 2 000 and 10 000. Did it flatten? What would you change for the next run?</p></details>
   <p style="margin-top:18px;color:var(--muted)">More chapters are on the way — next we'll go beyond a single task toward smarter, language-driven policies. 🚀</p>
 </section>
 
@@ -362,12 +591,12 @@ lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
   <a class="btn ghost" href="../index.html" style="text-decoration:none">⌂ Course home</a>
   <a class="btn" href="../chapter-09/index.html" style="text-decoration:none">Chapter 9: One Task to Many →</a>
 </nav>
-<div class="foot">Chapter 8 of the LeRobot SO-101 course · Training defaults (steps 100k, batch 8, save_freq 20k), <code class="inl">lerobot-train</code>, <code class="inl">lerobot-rollout</code>, HF Jobs (<code class="inl">--job.target</code>) &amp; Colab from the open-source <a href="https://github.com/huggingface/lerobot">lerobot</a> docs. The loss curve &amp; run are simulated illustrations.</div>
+<div class="foot">Chapter 8 of the LeRobot SO-101 course · Training defaults (steps 100k, batch 8, save_freq 20k), <code class="inl">lerobot-train</code>, <code class="inl">lerobot-rollout</code>, HF Jobs (<code class="inl">--job.target</code>, <code class="inl">hf jobs</code>), <code class="inl">hf upload</code>, W&amp;B (<code class="inl">--wandb.*</code>, <code class="inl">log_freq</code> 200) &amp; Colab from the open-source <a href="https://github.com/huggingface/lerobot">lerobot</a> docs. The loss curve &amp; run are simulated illustrations.</div>
 
 <script>
 /* rail + progress */
 const secs=[...document.querySelectorAll('section')],rail=document.getElementById('rail');
-const labels=['Intro','At scale','Vocabulary','Loss curve','Checkpoints','Cloud','Deploy','Debug','Recap'];
+const labels=['Intro','At scale','Vocabulary','Loss curve','Checkpoints','Cloud','Push data','HF Jobs','W&B','Deploy','Debug','Recap'];
 secs.forEach((s,i)=>{const a=document.createElement('a');a.href='#'+s.id;a.title=labels[i]||s.id;rail.appendChild(a);});
 const dots=[...rail.children],bar=document.getElementById('topbar');
 function onScroll(){const y=window.scrollY,h=document.body.scrollHeight-window.innerHeight;bar.style.width=(100*y/h)+'%';
@@ -545,6 +774,110 @@ document.querySelectorAll('#cloudSel button').forEach(b=>b.onclick=()=>{
   document.getElementById('runNew').onclick=newScene;
   document.getElementById('mismatchSw').onclick=function(){mismatch=!mismatch;this.classList.toggle('on',mismatch);draw(cur.sh,cur.el,1);};
   draw(cur.sh,cur.el,1);
+})();
+
+/* ---- Part 6: name → address ---- */
+(function(){
+  const u=document.getElementById('nbUser'),d=document.getElementById('nbDs'),p=document.getElementById('nbPol'),out=document.getElementById('nbOut'),msg=document.getElementById('nbMsg');
+  function row(l,v,bad){return '<div class="urlrow'+(bad?' bad':'')+'"><span>'+l+'</span><span>'+v+'</span></div>';}
+  function upd(){const user=u.value.trim(),ds=d.value.trim(),pol=p.value.trim();
+    const ns=x=>x.includes('/')?x.split('/')[0]:'';
+    const dsOk=ns(ds)===user&&user, polOk=ns(pol)===user&&user;
+    out.innerHTML=row('local folder','~/.cache/huggingface/lerobot/'+ds+'/')+
+      row('dataset repo','https://huggingface.co/datasets/'+ds,!dsOk)+
+      row('model repo','https://huggingface.co/'+pol,!polOk)+
+      row('W&B run','https://wandb.ai/'+(user||'…')+'/so101/runs/&lt;id&gt;');
+    if(!ds.includes('/')||!pol.includes('/')) msg.innerHTML='⚠️ A repo id needs a namespace: <b>username/name</b>.';
+    else if(!dsOk) msg.innerHTML='❌ <b>'+ns(ds)+'</b> is not your namespace, so nothing can push this dataset — upload the folder as <b>'+user+'/'+ds.split('/')[1].replace(/_\d{8}_\d{6}$/,'')+'</b> with <code class="inl">hf upload</code> (Path A).';
+    else if(!polOk) msg.innerHTML='❌ The model repo must be under <b>'+user+'</b> too — the job creates it up front.';
+    else msg.innerHTML='✅ Both ids live under <b>'+user+'</b>: automatic pushes and <code class="inl">--job.target</code> will work.';}
+  [u,d,p].forEach(el=>el.oninput=upd);upd();
+})();
+
+/* ---- Part 7: HF Jobs console ---- */
+(function(){
+  const $=id=>document.getElementById(id);
+  const stepsS=$('jbSteps'),stateEl=$('jbState'),bar=$('jbBar'),costEl=$('jbCost'),logEl=$('jbLog'),hint=$('jbHint');
+  const RATE=1.0/3600; // $/s illustrative (~a10g-small)
+  let st=null,timer=null;
+  stepsS.oninput=()=>$('jbStepsV').textContent=(+stepsS.value).toLocaleString();
+  function log(m,c){const d=document.createElement('div');d.className='jlog '+(c||'');d.textContent=m;logEl.prepend(d);while(logEl.children.length>10)logEl.lastChild.remove();}
+  function halt(){clearInterval(timer);timer=null;}
+  function lossAt(s){return +(0.9*Math.exp(-s/9000)+0.11+0.01*Math.sin(s/700)).toFixed(3);}
+  function render(){if(!st)return;const total=+stepsS.value;
+    const names={queued:'⏳ queued',boot:'📦 pulling image',data:'⬇️ downloading dataset',train:'🏋️ training',push:'⬆️ pushing policy',done:'✅ done',cancelled:'⛔ cancelled'};
+    stateEl.textContent=(st.attached?'':'(detached) ')+names[st.phase];
+    stateEl.style.color=st.phase==='cancelled'?'var(--red)':st.phase==='done'?'var(--green)':'#fff';
+    bar.style.width=(st.phase==='train'?100*st.step/total:st.phase==='done'||st.phase==='push'?100:0)+'%';
+    costEl.textContent='$'+(st.secs*RATE*60).toFixed(2);
+    hint.textContent=st.phase==='done'?'Policy pushed. Next: lerobot-rollout (Part 9).':st.phase==='cancelled'?'Job stopped — billing stopped too. Nothing was pushed.':st.attached?'Logs are streaming. Ctrl+C only detaches — try it.':'Detached: the job is still running. Re-attach with hf jobs logs, or cancel.';}
+  function tick(){if(!st)return;st.secs+=1;const total=+stepsS.value;
+    if(st.phase==='queued'&&st.secs>2){st.phase='boot';if(st.attached)log('Job status: RUNNING — image huggingface/lerobot-gpu:latest','k');}
+    else if(st.phase==='boot'&&st.secs>5){st.phase='data';if(st.attached)log('Downloading dataset anjaniksharma/grab_cube from the Hub …','k');}
+    else if(st.phase==='data'&&st.secs>8){st.phase='train';if(st.attached){log('Track this run --> https://wandb.ai/anjaniksharma/so101/runs/8k2x1q','y');log('Start offline training on a fixed dataset','k');}}
+    else if(st.phase==='train'){st.step=Math.min(total,st.step+Math.round(total/60));
+      if(st.attached&&st.step%2000<Math.round(total/60)) log('step:'+(st.step/1000).toFixed(1)+'K smpl:'+(st.step*8/1000).toFixed(0)+'K ep:'+(st.step*8/1676).toFixed(0)+' loss:'+lossAt(st.step).toFixed(3)+' grdn:'+(2.1+Math.random()*.3).toFixed(3)+' lr:1.0e-05 updt_s:0.081 data_s:0.004');
+      if(st.step%10000<Math.round(total/60)&&st.attached) log('Checkpoint policy after step '+st.step,'g');
+      if(st.step>=total){st.phase='push';if(st.attached)log('Pushing policy to https://huggingface.co/anjaniksharma/act_grab_cube …','k');}}
+    else if(st.phase==='push'&&st.secs>st.pushAt+2){st.phase='done';halt();if(st.attached)log('End of training. Model repo: https://huggingface.co/anjaniksharma/act_grab_cube','w');}
+    if(st.phase==='push'&&!st.pushAt)st.pushAt=st.secs;
+    render();}
+  $('jbSubmit').onclick=()=>{halt();logEl.innerHTML='';st={phase:'queued',step:0,secs:0,attached:true,pushAt:0};
+    log('Submitting job to HF Jobs (flavor=a10g-small, image=huggingface/lerobot-gpu:latest) ...');
+    log('Job submitted: 68f1c2a9e4b0','w');log('  Job page:   https://huggingface.co/jobs/anjaniksharma/68f1c2a9e4b0');log('  Model repo: https://huggingface.co/anjaniksharma/act_grab_cube');log('  Monitor:    hf jobs logs 68f1c2a9e4b0');log('  Cancel:     hf jobs cancel 68f1c2a9e4b0');
+    render();timer=setInterval(tick,120);};
+  document.querySelectorAll('[data-jb]').forEach(b=>b.onclick=()=>{if(!st)return;const a=b.dataset.jb;
+    if(a==='detach'){if(!st.attached||st.phase==='done'||st.phase==='cancelled')return;st.attached=false;log('^C  Detached. The job keeps running in the cloud.','y');log('  Monitor: hf jobs logs 68f1c2a9e4b0','y');log('  Cancel:  hf jobs cancel 68f1c2a9e4b0','y');}
+    if(a==='logs'){if(st.attached)return;st.attached=true;log('$ hf jobs logs 68f1c2a9e4b0   (re-attached — streaming resumes)','k');if(st.phase==='train')log('step:'+(st.step/1000).toFixed(1)+'K loss:'+lossAt(st.step).toFixed(3)+' …');if(st.phase==='done')log('End of training. Model repo: https://huggingface.co/anjaniksharma/act_grab_cube','w');}
+    if(a==='cancel'){if(st.phase==='done'||st.phase==='cancelled')return;st.phase='cancelled';halt();log('$ hf jobs cancel 68f1c2a9e4b0 → Job cancelled at step '+st.step,'r');}
+    render();});
+})();
+
+/* ---- Part 8: W&B dashboard mock ---- */
+(function(){
+  const $=id=>document.getElementById(id);
+  const cvs={loss:$('obLoss'),gn:$('obGn'),lr:$('obLr'),t:$('obT')};
+  const LOGF=200,TOTAL=20000;let scen='healthy',step=0,timer=null,series;
+  function reset(){step=0;series={loss:[],ev:[],gn:[],lr:[],dl:[],up:[]};}
+  function sample(s){const x=s/TOTAL;let loss,gn,lr,dl,up,ev=null;
+    const warm=Math.min(1,s/1000);
+    if(scen==='lr'){lr=1e-3*warm;loss=0.9*Math.exp(-s/2500)+0.15+(s>6000?Math.min(3,(s-6000)/2500)*(0.5+Math.random()):0.05*Math.random());gn=2+(s>6000?Math.pow((s-6000)/1500,2):0.3*Math.random());}
+    else{lr=1e-5*warm;loss=0.9*Math.exp(-s/6000)+0.11+0.01*Math.random();gn=2.1+0.25*Math.random();}
+    if(scen==='overfit'){loss=0.9*Math.exp(-s/4000)+0.05+0.01*Math.random();ev=0.9*Math.exp(-s/4000)+0.12+(s>7000?(s-7000)/20000:0)+0.01*Math.random();}
+    if(scen==='starve'){dl=0.19+0.03*Math.random();up=0.08+0.005*Math.random();}else{dl=0.004+0.002*Math.random();up=0.08+0.005*Math.random();}
+    if(Number.isNaN(loss)||loss>4)loss=4;return{loss,gn,lr,dl,up,ev};}
+  function plot(cv,lines,fmt){const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+    const all=lines.flatMap(l=>l.d).filter(v=>v!=null);if(!all.length)return;let lo=Math.min(...all),hi=Math.max(...all);if(hi-lo<1e-9){hi=lo+1e-9;}const pad=(hi-lo)*.1;lo-=pad;hi+=pad;
+    ctx.strokeStyle='rgba(255,255,255,.07)';ctx.lineWidth=1;for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(0,H*i/4);ctx.lineTo(W,H*i/4);ctx.stroke();}
+    lines.forEach(l=>{ctx.strokeStyle=l.c;ctx.lineWidth=2;ctx.beginPath();let started=false;l.d.forEach((v,i)=>{if(v==null)return;const x=i/(TOTAL/LOGF)*W,y=H-(v-lo)/(hi-lo)*H;started?ctx.lineTo(x,y):ctx.moveTo(x,y);started=true;});ctx.stroke();});
+    ctx.fillStyle='#8b96b3';ctx.font='10px ui-monospace';ctx.textAlign='left';ctx.fillText(fmt(hi),3,10);ctx.fillText(fmt(lo),3,H-3);}
+  const MSG={healthy:'✅ <b>Healthy.</b> Loss drops fast then flattens near 0.1; grad_norm steady; lr warmed up to 1e-5 and holds; the GPU step dominates the tiny dataloading time. Let it run.',
+    lr:'🔥 <b>Diverging.</b> Loss climbs after an early dip and grad_norm explodes — the learning rate is too high. <b>Cancel the job now</b> (Part 7) and relaunch with a smaller <code class="inl">--optimizer.lr</code>. Every extra minute is wasted money.',
+    starve:'🐢 <b>GPU starving.</b> Loss is fine, but dataloading_s (0.2 s) is more than double update_s (0.08 s): the pod spends most of each step waiting for video frames. Raise <code class="inl">--num_workers</code>, or pick a flavor with more CPU. Same result, far cheaper.',
+    overfit:'🎯 <b>Overfitting.</b> train/loss keeps falling but the held-out <span style="color:var(--amber)">eval/eval_loss</span> turns back up after ~7k steps: the model is memorising your 3 episodes instead of learning the task. Deploy an earlier checkpoint — and record more, more varied episodes (Chapter 7).'};
+  function tick(){if(step>=TOTAL){clearInterval(timer);timer=null;return;}step+=LOGF;const v=sample(step);
+    series.loss.push(v.loss);series.ev.push(v.ev);series.gn.push(v.gn);series.lr.push(v.lr);series.dl.push(v.dl);series.up.push(v.up);
+    $('obStep').textContent='step '+step.toLocaleString();$('obLossV').textContent=v.loss.toFixed(3)+(v.ev!=null?' · eval '+v.ev.toFixed(3):'');$('obGnV').textContent=v.gn.toFixed(2);$('obLrV').textContent=v.lr.toExponential(1);$('obTV').textContent=v.dl.toFixed(3)+' · '+v.up.toFixed(3);
+    plot(cvs.loss,[{d:series.loss,c:'#60a5fa'},{d:series.ev,c:'#fbbf24'}],x=>x.toFixed(2));
+    plot(cvs.gn,[{d:series.gn,c:'#f472b6'}],x=>x.toFixed(1));
+    plot(cvs.lr,[{d:series.lr,c:'#a3e635'}],x=>x.toExponential(0));
+    plot(cvs.t,[{d:series.dl,c:'#fb7185'},{d:series.up,c:'#34d399'}],x=>x.toFixed(2)+'s');}
+  function start(){clearInterval(timer);reset();$('obMsg').innerHTML=MSG[scen];timer=setInterval(tick,60);}
+  document.querySelectorAll('#obSel button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#obSel button').forEach(x=>x.classList.remove('on'));b.classList.add('on');scen=b.dataset.s;start();});
+  $('obRestart').onclick=start;start();
+})();
+
+/* ---- Part 8: loss decomposer ---- */
+(function(){
+  const $=id=>document.getElementById(id);const l1=$('ldL1'),kl=$('ldKl'),w=$('ldW');
+  function upd(){const a=+l1.value,b=+kl.value,k=+w.value,t=a+k*b;
+    $('ldL1V').textContent=a.toFixed(2);$('ldKlV').textContent=b.toFixed(2);$('ldWV').textContent=k;
+    $('ldOut').innerHTML='train/loss = '+a.toFixed(2)+' + '+k+' × '+b.toFixed(2)+' = <b>'+t.toFixed(2)+'</b>';
+    const share=t>0?a/t:1;$('ldBarL1').style.width=(100*share)+'%';$('ldBarKl').style.width=(100*(1-share))+'%';
+    $('ldMsg').innerHTML=share<0.35?'The KL term is <b>'+Math.round(100*(1-share))+'%</b> of the total, so train/loss moves mostly when kld moves — not when the arm gets more accurate. Judge progress on <b>l1</b> directly.':
+      share>0.75?'l1 is <b>'+Math.round(100*share)+'%</b> of the total, so train/loss is now a fair proxy for motion accuracy.':
+      'Roughly balanced — both curves carry information; keep an eye on both.';}
+  [l1,kl,w].forEach(e=>e.oninput=upd);upd();
 })();
 
 /* quiz */

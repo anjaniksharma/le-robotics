@@ -17,7 +17,7 @@ offline — just open `index.html`.
 | 5 | **How Machines Learn** | Neurons, loss, gradient descent, backprop — and a **real neural net you train live** | [chapter-05](chapter-05/index.html) |
 | 6 | **From Words to Motion** | Text generation (next-token) → **ACT**, the robot's brain that predicts motions | [chapter-06](chapter-06/index.html) |
 | 7 | **Collecting Good Data** | Cameras, fps, lighting & episodes; running a `lerobot-record` session (keys, configs, where it saves), viewing episodes with `lerobot-dataset-viz`; a live good-vs-bad data auditor | [chapter-07](chapter-07/index.html) |
-| 8 | **Training & Running** | The loss curve, checkpoints, cloud training (Colab / HF Jobs), and deploying ACT on the arm | [chapter-08](chapter-08/index.html) |
+| 8 | **Training & Running** | The loss curve, checkpoints, pushing the dataset to the Hub, training on HF Jobs, live loss in Weights & Biases, and deploying ACT on the arm | [chapter-08](chapter-08/index.html) |
 | 9 | **From One Task to Many** | Language-conditioned policies (VLAs): fine-tuning SmolVLA + a live instruction → action demo | [chapter-09](chapter-09/index.html) |
 
 ## Live hardware demos (`live-demo/`)
