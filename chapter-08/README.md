@@ -75,6 +75,10 @@ lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act --policy.de
   --job.target=a10g-small --job.timeout=6h
 hf jobs logs <id> | hf jobs ps | hf jobs cancel <id>
 
+# After cloud training, before rollout: match the pod's (always-latest) LeRobot locally,
+# or the policy config fails with "The fields `<name>` are not valid for ACTConfig"
+git -C ~/Documents/robotics/lerobot pull && pip install -e "$HOME/Documents/robotics/lerobot[feetech]"
+
 # Train (locally or in a Colab GPU notebook)
 lerobot-train --dataset.repo_id=$HF_USER/grab_cube --policy.type=act \
   --output_dir=outputs/train/act_grab_cube --policy.device=cuda \

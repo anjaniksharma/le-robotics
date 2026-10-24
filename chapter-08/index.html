@@ -527,6 +527,9 @@ lerobot-train \
   --robot.type=so101_follower --robot.port=/dev/tty.usbmodemXXXX --robot.id=my_follower_arm \
   --robot.cameras="{front: {type: opencv, index_or_path: 1, width: 640, height: 480, fps: 30}, wrist: {type: opencv, index_or_path: 0, width: 640, height: 480, fps: 30}}" \
   --task="Grab the cube" --duration=60</code><button class="copy">Copy</button></div>
+      <div class="callout bad" style="font-size:14px"><b>Before the first rollout after any cloud training: update your local LeRobot.</b> The HF Jobs pod always runs the <code class="inl">huggingface/lerobot-gpu:latest</code> image (there is no older tag and no flag to pin a version), so the policy's <code class="inl">config.json</code> carries whatever fields <i>that day's</i> LeRobot has. An older install on your Mac refuses it with <i>“The fields `dtype` are not valid for ACTConfig”</i> (Oct 8) or <i>“`optimizer_fused` …”</i> (Oct 23) — a new field each time upstream adds one. Fix in two lines, then rerun the rollout:
+      <div class="cmdrow" style="margin:8px 0 0"><code>git -C ~/Documents/robotics/lerobot pull
+~/Documents/robotics/.venv/bin/pip install -e "$HOME/Documents/robotics/lerobot[feetech]"   # absolute path: works from any folder</code><button class="copy">Copy</button></div></div>
       <div class="callout"><b>Flip the mismatch switch:</b> if the camera or lighting at deploy time differs from training, the policy misses — the exact lesson from Chapter 7. Your data setup <em>is</em> your deploy setup.</div>
     </div>
   </div>
